@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- build:css options.css -->
+		<link href="css/bootstrap.css" rel="stylesheet">
+		<link href="css/styles.css" rel="stylesheet">
+        <!-- endbuild -->
+    </head>
+    <body id="options">
+
+        <h1>NZB Unity Options</h1>
+
+        <div class="container">
+
+            <form id="FormSettings">
+
+                <!-- Connection Settings -->
+                <h2>Connection</h2>
+
+                <h3>Connection Information</h3>
+
+                    <div class="row">
+                        <div class="col-form-label col-3 col-sm-1">
+                            <label for="ProfileCurrent">Profile:</label>
+                        </div>
+                        <div class="col-9 col-sm-2">
+                            <select id="ProfileCurrent" class="form-control form-control-sm">
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-3">
+                            <div class="btn-group" role="group" aria-label="Profile controls">
+                                <button type="button" class="btn btn-sm btn-info">Create</button>
+                                <button type="button" class="btn btn-sm btn-secondary">Duplicate</button>
+                                <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div id="profile-container" class="col-6">
+
+                            <div class="form-row">
+                                <div class="col-2"></div>
+                                <div class="col-form-label col-3">
+                                    <label for="ProfileName">Profile Name:</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" id="ProfileName" class="form-control form-control-sm">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-2"></div>
+                                <div class="col-form-label col-3">
+                                    <label for="ProfileHost">SABnzbd URL:</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" id="ProfileHost" class="form-control form-control-sm">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-2"></div>
+                                <div class="col-form-label col-3">
+                                    <label for="ProfileApiKey">SABnzbd API Key:</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" id="ProfileApiKey" class="form-control form-control-sm">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-2"></div>
+                                <div class="col-form-label col-3">
+                                    <label for="ProfileUsername">SABnzbd Username:</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" id="ProfileUsername" class="form-control form-control-sm">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-2"></div>
+                                <div class="col-form-label col-3">
+                                    <label for="ProfilePassword">SABnzbd Password:</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" id="ProfilePassword" class="form-control form-control-sm">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-12 text-center">
+                                    <button id="ProfileTest" class="btn btn-sm btn-info">Test Connection</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                <!-- End Connection Settings -->
+
+
+                <!-- Providers Settings -->
+                <h2>Providers</h2>
+
+                <h3>1-Click NZB Downloading</h3>
+
+                    <p>Enable 1-click downloading for the following sites:</p>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="Provider-binsearch.info" class="form-check-input" type="checkbox" value="">
+                            binsearch.info
+                        </label>
+                    </div>
+
+                    <!-- TODO: More, automate? -->
+
+                    <div class="form-row">
+                        <div class="col-2">
+                            <label for="ProviderNewznab">Newznab Providers<br>(comma separated):</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" id="ProviderNewznab" class="form-control form-control-sm" placeholder="mynewznab.com,otherprovider.com">
+                        </div>
+                    </div>
+
+                <h3>Display Names</h3>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="Display-binsearch.info" class="form-check-input" type="checkbox" value="">
+                            binsearch.info: Use display name instead of NZB filename
+                        </label>
+                    </div>
+
+                <!-- End Providers Settings -->
+
+
+                <!-- Extension Settings -->
+                <h2>Extension Settings</h2>
+
+                <h3>General</h3>
+
+                    <div class="form-row">
+                        <div class="col-form-label col-2">
+                            <label for="RefreshRate">Refresh Rate:</label>
+                        </div>
+                        <div class="col-3">
+                            <select id="RefreshRate" class="form-control form-control-sm">
+                                <option value="10">10 seconds</option>
+                                <option value="10">15 seconds</option>
+                                <option value="10">30 seconds</option>
+                                <option value="10">60 seconds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-form-label col-2">
+                            <label for="NotificationTimeout">Notification Timeout:</label>
+                        </div>
+                        <div class="col-3">
+                            <select id="NotificationTimeout" class="form-control form-control-sm">
+                                <option value="10">10 seconds</option>
+                                <option value="10">15 seconds</option>
+                                <option value="10">30 seconds</option>
+                                <option value="10">60 seconds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="EnableGraph" class="form-check-input" type="checkbox" value="">
+                            Enable Graph
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="EnableContextMenu" class="form-check-input" type="checkbox" value="">
+                            Enable Context Menu
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="EnableNotifications" class="form-check-input" type="checkbox" value="">
+                            Enable Notifications
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="EnableNewznab" class="form-check-input" type="checkbox" value="">
+                            Enable Automatic Newznab Detection (can slow down some sites)
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-form-label col-3">
+                            Click to reset all settings to default
+                        </div>
+                        <div class="col-1">
+                            <button id="ResetOptions" class="btn btn-sm btn-danger">Reset</button>
+                        </div>
+                    </div>
+
+
+                <h3>Categories</h3>
+
+                    <p>For more information regarding categories, please read the wiki page.</p>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="CategoriesUseGroupNames" class="form-check-input" type="checkbox" value="">
+                            Do not attempt to pass category names, forcing SABnzbd to use group names in the NZB instead.
+                            This will ignore <em>all</em> of the following category options. Note that some indexers (newznab, etc.)
+                            embed category names in the nzb itself.
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="CategoriesUseMenu" class="form-check-input" type="checkbox" value="">
+                            Override the category with the one chosen from the menu. The list of categories is loaded by SABnzbd.
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="CategoriesUseHeader" class="form-check-input" type="checkbox" value="">
+                            Use X-DNZB-Category HTTP header instead of auto-categorization on supported sites (NZBs.org, Newzbin).
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-form-label col-2">
+                            <label for="CategoriesOverride">Force cartegory:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" id="CategoriesOverride" class="form-control form-control-sm">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-form-label col-2">
+                            <label for="CategoriesDefault">Default category:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" id="CategoriesDefault" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                <!-- End Extension Settings -->
+            </form>
+        </div>
+        <!-- /.container -->
+
+
+        <!-- build:js vendor-bundle.js -->
+        <!-- weh:js weh-all -->
+        <!-- endbuild -->
+
+        <!-- build:js options-bundle.js -->
+        <script src="options.ts"></script>
+        <!-- endbuild -->
+
+    </body>
+</html>
