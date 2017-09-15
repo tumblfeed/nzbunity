@@ -1,16 +1,14 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "default_locale": "en_US",
   "version": "0.1.0",
-  "version_name": "0.1.0",
   "author": "John Hutchison",
   "description": "Adds the ability to send and control Usenet NZB files from various NZB sites directly to SABnzbd+ or NZBGet download clients.",
   "background": {
     "scripts": [
-      "background/main.ts"
-    ],
-    "persistent": true
+      "background/providers.js",
+      "background/main.js"
+    ]
   },
   "icons": {
     "32": "content/images/icon-32.png",
@@ -19,6 +17,7 @@
     "128": "content/images/icon-128.png"
   },
   "browser_action": {
+    "browser_style": true,
     "default_icon": {
       "40": "content/images/icon-40.png"
     },
@@ -26,12 +25,15 @@
     "default_popup": "content/popup.html"
   },
   "options_ui": {
+    "browser_style": false,
     "open_in_tab": true,
     "page": "content/options.html"
   },
   "permissions": [
+    "*://*/*",
+    "contextMenus",
+    "notifications",
     "storage",
-    "tabs",
-    "contextMenus"
+    "tabs"
   ]
 }

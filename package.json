@@ -1,40 +1,39 @@
 {
   "name": "nzbunity",
   "version": "0.1.0",
+  "license": "MPL-2.0",
   "description": "Adds the ability to send and control Usenet NZB files from various NZB sites directly to SABnzbd+ or NZBGet download clients.",
+  "author": "John Hutchison",
+  "contributors": [
+    "clutterskull@gmail.com"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apereo/cas"
+    "url": "https://github.com/clutterskull/nzbunity"
   },
-  "homepage": "http://apereo.github.io/cas",
+  "homepage": "https://github.com/clutterskull/nzbunity",
   "keywords": [
-    "CAS",
-    "Central Authentication Service"
+    "NZB"
   ],
   "engines": {
-    "node": ">=5.11.0 <6.0"
+    "node": ">7"
   },
   "bugs": {
-    "url": "https://github.com/apereo/cas/issues"
+    "url": "https://github.com/clutterskull/nzbunity/issues"
   },
-  "contributors": [],
   "dependencies": {
-    "bootstrap-sass": "~> 3.3.6",
-    "chai": "^3.5.0",
+    "@types/chrome": "0.0.48",
+    "@types/jquery": "^3.2.12",
+    "bootstrap-sass": "~> 3.3.7",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.0",
     "gulp-debug": "^3.1.0",
     "gulp-sass": "^2.2.0",
-    "gulp-shell": "^0.6.3",
     "gulp-sourcemaps": "^2.6.0",
+    "gulp-typescript": "^3.2.2",
     "gulp-util": "^3.0.8",
-    "gulp-webdriver": "^2.0.3",
-    "tree-kill": "^1.1.0",
-    "wdio-mocha-framework": "^0.5.10",
-    "wdio-phantomjs-service": "^0.2.2",
-    "wdio-selenium-standalone-service": "0.0.8",
-    "wdio-spec-reporter": "^0.1.0",
-    "webdriverio": "^4.8.0",
+    "typescript": "^2.5.2",
+    "web-ext-types": "^0.3.1",
     "yargs": "^4.7.0"
   },
   "devDependencies": {
@@ -42,7 +41,5 @@
   },
   "scripts": {
     "gulp": "gulp"
-  },
-  "author": "Jeff Sittler",
-  "license": "Apache-2.0"
+  }
 }

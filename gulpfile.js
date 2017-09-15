@@ -7,13 +7,10 @@
 const autoprefixer = require('gulp-autoprefixer');
 const gulp = require('gulp');
 const gutil = require('gulp-util');
-const kill = require('tree-kill');
 const path = require('path');
+const ts = require('gulp-typescript');
 const sass = require('gulp-sass');
-const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
-const spawn = require('child_process').spawn;
-const webdriver = require('gulp-webdriver');
 
 // Options
 
@@ -44,23 +41,20 @@ if (argv.verbose) {
 // Config & Helpers
 
 var isDev = !(argv.production || /^prod/i.test(process.env.NODE_ENV));
-var isWin = /^win/.test(process.platform);
 
 var paths = {
-  htmlPath: path.resolve('./src/main/resources/templates/**/*.html'),
-  jsPath: path.resolve('./src/main/resources/static/js/**/*.js'),
-  sassPath: path.resolve('./src/main/resources/static/sass/**/*.scss'),
-  casSassPath: path.resolve('./target/cas/WEB-INF/classes/static/sass'),
-  npmPath: path.resolve('./node_modules/bootstrap-sass/assets/stylesheets'),
-  cssPath: path.resolve('./src/main/resources/static/css'),
-  wdioPath: path.resolve('./wdio.conf.js'),
-  warPath: path.resolve('./target/cas.war')
+  tsPath: path.resolve('./src/**/*.ts'),
+  sassPath: path.resolve('./src/**/*.scss'),
+  buildPath: path.resolve('./build')
 };
 
+var copyFiles = ['html', 'js', 'json', 'css', 'png', 'jpg'];
+
 var watchPath = [
-  paths.htmlPath,
-  paths.jsPath,
-  paths.sassPath
+  path.resolve('./src/**/*')
+  // paths.htmlPath,
+  // paths.jsPath,
+  // paths.sassPath
 ];
 
 var autoprefixerOptions = {
@@ -84,6 +78,43 @@ gulp.task('paths', () => {
 });
 
 /**
+ * gulp copy
+ * Copies all static files that do not require pre-processing / compilation
+ */
+gulp.task('copy', () => {
+  gutil.log(
+    gutil.colors.magenta('Copying files ') + envStr(),
+    '\n\tFrom -> ./src : ', copyFiles.join(', '),
+    '\n\tTo   -> ', paths.buildPath
+  );
+
+  return gulp
+    .src(copyFiles.map(
+      (ext) => { return path.resolve('./src/**/*.' + ext); }
+    ))
+    .pipe(gulp.dest(paths.buildPath));
+});
+
+/**
+ * gulp typescript
+ * Compiles all TypesScript code to the build directory.
+ */
+gulp.task('typescript', () => {
+  var tsProject = ts.createProject(path.resolve('./tsconfig.json'));
+
+  gutil.log(
+    gutil.colors.magenta('Compiling TypeScript ') + envStr(),
+    '\n\tFrom -> ', paths.tsPath,
+    '\n\tTo   -> ', paths.buildPath
+  );
+
+  return tsProject.src()
+    .pipe(tsProject())
+    .js
+    .pipe(gulp.dest(paths.buildPath));
+});
+
+/**
  * gulp sass
  * Builds all project SCSS files and copies them to src.
  * - In development, output is expanded and sourcemaps are produced
@@ -93,9 +124,7 @@ gulp.task('sass', () => {
   gutil.log(
     gutil.colors.magenta('Compiling SASS ') + envStr(),
     '\n\tFrom -> ', paths.sassPath,
-    '\n\t        ', paths.casSassPath,
-    '\n\t        ', paths.npmPath,
-    '\n\tTo   -> ', paths.cssPath
+    '\n\tTo   -> ', paths.buildPath
   );
   return gulp
     .src(paths.sassPath)
@@ -105,88 +134,39 @@ gulp.task('sass', () => {
       sass({
         errLogToConsole: true,
         outputStyle: isDev ? 'expanded' : 'compressed',
-        includePaths: [ paths.sassPath, paths.casSassPath, paths.npmPath ]
+        includePaths: [ paths.sassPath ]
       })
       .on('error', sass.logError)
     )
     .pipe(isDev ? sourcemaps.write() : gutil.noop())
     .pipe(autoprefixer(autoprefixerOptions))
-    .pipe(gulp.dest(paths.cssPath));
+    .pipe(gulp.dest(paths.buildPath));
 });
-
-/**
- * gulp test
- * Initializes and starts webdriver tests.
- */
-gulp.task('test', () => {
-  return gulp
-    .src(paths.wdioPath)
-    .pipe(webdriver());
-});
-
-/**
- * gulp maven
- * Runs the Maven target 'clean package'.
- */
-gulp.task('maven:before', gutil.noop);
-
-gulp.task('maven:package', [], shell.task([
-  isWin
-    ? 'set HOSTNAME=' + argv.hostname + '&&'
-    : 'HOSTNAME=' + argv.hostname,
-  'mvn -P local clean package'
-].join(' ')));
-
-gulp.task('maven:after', ['maven:package'], shell.task([
-  isWin
-    ? 'del'
-    : 'rm',
-  path.resolve(__dirname, 'target/cas/WEB-INF/classes/application.properties')
-].join(' ')));
-
-gulp.task('maven', ['maven:after']); // alias
 
 /**
  * gulp build
  * Runs frontend build tasks and then Maven package.
  */
-gulp.task('build', ['sass', 'maven']);
-
-// gulp.task('run', ['sass', 'maven:package'], shell.task('java -jar ' + paths.warPath));
-
-/**
- * gulp run
- * Initializes the server process.
- * Note: This should be able to stop and restart the server on a watch trigger,
- *       but for some reason does not work.
- */
-var runProcess;
-gulp.task('run', ['build'], () => {
-  if (runProcess) {
-    kill(runProcess.pid);
-  }
-
-  runProcess = spawn('java', ['-jar', paths.warPath], { stdio: 'inherit' });
-
-  runProcess.on('close', (code) => {
-    if (code !== 0) {
-      gutil.log(gutil.colors.red('Error detected, waiting for changes...'));
-    }
-  });
-});
+gulp.task('build', ['copy', 'typescript', 'sass']);
 
 // Watchers
 
-gulp.task('watch', () => {
-  gulp.watch(watchPath, ['sass', 'maven:package']);
+gulp.task('watch', ['build'], () => {
+  gulp.watch(watchPath, ['build']);
+});
+
+gulp.task('watch:copy', () => {
+  gulp.watch(copyFiles.map(
+    (ext) => { return path.resolve('./src/**/*.' + ext); }
+  ), ['copy']);
 });
 
 gulp.task('watch:sass', () => {
-  gulp.watch(watchPath, ['sass']);
+  gulp.watch(paths.sassPath, ['sass']);
 });
 
-gulp.task('watch:run', ['run'], () => {
-  gulp.watch(watchPath, ['run']);
+gulp.task('watch:ts', () => {
+  gulp.watch(paths.tsPath, ['typescript']);
 });
 
 gulp.task('default', ['build']);
