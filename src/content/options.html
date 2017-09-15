@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- build:css options.css -->
-		<link href="css/bootstrap.css" rel="stylesheet">
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>NZB Unity Options</title>
+
+        <link href="css/bootstrap.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
-        <!-- endbuild -->
     </head>
     <body id="options">
 
@@ -29,9 +33,9 @@
                         </div>
                         <div class="col-12 col-sm-3">
                             <div class="btn-group" role="group" aria-label="Profile controls">
-                                <button type="button" class="btn btn-sm btn-info">Create</button>
-                                <button type="button" class="btn btn-sm btn-secondary">Duplicate</button>
-                                <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                <button id="ProfileCreate" class="btn btn-sm btn-info">Create</button>
+                                <button id="ProfileDuplicate" class="btn btn-sm btn-secondary">Duplicate</button>
+                                <button id="ProfileDelete" class="btn btn-sm btn-danger">Delete</button>
                             </div>
                         </div>
                     </div>
@@ -109,7 +113,7 @@
 
                     <div class="form-check">
                         <label class="form-check-label">
-                            <input id="Provider-binsearch.info" class="form-check-input" type="checkbox" value="">
+                            <input id="ProviderEnabled-binsearch.info" class="form-check-input" type="checkbox" value="">
                             binsearch.info
                         </label>
                     </div>
@@ -129,7 +133,7 @@
 
                     <div class="form-check">
                         <label class="form-check-label">
-                            <input id="Display-binsearch.info" class="form-check-input" type="checkbox" value="">
+                            <input id="ProviderDisplay-binsearch.info" class="form-check-input" type="checkbox" value="">
                             binsearch.info: Use display name instead of NZB filename
                         </label>
                     </div>
@@ -207,6 +211,13 @@
                         </div>
                     </div>
 
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="DebugNotifications" class="form-check-input" type="checkbox" value="">
+                            Show debug notifications
+                        </label>
+                    </div>
+
 
                 <h3>Categories</h3>
 
@@ -257,14 +268,9 @@
         </div>
         <!-- /.container -->
 
-
-        <!-- build:js vendor-bundle.js -->
-        <!-- weh:js weh-all -->
-        <!-- endbuild -->
-
-        <!-- build:js options-bundle.js -->
-        <script src="options.ts"></script>
-        <!-- endbuild -->
-
+        <script src="vendor/jquery-3.2.1.slim.js"></script>
+        <script src="vendor/popper.min.js"></script>
+        <script src="vendor/bootstrap.min.js"></script>
+        <script src="options.js"></script>
     </body>
 </html>

@@ -1,7 +1,0 @@
-{
-    "indent_size": 2,
-    "end_with_newline": true,
-    "max_preserve_newlines": 2,
-    "space_after_anon_function": true,
-    "operator_position": "after-newline"
-}
