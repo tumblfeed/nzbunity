@@ -34,6 +34,10 @@ class NZBUnity {
                 return this.initOptions()
             })
             .then(() => {
+                // Tuck provider info into storage
+                return this.setOpt({ 'Providers': Providers });
+            })
+            .then(() => {
                 this.debug('[NZBUnity.constructor] Options Ok!');
             })
             .then(() => {
@@ -55,8 +59,12 @@ class NZBUnity {
         for (let k in message) {
             this.debug(k, message[k]);
             switch (k) {
-                case 'options.setOption':
-                    this.setOpt(message[k]);
+                case 'options.setOptions':
+                    if (this.isValidOpt(Object.keys(message[k]))) {
+                        this.setOpt(message[k]);
+                    } else {
+                        this.error('items contain invalid option names');
+                    }
                     break;
             }
         }
@@ -77,12 +85,7 @@ class NZBUnity {
     }
 
     setOpt(items: Object):Promise<void> {
-        this.debug('[NZBUnity.setOpt]', items);
         return new Promise((resolve, reject) => {
-            if (!this.isValidOpt(Object.keys(items))) {
-                reject('items contain invalid option names');
-            }
-
             this.storage.set(items, () => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
@@ -95,6 +98,7 @@ class NZBUnity {
 
     isValidOpt(opt:string | string[]):boolean {
         opt = Array.isArray(opt) ? opt : [opt];
+
         return opt.every((k:string) => {
             return Object.keys(DefaultOptions).indexOf(k) >= 0;
         });
@@ -122,23 +126,21 @@ class NZBUnity {
 
     /* DEBUGGING */
 
+    error(...args:any[]) {
+        console.error.apply(this, args);
+    }
+
     debug(...args:any[]) {
         if (this._debug) console.debug.apply(this, args);
     }
 
-    error(...args:any[]) {
-        if (this._debug) console.error.apply(this, args);
-    }
-
-    debugMessage(message:MessageEvent):boolean {
+    debugMessage(message:MessageEvent) {
         let msg = '';
         for (let k in message) {
             msg += `${k}: ${message[k]}`;
         }
 
         console.debug('[NZBUnity.debugMessage]', msg);
-
-        return true;
     }
 
     debugNotify(message:string):void {

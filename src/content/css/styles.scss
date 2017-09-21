@@ -40,14 +40,18 @@ h3 {
     #FormSettings {
         padding-left: 20px;
 
+        #profile-controls {
+            margin-bottom: 15px;
+        }
+
         #profile-container {
             border: 1px solid #ccc;
             border-radius: 3px;
-            margin-left: 25px;
-            padding: 15px 0;
+            margin: 5%;
+            padding: 15px 5%;
 
             #ProfileTest {
-                margin: 10px auto;
+                margin: 10px auto 0;
             }
         }
     }
