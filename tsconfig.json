@@ -1,6 +1,9 @@
 {
   "files": [
-    "src/background/**/*.ts",
+    "src/background/util.ts",
+    "src/background/providers.ts",
+    "src/background/nzb.ts",
+    "src/background/main.ts",
     "src/content/options.ts"
   ],
   "compileOnSave": false,
