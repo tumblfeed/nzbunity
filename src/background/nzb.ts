@@ -1,3 +1,10 @@
+declare interface NZBResult {
+  success: boolean;
+  operation?: string;
+  result?: NestedDictionary;
+  error?: string;
+}
+
 abstract class NZBHost {
   host:string;
   hostParsed:ParsedUrl;
@@ -8,7 +15,8 @@ abstract class NZBHost {
     this.hostParsed = Util.parseUrl(this.host);
   }
 
-  abstract call(command:string, params:Dictionary):Promise<any>;
+  abstract call(operation:string, params:Dictionary):Promise<NZBResult>;
+  abstract test():Promise<NZBResult>;
   // addNZB(url):Promise<any>;
 
 }
@@ -24,14 +32,14 @@ class SABnzbdHost extends NZBHost {
     this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
   }
 
-  call(command:string, params:Dictionary = {}):Promise<any> {
+  call(operation:string, params:Dictionary = {}):Promise<NZBResult> {
     let request:RequestOptions = {
       method: 'GET',
       url: this.apiUrl,
       params: {
         apikey: this.apikey,
         output: 'json',
-        mode: command
+        mode: operation
       }
     };
 
@@ -39,7 +47,28 @@ class SABnzbdHost extends NZBHost {
       request.params[k] = String(params[k]);
     }
 
-    return Util.request(request);
+    return Util.request(request)
+      .then((r) => {
+        // check for error condition
+        if (r.status === false && r.error) {
+          return { success: false, operation: operation, error: r.error };
+        }
+
+        // Collapse single key result
+        if (Object.keys(r).length === 1) {
+          r = r[Object.keys(r)[0]];
+        }
+
+        return { success: true, operation: operation, result: r };
+      })
+      .catch((err) => {
+        return { success: false, operation: operation, error: err };
+      });
+  }
+
+  test():Promise<NZBResult> {
+    let op = 'fullstatus';
+    return this.call(op, { skip_dashboard: 1 });
   }
 }
 
@@ -56,7 +85,7 @@ class NZBGetHost extends NZBHost {
     this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
   }
 
-  call(command:string, params:Dictionary = {}):Promise<any> {
+  call(operation:string, params:Dictionary = {}):Promise<any> {
     let request:RequestOptions = {
       method: 'POST',
       url: this.apiUrl,
@@ -64,7 +93,7 @@ class NZBGetHost extends NZBHost {
       password: this.password,
       json: true,
       params: {
-        method: command
+        method: operation
       }
     };
 
@@ -73,5 +102,16 @@ class NZBGetHost extends NZBHost {
     }
 
     return Util.request(request);
+  }
+
+  test():Promise<NZBResult> {
+    let op = 'status';
+    return this.call(op)
+      .then((r) => {
+        return { success: true, operation: op, result: r };
+      })
+      .catch((err) => {
+        return { success: false, operation: op, error: err };
+      });
   }
 }

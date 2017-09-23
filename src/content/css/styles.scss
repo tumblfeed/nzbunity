@@ -1,4 +1,7 @@
-body {
+$fa-font-path: "../fonts";
+@import "./font-awesome/font-awesome.scss";
+
+body#options {
   background: rgb(66, 79, 90);
   font-size: .9rem;
 
@@ -9,52 +12,102 @@ body {
     padding-bottom: 40px;
     padding-top: 10px;
   }
-}
 
-h1 {
-  color: white;
-  font-family: serif;
-  font-size: 2rem;
-  margin: 20px;
-  text-align: center;
-}
+  h1 {
+    color: white;
+    font-family: serif;
+    font-size: 2rem;
+    margin: 20px;
+    text-align: center;
+  }
 
-h2 {
-  font-family: serif;
-  font-size: 1.3rem;
-  margin: 35px 0 17px;
-}
+  h2 {
+    font-family: serif;
+    font-size: 1.3rem;
+    margin: 35px 0 17px;
+  }
 
-h3 {
-  border-top: 1px solid #AAA;
-  font-size: .9rem;
-  font-weight: bold;
-  margin: 25px 0 17px;
-  padding-top: 7px;
-  padding-left: 15px;
-  width: 100%;
-}
-
-#options {
+  h3 {
+    border-top: 1px solid #AAA;
+    font-size: .9rem;
+    font-weight: bold;
+    margin: 25px 0 17px;
+    padding-top: 7px;
+    padding-left: 15px;
+    width: 100%;
+  }
 
   #FormSettings {
-    padding-left: 20px;
+
+    .options-pane {
+      margin-left: 10px;
+    }
 
     #profile-controls {
-      margin-bottom: 15px;
+      margin: 15px auto;
     }
 
     #profile-container {
       border: 1px solid #ccc;
       border-radius: 3px;
-      margin: 5%;
-      padding: 15px 5%;
+      margin: 0;
+      padding: 15px 5px;
+    }
 
-      #ProfileTest {
-        margin: 10px auto 0;
+    label[for="ProfileCurrent"] {
+      margin: .4rem 15px 0 0;
+    }
+
+    #profileTest {
+      margin: 10px auto 0;
+    }
+
+    #profileTest-result {
+      margin-top: 5px;
+    }
+
+    #provider-enabled-container {
+      margin-bottom: .7em;
+    }
+  }
+}
+
+@media (min-width: 576px) {
+  body#options {
+    & > .container {
+      padding-left: 40px;
+    }
+
+    #FormSettings {
+      .options-pane {
+        margin-left: 20px;
+      }
+
+      #profile-container {
+        padding-left: 25px;
       }
     }
   }
-
 }
 
+@media (min-width: 768px) {
+  body#options {
+    & > .container {
+      padding-left: 60px;
+    }
+
+    #FormSettings {
+      .options-pane {
+        margin-left: 40px;
+      }
+
+      #profile-container {
+        margin-left: 25px;
+      }
+
+      #profile-controls {
+        margin-top: 0;
+      }
+    }
+  }
+}

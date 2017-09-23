@@ -1,18 +1,54 @@
-const DefaultOptions = {
+declare interface NZBUnityProfileOptions extends Dictionary {
+  ProfileName: string,
+  ProfileHost: string,
+  ProfileApiKey: string,
+  ProfileUsername: string,
+  ProfilePassword: string
+}
+
+declare interface NZBUnityProviderOptions extends Dictionary {
+  Enabled: boolean,
+  Matches: string[],
+  Js: string[]
+}
+
+declare interface NZBUnityOptions extends NestedDictionary {
+  Initialized: boolean,
+  Debug: boolean,
+  Profiles: { [key:string]: NZBUnityProfileOptions },
+  ActiveProfile: string,
+  Providers: { [key:string]: NZBUnityProviderOptions },
+  ProviderNewznab: string,
+  ProviderEnabled: boolean,
+  // ProviderDisplay: boolean,
+  RefreshRate: number,
+  NotificationTimeout: number,
+  EnableContextMenu: boolean,
+  EnableNotifications: boolean,
+  EnableNewznab: boolean,
+  CategoriesUseGroupNames: boolean,
+  CategoriesUseMenu: boolean,
+  CategoriesUseHeader: boolean,
+  CategoriesOverride: string,
+  CategoriesDefault: string
+};
+
+const DisplayAvailableProviders:string[] = ['binsearch', 'nzbindex', 'yubse'];
+
+const DefaultOptions:NZBUnityOptions = {
   Initialized: false,
   Debug: false,
   Profiles: {},
+  ActiveProfile: '',
   ProviderEnabled: true,
   ProviderDisplay: true,
   Providers: {},
   ProviderNewznab: '',
   RefreshRate: 15,
   NotificationTimeout: 15,
-  EnableGraph: true,
   EnableContextMenu: true,
   EnableNotifications: true,
   EnableNewznab: true,
-  DebugNotifications: true,
   CategoriesUseGroupNames: true,
   CategoriesUseMenu: true,
   CategoriesUseHeader: true,
@@ -24,23 +60,31 @@ class NZBUnity {
   public _debug:boolean;
   public storage:chrome.storage.StorageArea;
   public optionsTab:chrome.tabs.Tab;
+  public nzbHost:NZBHost;
 
   constructor() {
     this.storage = chrome.storage.local
 
     // Initialize default options
     this.getOpt('Debug')
-      .then((items) => {
-        this._debug = items.Debug;
+      .then((opts) => {
+        this._debug = <boolean> opts.Debug;
         return this.initOptions()
       })
       .then(() => {
-        this.debug('[NZBUnity.constructor] Options Ok!');
+        this.debug('[NZBUnity.constructor] Options Ok');
+        return this.getOpt('ActiveProfile');
+      })
+      .then((opts) => {
+        // Initialize server connection
+        return this.setActiveProfile();
       })
       .then(() => {
+        this.debug('[NZBUnity.constructor] Active profile connected');
+
         // Handle messages from the UI
         chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
-        this.debug('[NZBUnity.constructor] Message handler Ok!');
+        this.debug('[NZBUnity.constructor] Message handler Ok');
       })
       .then(() => {
         this.debug('[NZBUnity.constructor] Init Done!');
@@ -54,31 +98,46 @@ class NZBUnity {
 
     // Handle message
     for (let k in message) {
-      this.debug(k, message[k]);
+      let val:any = message[k];
+      this.debug(k, val);
+
       switch (k) {
         case 'options.onTab':
-          this.optionsTab = message[k];
+          this.optionsTab = val;
           this.sendOptionsMessage('onTab', true);
           break;
 
         case 'options.setOptions':
-          if (this.isValidOpt(Object.keys(message[k]))) {
-            this.setOpt(message[k]);
+          if (this.isValidOpt(Object.keys(val))) {
+            this.setOpt(val);
           } else {
             this.error('items contain invalid option names');
           }
           break;
 
         case 'options.resetOptions':
-          this.setOptionDefaults()
+          this.resetOptions()
             .then(() => {
               this.sendOptionsMessage('resetOptions', true);
             });
           break;
 
+        case 'options.profileNameChanged':
+          this.getOpt('ActiveProfile')
+            .then((opts) => {
+              if (val.old = opts.ActiveProfile) {
+                this.setActiveProfile(val.new);
+              }
+            });
+          break;
+
+        case 'options.profilesSaved':
+          this.setActiveProfile();
+          break;
+
         case 'options.profileTest':
           this.sendOptionsMessage('profileTestStart', true);
-          this.profileTest(message[k])
+          this.profileTest(val)
             .then((result) => {
               this.sendOptionsMessage('profileTestResult', result);
             })
@@ -98,19 +157,19 @@ class NZBUnity {
 
   /* OPTIONS */
 
-  getOpt(keys: string | string[] | Object | null):Promise<{ [key: string]: any }> {
+  getOpt(keys: string | string[] | Object = null):Promise<NZBUnityOptions> {
     return new Promise((resolve, reject) => {
       this.storage.get(keys, (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
-          resolve(result);
+          resolve(<NZBUnityOptions> result);
         }
       });
     });
   }
 
-  setOpt(items: Object):Promise<void> {
+  setOpt(items:NestedDictionary):Promise<void> {
     return new Promise((resolve, reject) => {
       this.storage.set(items, () => {
         if (chrome.runtime.lastError) {
@@ -122,15 +181,19 @@ class NZBUnity {
     });
   }
 
-  isValidOpt(opt:string | string[]):boolean {
-    opt = Array.isArray(opt) ? opt : [opt];
-
-    return opt.every((k:string) => {
-      return Object.keys(DefaultOptions).indexOf(k) >= 0;
+  resetOptions():Promise<void> {
+    return (new Promise((resolve) => {
+      this.storage.clear(resolve);
+    })).then(() => {
+      return this.initOptions();
     });
   }
 
-  initOptions():Promise<any> {
+  setOptionDefaults():Promise<void> {
+    return this.setOpt(DefaultOptions);
+  }
+
+  initOptions():Promise<void> {
     return this.getOpt('Initialized')
       .then((items) => {
         if (!items.Initialized) {
@@ -140,31 +203,92 @@ class NZBUnity {
               return this.setOpt({ Initialized: true });
             });
         }
+      })
+      .then(() => {
+        this.initProviders();
       });
   }
 
-  setOptionDefaults():Promise<any> {
-    DefaultOptions.Providers = {};
-    Object.keys(Providers).forEach((k) => {
-      DefaultOptions.Providers[k] = {
-        enabled: DefaultOptions.ProviderEnabled,
-        display: DefaultOptions.ProviderDisplay,
-        displayAvailable: Providers[k].displayAvailable || false
-      };
-    });
+  initProviders():Promise<{[key:string]:NZBUnityProviderOptions}> {
+    return this.getOpt('Providers')
+      .then((opts) => {
+        let providers:{[key:string]:NZBUnityProviderOptions} = {};
 
-    return this.setOpt(DefaultOptions)
-      .catch((err) => {
-        this.error('[NZBUnity.setOptionDefaults]', err);
+        // get names from the manifest
+        chrome.runtime.getManifest().content_scripts.forEach((i) => {
+          let match = i.js && i.js[0] && i.js[0].match(/(\w+)\.js$/);
+          let name = match ? match[1] : null;
+
+          if (name && name !== 'common') {
+            providers[name] = {
+              Enabled: DefaultOptions.ProviderEnabled,
+              Matches: i.matches,
+              Js: i.js
+            }
+
+            if (opts.Providers[name]) {
+              providers[name].Enabled = opts.Providers[name].Enabled;
+            }
+          }
+        });
+
+        return this.setOpt({ Providers: providers })
+          .then(() => {
+            return providers;
+          });
       });
+  }
+
+  isValidOpt(opt:string | string[]):boolean {
+    opt = Array.isArray(opt) ? opt : [opt];
+
+    return opt.every((k:string) => {
+      return Object.keys(DefaultOptions).indexOf(k) >= 0;
+    });
   }
 
   /* PROFILE */
 
   profileTest(name:string):Promise<object> {
-    return new Promise((resolve, reject) => {
-      resolve({ success: true, message: '' });
-    });
+    if (!this.nzbHost) {
+      return Promise.reject({ success: false, error: 'No connection to host' });
+    }
+    return this.nzbHost.test();
+  }
+
+  setActiveProfile(profile:string = null):Promise<void> {
+    let profiles:{ [key:string]: NZBUnityProfileOptions };
+    let profileNames:string[];
+
+    return this.getOpt(['ActiveProfile', 'Profiles'])
+      .then((opts) => {
+        profiles = opts.Profiles;
+        profileNames = Object.keys(profiles);
+
+        if (!profileNames.length) {
+          // No profiles, no set
+          return this.setOpt({ ActiveProfile: DefaultOptions.ActiveProfile })
+        }
+
+        if (!profile || !profileNames.includes(profile)) {
+          // Drfault to the current active (ie init), or the first profile
+          profile = profileNames.includes(opts.ActiveProfile)
+            ? opts.ActiveProfile
+            : profileNames[0];
+        }
+
+        return this.setOpt({ ActiveProfile: profile })
+      })
+      .then(() => {
+        // Ready to initizlize
+        // TODO: NZBGet
+        if (profiles[profile]) {
+          this.nzbHost = new SABnzbdHost({
+            host: profiles[profile].ProfileHost,
+            apikey: profiles[profile].ProfileApiKey
+          });
+        }
+      });
   }
 
   /* DEBUGGING */
@@ -175,6 +299,12 @@ class NZBUnity {
 
   debug(...args:any[]) {
     if (this._debug) console.debug.apply(this, args);
+  }
+
+  debugOpts() {
+    this.getOpt().then((items) => {
+      this.debug('[NZBUnity.debugOpts]', items);
+    });
   }
 
   debugMessage(message:MessageEvent) {

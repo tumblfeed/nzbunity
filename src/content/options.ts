@@ -2,11 +2,11 @@ class OptionsPage {
 
   public _debug:boolean = false;
   public storage:chrome.storage.StorageArea;
-  public providers:Object;
   public form:JQuery<HTMLElement>;
   public elements:JQuery<HTMLElement>;
 
-  public profiles:Object;
+  public providers:{ [key:string]: NZBUnityProviderOptions };
+  public profiles:{ [key:string]: NZBUnityProfileOptions };
   public profileCurrent:JQuery<HTMLElement>;
   public profileButtons:JQuery<HTMLElement>;
   public profileInputs:JQuery<HTMLElement>;
@@ -18,7 +18,7 @@ class OptionsPage {
     this.form = $('#FormSettings');
     this.elements = $();
     this.profileCurrent = $('#ProfileCurrent');
-    this.profileButtons = $('#profile-controls button, #ProfileTest');
+    this.profileButtons = $('#profile-controls button, #profileTest');
     this.profileInputs = $('#profile-container input');
 
     // Init data
@@ -77,17 +77,17 @@ class OptionsPage {
         this.profileSelectFirst();
 
         // Set up provider checkboxes and listeners
-        Object.keys(this.providers).forEach((k) => {
-          let el = this.getProviderElement(k);
-          el.find('input').prop('checked', this.providers[k].enabled);
+        for (let k in this.providers) {
+          let el = this.getProviderElement(k, this.providers[k]);
+          el.find('input').prop('checked', this.providers[k].Enabled);
           el.appendTo('#provider-enabled-container');
 
-          if (this.providers[k].displayAvailable) {
-            el = this.getProviderElement(k, true);
-            el.find('input').prop('checked', this.providers[k].display);
-            el.appendTo('#provider-display-container');
-          }
-        });
+          // if (this.providers[k].displayAvailable) {
+          //   el = this.getProviderElement(k, true);
+          //   el.find('input').prop('checked', this.providers[k].Display);
+          //   el.appendTo('#provider-display-container');
+          // }
+        }
 
         this.providerInputs = $('input[type="checkbox"][id^="Provider"]');
         this.providerInputs.on('change', this.handleProviderInput.bind(this));
@@ -120,10 +120,35 @@ class OptionsPage {
 
     // Handle message
     for (let k in message) {
+      let val:any = message[k];
+
       switch (k) {
         case 'main.resetOptions':
           if(message[k]) {
             window.location.reload();
+          }
+          break;
+
+        case 'main.profileTestStart':
+          this.profileTestStart();
+          break;
+
+        case 'main.profileTestResult':
+          console.log(val);
+          if (val.success) {
+            this.profileTestSuccess();
+          } else {
+            let error:string;
+
+            if (typeof val.error === 'string') {
+              error = val.error;
+            } if (val.error.statusText) {
+              error = val.error.statusText;
+            } if (val.error.status === 0) {
+              error = 'Could not connect to host';
+            }
+
+            this.profileTestFailure(error);
           }
           break;
       }
@@ -142,11 +167,13 @@ class OptionsPage {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       let profiles:Object = changes['Profiles'].newValue;
-      Object.keys(profiles).forEach((k) => {
+      for (let k in profiles) {
         if (profiles[k].ProfileName !== k) {
           this.profileNameChanged(k, profiles[k].ProfileName);
         }
-      });
+      }
+
+      this.profileTestClear();
     }
   }
 
@@ -157,28 +184,13 @@ class OptionsPage {
 
   handleProfileButton(e:Event) {
     let el = $(e.currentTarget);
-
-    this.debug('[OptionsPage.handleProfileButton] ', el.attr('id'));
-
-    switch (el.attr('id')) {
-      case 'ProfileCreate':
-        this.profileCreate();
-        break;
-
-      case 'ProfileDuplicate':
-        this.profileDuplicate();
-        break;
-
-      case 'ProfileDelete':
-        this.profileDelete();
-        break;
-
-      case 'ProfileTest':
-        this.profileTest();
-        break;
-    }
-
     e.preventDefault();
+
+    // this.debug('[OptionsPage.handleProfileButton] ', el.attr('id'));
+
+    if (typeof this[el.attr('id')] === 'function') {
+      this[el.attr('id')]();
+    }
   }
 
   handleProfileInput(e:Event) {
@@ -192,19 +204,19 @@ class OptionsPage {
 
   handleProviderInput(e:Event) {
     let el = $(e.currentTarget);
-
-    this.debug('[OptionsPage.handleProviderInput] ', el.attr('id'), el.prop('checked'));
-
     let match = el.attr('id').match(/^Provider(Enabled|Display)-(.*)$/);
+
+    // this.debug('[OptionsPage.handleProviderInput] ', el.attr('id'), el.prop('checked'), match);
+
     if (match && this.providers[match[2]]) {
-      this.providers[match[2]][match[1].toLowerCase()] = el.prop('checked');
+      this.providers[match[2]][match[1]] = el.prop('checked');
       this.setOpt({ Providers: this.providers });
     }
   }
 
   /* PROFILES */
 
-  profileNameChanged(oldName:string, newName:string) {
+  profileNameChanged(oldName:string, newName:string):Promise<void> {
     if (newName) {
       let profile = this.profiles[oldName];
       delete this.profiles[oldName];
@@ -214,18 +226,26 @@ class OptionsPage {
         this.profileSelectUpdate();
         this.profileCurrent.val(newName);
       }
+
+      return this.profileSave()
+        .then(() => {
+          this.sendMessage('profileNameChanged', { old: oldName, new: newName });
+        });
     }
   }
 
   profileSave() {
-    return this.setOpt({ Profiles: this.profiles });
-  }
+    return this.setOpt({ Profiles: this.profiles })
+      .then(() => {
+        this.sendMessage('profilesSaved', this.profiles);
+      });
+}
 
   profileSelectUpdate() {
     this.profileCurrent.find('option').remove();
-    Object.keys(this.profiles).forEach((k) => {
+    for (let k in this.profiles) {
       this.profileCurrent.append(`<option value="${k}">${k}</option>`);
-    });
+    }
   }
 
   profileSelect(name:string) {
@@ -234,11 +254,11 @@ class OptionsPage {
       this.profileCurrent.val(name);
       this.profileCurrent.data('profile', this.profiles[name]);
 
-      Object.keys(this.profiles[name]).forEach((k) => {
+      for (let k in this.profiles[name]) {
         let el = $(`#${k}`);
-        el.val(this.profiles[name][k]);
+        el.val(<string> this.profiles[name][k]);
         el.prop('disabled', false);
-      });
+      }
     }
   }
 
@@ -256,7 +276,7 @@ class OptionsPage {
     });
     profile['ProfileName'] = name;
 
-    this.profiles[name] = profile;
+    this.profiles[name] = <NZBUnityProfileOptions> profile;
 
     return this.profileSave()
       .then(() => {
@@ -273,7 +293,7 @@ class OptionsPage {
     });
     profile['ProfileName'] = name;
 
-    this.profiles[name] = profile;
+    this.profiles[name] = <NZBUnityProfileOptions> profile;
 
     return this.profileSave()
       .then(() => {
@@ -322,15 +342,74 @@ class OptionsPage {
     this.sendMessage('profileTest', name);
   }
 
+  getProfileTestButton(color:string = 'info'):JQuery<HTMLElement> {
+    return $('#profileTest')
+      .removeClass('btn-info btn-secondary btn-success btn-danger')
+      .addClass(`btn-${color}`);
+  }
+
+  profileTestClear():JQuery<HTMLElement> {
+    $('#profileTest-result').empty();
+
+    return this.getProfileTestButton('info')
+      .prop('disabled', false)
+      .find('.icon').hide().empty();
+  }
+
+  profileTestStart():JQuery<HTMLElement> {
+    return this.getProfileTestButton('secondary')
+      .prop('disabled', true)
+      .find('.icon')
+        .hide().empty()
+        .append('&nbsp;<i class="fa fa-lg fa-circle-o-notch fa-spin fa-fw"></i>')
+        .show();
+  }
+
+  profileTestSuccess():JQuery<HTMLElement> {
+    return this.getProfileTestButton('success')
+      .prop('disabled', false)
+      .find('.icon')
+        .hide().empty()
+        .append('&nbsp;<i class="fa fa-lg fa-check-circle"></i>')
+        .show();
+  }
+
+  profileTestFailure(error:string = null):JQuery<HTMLElement> {
+    if (error) {
+      $('#profileTest-result').empty()
+        .append(`<span class="text-danger">${error}</span>`);
+    }
+
+    return this.getProfileTestButton('danger')
+      .prop('disabled', false)
+      .find('.icon')
+        .hide().empty()
+        .append('&nbsp;<i class="fa fa-lg fa-times-circle"></i>')
+        .show();
+  }
+
   /* PROVIDERS */
 
-  getProviderElement(name:string, display:boolean = false) {
+  getProviderElement(name:string, provider:NZBUnityProviderOptions, display:boolean = false) {
+    let matches:string[] = provider.Matches.map((m) => {
+      return m.replace('*://', '').replace('*.', '').replace('/*', '');
+    });
+
     return $(
-      `<div class="form-check">
-        <label class="form-check-label">
-          <input id="Provider${display ? 'Display' : 'Enabled'}-${name}" class="form-check-input" type="checkbox" value="">
-          ${name} ${display ? '&ndash; Use display name instead of NZB filename' : ''}
-        </label>
+      `<div class="row">
+        <div class="form-check col-5 col-sm-4 col-md-3 col-lg-2">
+          <label class="form-check-label">
+            <input id="Provider${display ? 'Display' : 'Enabled'}-${name}" class="form-check-input" type="checkbox" value="">
+            <strong>${name}</strong>
+          </label>
+        </div>
+
+        <div class="col-7 col-sm-8 col-md-9">
+          ${display
+            ? 'Use display name instead of NZB filename'
+            : matches.join(', ')
+          }
+        </div>
       </div>`
     );
   }

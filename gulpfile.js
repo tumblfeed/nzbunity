@@ -44,11 +44,14 @@ var isDev = !(argv.production || /^prod/i.test(process.env.NODE_ENV));
 
 var paths = {
   tsPath: path.resolve('./src/**/*.ts'),
-  sassPath: path.resolve('./src/**/*.scss'),
+  sassPath: path.resolve('./src/content/css/*.scss'),
   buildPath: path.resolve('./build')
 };
 
-var copyFiles = ['html', 'js', 'json', 'css', 'png', 'jpg'];
+var copyFiles = [
+  'html', 'js', 'json', 'css', 'png', 'jpg',
+  'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2'
+];
 
 var watchPath = [
   path.resolve('./src/**/*')
@@ -140,7 +143,7 @@ gulp.task('sass', () => {
     )
     .pipe(isDev ? sourcemaps.write() : gutil.noop())
     .pipe(autoprefixer(autoprefixerOptions))
-    .pipe(gulp.dest(paths.buildPath));
+    .pipe(gulp.dest(paths.buildPath + '/content/css'));
 });
 
 /**
