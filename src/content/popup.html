@@ -12,13 +12,50 @@
   </head>
   <body id="popup">
 
-    <div class="container">
+    <div id="info">
+      <div id="errors"></div>
 
+      <div class="form-inline" >
+        Active Profile: <select id="ProfileCurrent"></select>
+      </div>
 
-        <a id="open-options" href="#">Open Options</a>
+      <div id="summary" class="row">
+        <div class="col-6">
+          <span id="status"></span>
+          <div id="timeleft"></div>
+        </div>
 
+        <div class="col-6">
+          <div id="speed"></div>
+          <span id="sizeleft"></span>
+        </div>
+      </div>
+
+      <ul id="queue"></ul>
     </div>
-    <!-- /.container -->
+
+    <div class="menu">
+      <nav class="nav flex-column">
+        <a id="btn-refresh" class="nav-link disabled" href="#">Refresh</a>
+        <a id="btn-server" class="nav-link disabled" href="#">Open Server</a>
+        <a id="btn-options" class="nav-link" href="#">Open Options</a>
+      </nav>
+
+      <div class="form-inline">
+        Max Speed: <input id="max-speed" type="text"> KBps <button id="btn-speed">Set</button>
+      </div>
+
+      <div>
+        Override Category: <select id="override-category"></select>
+      </div>
+    </div>
+
+
+    <div class="form-inline" style="margin:15px 0 5px; padding-top:5px; border-top:1px solid grey;">
+        <input id="command" type="text" placeholder="Command"> <button id="btn-command">Send</button>
+    </div>
+    <pre id="output"></pre>
+
 
     <script src="vendor/jquery-3.2.1.slim.js"></script>
     <script src="vendor/popper.min.js"></script>

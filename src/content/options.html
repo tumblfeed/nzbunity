@@ -24,7 +24,7 @@
           <div class="row">
             <div class="d-flex col-12 col-sm-10 col-md-6 col-lg-4">
               <label for="ProfileCurrent">Profile:</label>
-              <select id="ProfileCurrent" name="ProfileCurrent" class="form-control form-control-sm">
+              <select id="ProfileCurrent" name="ProfileCurrent" class="custom-select">
               </select>
             </div>
             <div class="col-12 col-md-3 text-center">
@@ -151,21 +151,7 @@
               <label for="RefreshRate">Refresh Rate:</label>
             </div>
             <div class="col-7 col-sm-4 col-md-3 col-lg-2">
-              <select id="RefreshRate" name="RefreshRate" class="form-control form-control-sm">
-                <option value="10">10 seconds</option>
-                <option value="15">15 seconds</option>
-                <option value="30">30 seconds</option>
-                <option value="60">60 seconds</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="col-form-label col-12 col-sm-4 col-md-3 col-lg-2">
-              <label for="NotificationTimeout">Notification Timeout:</label>
-            </div>
-            <div class="col-7 col-sm-4 col-md-3 col-lg-2">
-              <select id="NotificationTimeout" name="NotificationTimeout" class="form-control form-control-sm">
+              <select id="RefreshRate" name="RefreshRate" class="custom-select">
                 <option value="10">10 seconds</option>
                 <option value="15">15 seconds</option>
                 <option value="30">30 seconds</option>
@@ -228,25 +214,9 @@
 
           <div class="form-check">
             <label class="form-check-label">
-              <input id="CategoriesUseMenu" name="CategoriesUseMenu" class="form-check-input" type="checkbox" value="">
-              Override the category with the one chosen from the menu. The list of categories is loaded by SABnzbd.
-            </label>
-          </div>
-
-          <div class="form-check">
-            <label class="form-check-label">
               <input id="CategoriesUseHeader" name="CategoriesUseHeader" class="form-check-input" type="checkbox" value="">
               Use X-DNZB-Category HTTP header instead of auto-categorization on supported sites (NZBs.org, Newzbin).
             </label>
-          </div>
-
-          <div class="form-row">
-            <div class="col-form-label col-12 col-sm-4 col-md-3 col-lg-2">
-              <label for="CategoriesOverride">Force cartegory:</label>
-            </div>
-            <div class="col-12 col-sm-7 col-lg-4">
-              <input type="text" id="CategoriesOverride" name="CategoriesOverride" class="form-control form-control-sm">
-            </div>
           </div>
 
           <div class="form-row">

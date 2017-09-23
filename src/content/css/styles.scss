@@ -1,6 +1,7 @@
 $fa-font-path: "../fonts";
 @import "./font-awesome/font-awesome.scss";
 
+// Options Page Styles
 body#options {
   background: rgb(66, 79, 90);
   font-size: .9rem;
@@ -39,12 +40,16 @@ body#options {
 
   #FormSettings {
 
+    .custom-select {
+      width: 100%;
+    }
+
     .options-pane {
       margin-left: 10px;
     }
 
     #profile-controls {
-      margin: 15px auto;
+      margin: 15px auto 25px;
     }
 
     #profile-container {
@@ -55,7 +60,7 @@ body#options {
     }
 
     label[for="ProfileCurrent"] {
-      margin: .4rem 15px 0 0;
+      margin: .5rem 15px 0 0;
     }
 
     #profileTest {
@@ -71,6 +76,12 @@ body#options {
     }
   }
 }
+
+// Popup Styles
+body#popup {
+  padding: 10px;
+}
+
 
 @media (min-width: 576px) {
   body#options {
@@ -101,12 +112,12 @@ body#options {
         margin-left: 40px;
       }
 
-      #profile-container {
-        margin-left: 25px;
+      #profile-controls {
+        margin-top: 3px;
       }
 
-      #profile-controls {
-        margin-top: 0;
+      #profile-container {
+        margin-left: 25px;
       }
     }
   }
