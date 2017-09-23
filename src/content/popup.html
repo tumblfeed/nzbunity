@@ -1,21 +1,28 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <!-- build:css styles.css -->
-		<link href="styles.css" type="text/css" rel="stylesheet">
-        <!-- endbuild -->
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    </head>
-    <body>
-        <div id="root"></div>
+    <title>NZB Unity</title>
 
-        <!-- build:js vendor-bundle.js -->
-        <!-- weh:js weh-all -->
-        <!-- endbuild -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+		<link href="css/styles.css" rel="stylesheet">
+  </head>
+  <body id="popup">
 
-        <!-- build:js popup-bundle.js -->
-        <script src="popup.jsx"></script>
-        <!-- endbuild -->
+    <div class="container">
 
-    </body>
+
+        <a id="open-options" href="#">Open Options</a>
+
+    </div>
+    <!-- /.container -->
+
+    <script src="vendor/jquery-3.2.1.slim.js"></script>
+    <script src="vendor/popper.min.js"></script>
+    <script src="vendor/bootstrap.min.js"></script>
+    <script src="popup.js"></script>
+  </body>
 </html>

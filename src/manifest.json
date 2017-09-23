@@ -7,7 +7,6 @@
   "background": {
     "scripts": [
       "background/util.js",
-      "background/providers.js",
       "background/nzb.js",
       "background/main.js"
     ]
@@ -37,5 +36,88 @@
     "notifications",
     "storage",
     "tabs"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://animenzb.com/*",
+        "*://*.animenzb.com/*",
+        "*://*.animezb.com/*",
+        "*://*.binsearch.info/*",
+        "*://*.binsearch.net/*",
+        "*://*.binsearch.co.uk/*",
+        "*://*.binsear.ch/*",
+        "*://*.bintube.com/*",
+        "*://*.dognzb.cr/*",
+        "*://*.fanzub.com/*",
+        "*://*.nzbclub.com/*",
+        "*://*.nzbindex.com/*",
+        "*://*.nzbindex.nl/*",
+        "*://*.nzb-rss.com/*",
+        "*://*.omgwtfnzbs.me/*",
+        "*://*.usenet4ever.info/*",
+        "*://*.yubse.com/*"
+      ],
+      "js": ["content/sites/common.js"]
+    },
+    {
+      "matches": [
+        "*://animenzb.com/*",
+        "*://*.animenzb.com/*"
+      ],
+      "js": ["content/sites/animenzb.js"]
+    },
+    {
+      "matches": ["*://*.animezb.com/*"],
+      "js": ["content/sites/animezb.js"]
+    },
+    {
+      "matches": [
+        "*://*.binsearch.info/*",
+        "*://*.binsearch.net/*",
+        "*://*.binsearch.co.uk/*",
+        "*://*.binsear.ch/*"
+      ],
+      "js": ["content/sites/binsearch.js"]
+    },
+    {
+      "matches": ["*://*.bintube.com/*"],
+      "js": ["content/sites/bintube.js"]
+    },
+    {
+      "matches": ["*://*.dognzb.cr/*"],
+      "js": ["content/sites/dognzb.js"]
+    },
+    {
+      "matches": ["*://*.fanzub.com/*"],
+      "js": ["content/sites/fanzub.js"]
+    },
+    {
+      "matches": ["*://*.nzbclub.com/*"],
+      "js": ["content/sites/nzbclub.js"]
+    },
+    {
+      "matches": [
+        "*://*.nzbindex.com/*",
+        "*://*.nzbindex.nl/*"
+      ],
+      "js": ["content/sites/nzbindex.js"]
+    },
+    {
+      "matches": ["*://*.nzb-rss.com/*"],
+      "js": ["content/sites/nzbrss.js"]
+    },
+    {
+      "matches": ["*://*.omgwtfnzbs.me/*"],
+      "js": ["content/sites/omgwtfnzbs.js"]
+    },
+    {
+      "matches": ["*://*.usenet4ever.info/*"],
+      "js": ["content/sites/nzbclub.js"]
+    },
+    {
+      "matches": ["*://*.yubse.com/*"],
+      "js": ["content/sites/yubse.js"]
+    }
   ]
 }

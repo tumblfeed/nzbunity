@@ -125,7 +125,7 @@ class Util {
         xhr.setRequestHeader(k, headers[k]);
       }
 
-      xhr.onload = function () {
+      xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           if (!xhr.responseType) {
             try {
@@ -138,6 +138,7 @@ class Util {
             resolve(xhr.response);
           }
         } else {
+          console.error(1, xhr);
           reject({
             status: xhr.status,
             statusText: xhr.statusText
@@ -145,7 +146,15 @@ class Util {
         }
       };
 
-      xhr.onerror = function () {
+      xhr.ontimeout = () => {
+        reject({
+          status: xhr.status,
+          statusText: 'Request timed out'
+        });
+      };
+
+      xhr.onerror = () => {
+        console.error(2, xhr);
         reject({
           status: xhr.status,
           statusText: xhr.statusText
