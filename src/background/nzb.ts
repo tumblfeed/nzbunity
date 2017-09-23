@@ -16,6 +16,8 @@ abstract class NZBHost {
   }
 
   abstract call(operation:string, params:Dictionary):Promise<NZBResult>;
+  abstract getQueue():Promise<NZBResult>;
+  abstract getCategories():Promise<NZBResult>;
   abstract test():Promise<NZBResult>;
   // addNZB(url):Promise<any>;
 
@@ -66,12 +68,20 @@ class SABnzbdHost extends NZBHost {
       });
   }
 
+  getQueue():Promise<NZBResult> {
+    return this.call('queue');
+  }
+
+  getCategories():Promise<NZBResult> {
+    return this.call('get_cats');
+  }
+
   test():Promise<NZBResult> {
-    let op = 'fullstatus';
-    return this.call(op, { skip_dashboard: 1 });
+    return this.call('fullstatus', { skip_dashboard: 1 });
   }
 }
 
+/*
 class NZBGetHost extends NZBHost {
   username:string;
   password:string;
@@ -115,3 +125,4 @@ class NZBGetHost extends NZBHost {
       });
   }
 }
+*/

@@ -5,8 +5,8 @@ class OptionsPage {
   public form:JQuery<HTMLElement>;
   public elements:JQuery<HTMLElement>;
 
-  public providers:{ [key:string]: NZBUnityProviderOptions };
-  public profiles:{ [key:string]: NZBUnityProfileOptions };
+  public providers:NZBUnityProviderDictionary;
+  public profiles:NZBUnityProfileDictionary;
   public profileCurrent:JQuery<HTMLElement>;
   public profileButtons:JQuery<HTMLElement>;
   public profileInputs:JQuery<HTMLElement>;
@@ -47,7 +47,7 @@ class OptionsPage {
             if (el.attr('type') === 'checkbox') {
               el.prop('checked', <boolean> opts[k]);
             } else {
-              el.val(opts[k]);
+              el.val(<string> opts[k]);
             }
           }
         }
@@ -239,10 +239,10 @@ class OptionsPage {
       .then(() => {
         this.sendMessage('profilesSaved', this.profiles);
       });
-}
+  }
 
   profileSelectUpdate() {
-    this.profileCurrent.find('option').remove();
+    this.profileCurrent.empty();
     for (let k in this.profiles) {
       this.profileCurrent.append(`<option value="${k}">${k}</option>`);
     }
@@ -416,19 +416,19 @@ class OptionsPage {
 
   /* OPTIONS */
 
-  getOpt(keys: string | string[] | Object | null):Promise<{ [key: string]: any }> {
+  getOpt(keys: string | string[] | Object = null):Promise<NZBUnityOptions> {
     return new Promise((resolve, reject) => {
       this.storage.get(keys, (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
-          resolve(result);
+          resolve(<NZBUnityOptions> result);
         }
       });
     });
   }
 
-  setOpt(items: Object):Promise<void> {
+  setOpt(items:NestedDictionary):Promise<void> {
     return new Promise((resolve, reject) => {
       this.storage.set(items, () => {
         if (chrome.runtime.lastError) {

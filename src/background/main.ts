@@ -12,24 +12,29 @@ declare interface NZBUnityProviderOptions extends Dictionary {
   Js: string[]
 }
 
+declare interface NZBUnityProfileDictionary {
+  [key:string]: NZBUnityProfileOptions
+}
+
+declare interface NZBUnityProviderDictionary {
+  [key:string]: NZBUnityProviderOptions
+}
+
 declare interface NZBUnityOptions extends NestedDictionary {
   Initialized: boolean,
   Debug: boolean,
-  Profiles: { [key:string]: NZBUnityProfileOptions },
+  Profiles: NZBUnityProfileDictionary,
   ActiveProfile: string,
-  Providers: { [key:string]: NZBUnityProviderOptions },
+  Providers: NZBUnityProviderDictionary,
   ProviderNewznab: string,
   ProviderEnabled: boolean,
   // ProviderDisplay: boolean,
   RefreshRate: number,
-  NotificationTimeout: number,
   EnableContextMenu: boolean,
   EnableNotifications: boolean,
   EnableNewznab: boolean,
   CategoriesUseGroupNames: boolean,
-  CategoriesUseMenu: boolean,
   CategoriesUseHeader: boolean,
-  CategoriesOverride: string,
   CategoriesDefault: string
 };
 
@@ -39,21 +44,18 @@ const DefaultOptions:NZBUnityOptions = {
   Initialized: false,
   Debug: false,
   Profiles: {},
-  ActiveProfile: '',
+  ActiveProfile: null,
   ProviderEnabled: true,
   ProviderDisplay: true,
   Providers: {},
   ProviderNewznab: '',
   RefreshRate: 15,
-  NotificationTimeout: 15,
   EnableContextMenu: true,
   EnableNotifications: true,
   EnableNewznab: true,
   CategoriesUseGroupNames: true,
-  CategoriesUseMenu: true,
   CategoriesUseHeader: true,
-  CategoriesOverride: '',
-  CategoriesDefault: ''
+  CategoriesDefault: null
 };
 
 class NZBUnity {
@@ -61,6 +63,7 @@ class NZBUnity {
   public storage:chrome.storage.StorageArea;
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
+  private refreshTimer:number;
 
   constructor() {
     this.storage = chrome.storage.local
@@ -87,8 +90,46 @@ class NZBUnity {
         this.debug('[NZBUnity.constructor] Message handler Ok');
       })
       .then(() => {
-        this.debug('[NZBUnity.constructor] Init Done!');
+        this.debug('[NZBUnity.constructor] Init Done, starting!');
+        this.refresh();
       });
+  }
+
+  /* OPERATIONS */
+
+  startTimer() {
+    this.stopTimer();
+
+    this.getOpt('RefreshRate')
+      .then((opts) => {
+        this.refreshTimer = setInterval(() =>{
+          this.getQueue().then((result) => {
+            this.sendMessage('refresh', result);
+          });
+        }, opts.RefreshRate * 1000);
+      });
+  }
+
+  stopTimer() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+    }
+  }
+
+  refresh():Promise<NZBResult> {
+    this.startTimer();
+    return this.getQueue().then((result) => {
+      this.sendMessage('refresh', result);
+      return result;
+    });
+  }
+
+  getQueue():Promise<NZBResult> {
+    if (!this.nzbHost) {
+      return Promise.resolve({ success: false, operation: null, error: 'No connection to host'});
+    }
+
+    return this.nzbHost.getQueue()
   }
 
   /* MESSAGING */
@@ -102,6 +143,37 @@ class NZBUnity {
       this.debug(k, val);
 
       switch (k) {
+        // Popup Messages
+        case 'popup.profileSelect':
+          this.setActiveProfile(val)
+            .then(() => {
+              this.sendMessage('activeProfileSet', val);
+            });
+          break;
+
+        case 'popup.refresh':
+          this.refresh();
+          break;
+
+        case 'popup.command':
+          let op:string;
+          let params:StringDictionary = {};
+
+          try {
+            val = JSON.parse(val);
+            op = val.op;
+            params = val.params;
+          } catch (e) {
+            op = val;
+          }
+
+          this.nzbHost.call(op, params)
+            .then((r) => {
+              this.sendMessage('commandResult', r);
+            });
+          break;
+
+        // Options Messages
         case 'options.onTab':
           this.optionsTab = val;
           this.sendOptionsMessage('onTab', true);
@@ -149,10 +221,18 @@ class NZBUnity {
     }
   }
 
-  sendOptionsMessage(name:string, data:any) {
-    if (this.optionsTab) {
-      chrome.tabs.sendMessage(this.optionsTab.id, { [`main.${name}`]: data });
+  sendMessage(name:string, data:any = null) {
+    chrome.runtime.sendMessage({ [`main.${name}`]: data });
+  }
+
+  sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any) {
+    if (tab) {
+      chrome.tabs.sendMessage(tab.id, { [`main.${name}`]: data });
     }
+  }
+
+  sendOptionsMessage(name:string, data:any) {
+    this.sendTabMessage(this.optionsTab, name, data);
   }
 
   /* OPTIONS */
@@ -256,8 +336,8 @@ class NZBUnity {
     return this.nzbHost.test();
   }
 
-  setActiveProfile(profile:string = null):Promise<void> {
-    let profiles:{ [key:string]: NZBUnityProfileOptions };
+  setActiveProfile(name:string = null):Promise<void> {
+    let profiles:NZBUnityProfileDictionary;
     let profileNames:string[];
 
     return this.getOpt(['ActiveProfile', 'Profiles'])
@@ -270,22 +350,22 @@ class NZBUnity {
           return this.setOpt({ ActiveProfile: DefaultOptions.ActiveProfile })
         }
 
-        if (!profile || !profileNames.includes(profile)) {
+        if (!name || !profileNames.includes(name)) {
           // Drfault to the current active (ie init), or the first profile
-          profile = profileNames.includes(opts.ActiveProfile)
+          name = profileNames.includes(opts.ActiveProfile)
             ? opts.ActiveProfile
             : profileNames[0];
         }
 
-        return this.setOpt({ ActiveProfile: profile })
+        return this.setOpt({ ActiveProfile: name })
       })
       .then(() => {
         // Ready to initizlize
         // TODO: NZBGet
-        if (profiles[profile]) {
+        if (profiles[name]) {
           this.nzbHost = new SABnzbdHost({
-            host: profiles[profile].ProfileHost,
-            apikey: profiles[profile].ProfileApiKey
+            host: profiles[name].ProfileHost,
+            apikey: profiles[name].ProfileApiKey
           });
         }
       });
