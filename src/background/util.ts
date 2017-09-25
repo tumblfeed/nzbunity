@@ -24,7 +24,7 @@ declare interface RequestOptions {
   method?: string;
   url: string;
   headers?: StringDictionary;
-  params?: StringDictionary;
+  params?: NestedDictionary;
   body?: string;
   username?: string;
   password?: string;
@@ -86,7 +86,7 @@ class Util {
         if (method === 'GET') {
           search = search || {};
           for (let k in options.params) {
-            search[k] = options.params[k];
+            search[k] = <string> options.params[k];
           }
 
         // Other types of requests, figure out content type if not specified
@@ -107,7 +107,7 @@ class Util {
             case 'application/x-www-form-urlencoded':
             default:
               headers['Content-Type'] = 'application/x-www-form-urlencoded';
-              options.body = Util.uriEncodeQuery(options.params);
+              options.body = Util.uriEncodeQuery(<Dictionary> options.params);
           }
         }
       }

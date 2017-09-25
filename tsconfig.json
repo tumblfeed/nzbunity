@@ -4,7 +4,9 @@
     "src/background/nzb.ts",
     "src/background/main.ts",
     "src/content/options.ts",
-    "src/content/popup.ts"
+    "src/content/popup.ts",
+    "src/content/site.ts",
+    "src/content/sites/omgwtfnzbs.ts"
   ],
   "compileOnSave": false,
   "compilerOptions": {

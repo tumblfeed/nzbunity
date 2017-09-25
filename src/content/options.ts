@@ -7,6 +7,7 @@ class OptionsPage {
 
   public providers:NZBUnityProviderDictionary;
   public profiles:NZBUnityProfileDictionary;
+  public profileData:NZBUnityProfileOptions;
   public profileCurrent:JQuery<HTMLElement>;
   public profileButtons:JQuery<HTMLElement>;
   public profileInputs:JQuery<HTMLElement>;
@@ -19,7 +20,7 @@ class OptionsPage {
     this.elements = $();
     this.profileCurrent = $('#ProfileCurrent');
     this.profileButtons = $('#profile-controls button, #profileTest');
-    this.profileInputs = $('#profile-container input');
+    this.profileInputs = $('#profile-container').find('input, select');
 
     // Init data
     this.storage = chrome.storage.local
@@ -196,9 +197,13 @@ class OptionsPage {
   handleProfileInput(e:Event) {
     let el = $(e.currentTarget);
 
-    // this.debug('[OptionsPage.handleProfileInput] ', el.attr('id'), el.val());
+    this.debug('[OptionsPage.handleProfileInput] ', el.attr('id'), el.val());
 
-    this.profileCurrent.data('profile')[el.attr('id')] = el.val();
+    if (el.attr('id') === 'ProfileType') {
+      this.disableProfileFieldsByType(<string> el.val());
+    }
+
+    this.profileData[el.attr('id')] = el.val();
     this.profileSave();
   }
 
@@ -252,13 +257,25 @@ class OptionsPage {
     if (this.profiles[name]) {
       this.debug('[OptionsPage.profileSelect] ', name);
       this.profileCurrent.val(name);
-      this.profileCurrent.data('profile', this.profiles[name]);
+      this.profileData = this.profiles[name];
 
       for (let k in this.profiles[name]) {
         let el = $(`#${k}`);
         el.val(<string> this.profiles[name][k]);
         el.prop('disabled', false);
       }
+
+      this.disableProfileFieldsByType(this.profiles[name].ProfileType);
+    }
+  }
+
+  disableProfileFieldsByType(type:string) {
+    $('#ProfileApiKey, #ProfileUsername, #ProfilePassword').prop('disabled', true);
+
+    if (type === 'SABnzbd') {
+      $('#ProfileApiKey').prop('disabled', false);
+    } else if (type === 'NZBGet') {
+      $('#ProfileUsername, #ProfilePassword').prop('disabled', false);
     }
   }
 
@@ -337,7 +354,7 @@ class OptionsPage {
   }
 
   profileTest() {
-    let name:string = this.profileCurrent.data('profile').ProfileName;
+    let name:string = this.profileData.ProfileName;
     this.debug('[OptionsPage.profileTest] ', name);
     this.sendMessage('profileTest', name);
   }
