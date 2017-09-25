@@ -1,6 +1,10 @@
 $fa-font-path: "../fonts";
 @import "./font-awesome/font-awesome.scss";
 
+.custom-select.form-control-sm {
+  padding-top: .2rem;
+}
+
 // Options Page Styles
 body#options {
   background: rgb(66, 79, 90);
@@ -50,6 +54,10 @@ body#options {
 
     #profile-controls {
       margin: 15px auto 25px;
+
+      .btn-sm {
+        padding-top: .1rem;
+      }
     }
 
     #profile-container {
@@ -65,6 +73,7 @@ body#options {
 
     #profileTest {
       margin: 10px auto 0;
+      padding-bottom: 5px;
     }
 
     #profileTest-result {
@@ -79,7 +88,8 @@ body#options {
 
 // Popup Styles
 body#popup {
-  padding: 10px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 
@@ -113,7 +123,7 @@ body#popup {
       }
 
       #profile-controls {
-        margin-top: 3px;
+        margin-top: 4px;
       }
 
       #profile-container {

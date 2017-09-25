@@ -1,5 +1,6 @@
 declare interface NZBUnityProfileOptions extends Dictionary {
   ProfileName: string,
+  ProfileType: string,
   ProfileHost: string,
   ProfileApiKey: string,
   ProfileUsername: string,
@@ -30,6 +31,7 @@ declare interface NZBUnityOptions extends NestedDictionary {
   ProviderEnabled: boolean,
   // ProviderDisplay: boolean,
   RefreshRate: number,
+  InterceptDownloads: boolean,
   EnableContextMenu: boolean,
   EnableNotifications: boolean,
   EnableNewznab: boolean,
@@ -50,6 +52,7 @@ const DefaultOptions:NZBUnityOptions = {
   Providers: {},
   ProviderNewznab: '',
   RefreshRate: 15,
+  InterceptDownloads: true,
   EnableContextMenu: true,
   EnableNotifications: true,
   EnableNewznab: true,
@@ -71,14 +74,11 @@ class NZBUnity {
     // Initialize default options
     this.getOpt('Debug')
       .then((opts) => {
-        this._debug = <boolean> opts.Debug;
+        this._debug = opts.Debug;
         return this.initOptions()
       })
       .then(() => {
         this.debug('[NZBUnity.constructor] Options Ok');
-        return this.getOpt('ActiveProfile');
-      })
-      .then((opts) => {
         // Initialize server connection
         return this.setActiveProfile();
       })
@@ -87,12 +87,56 @@ class NZBUnity {
 
         // Handle messages from the UI
         chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
-        this.debug('[NZBUnity.constructor] Message handler Ok');
+        this.debug('[NZBUnity.constructor] Message handler initialized');
+
+        // Intercept response headers to check for NZB content
+        return this.getOpt('InterceptDownloads');
+      })
+      .then((opts) => {
+        if (opts.InterceptDownloads) {
+          chrome.webRequest.onHeadersReceived.addListener(
+            this.handleHeadersReceived.bind(this),
+            {
+              urls: ["<all_urls>"],
+              types: ["main_frame", "sub_frame"]
+            },
+            ["responseHeaders", "blocking"]
+          );
+          this.debug('[NZBUnity.constructor] NZB download intercept initialized');
+        }
       })
       .then(() => {
         this.debug('[NZBUnity.constructor] Init Done, starting!');
         this.refresh();
       });
+  }
+
+  showNotification(id:string, title:string, message:string) {
+    this.getOpt('EnableNotifications')
+      .then((opts) => {
+        if (opts.EnableNotifications) {
+          chrome.notifications.create(`nzbunity.${id}`, {
+            'type': 'basic',
+            'iconUrl': chrome.extension.getURL('content/images/icon-32.png'),
+            'title': `NZB Unity - ${title}`,
+            'message': message
+          });
+        }
+      });
+  }
+
+  sendMessage(name:string, data:any = null) {
+    chrome.runtime.sendMessage({ [`main.${name}`]: data });
+  }
+
+  sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any) {
+    if (tab) {
+      chrome.tabs.sendMessage(tab.id, { [`main.${name}`]: data });
+    }
+  }
+
+  sendOptionsMessage(name:string, data:any) {
+    this.sendTabMessage(this.optionsTab, name, data);
   }
 
   /* OPERATIONS */
@@ -118,10 +162,7 @@ class NZBUnity {
 
   refresh():Promise<NZBResult> {
     this.startTimer();
-    return this.getQueue().then((result) => {
-      this.sendMessage('refresh', result);
-      return result;
-    });
+    return this.getQueue();
   }
 
   getQueue():Promise<NZBResult> {
@@ -130,9 +171,83 @@ class NZBUnity {
     }
 
     return this.nzbHost.getQueue()
+      .then((result) => {
+        this.sendMessage('refresh', result);
+        return result;
+      });
   }
 
-  /* MESSAGING */
+  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBResult> {
+    if (!this.nzbHost) {
+      return Promise.resolve({ success: false, operation: null, error: 'No connection to host'});
+    }
+
+    return this.nzbHost.addUrl(url, options)
+      .then((result) => {
+        this.sendMessage('addUrl', result);
+        this.showNotification(
+          'addUrl',
+          `${options.nzbname || url} Added`,
+          `${options.nzbname || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`
+        );
+        return result;
+      });
+  }
+
+  /* HANDLERS */
+
+  handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
+    let url:string = details.url;
+    let type:string;
+    let disposition:string;
+    let dnzb:DirectNZB = {};
+
+    details.responseHeaders.forEach((h) => {
+      if (h.name === 'Content-Type') {
+        type = h.value.split(/;\s*/)[0].toLowerCase();
+      } else if (h.name === 'Content-Disposition') {
+        disposition = h.value;
+      } else if (h.name.startsWith('X-DNZB')) {
+        dnzb[h.name.replace('X-DNZB-', '')] = h.value;
+      }
+    });
+
+    // Intercept if NZB
+    let dispositionMatch = disposition && disposition.match(/^attachment;\s*filename="?(.*(\.nzb))"?$/i);
+    if (type === 'application/x-nzb' || dispositionMatch) {
+
+      // console.log('===================HEADERS=================');
+      // console.log(`URL: ${url}`);
+      // console.log(`Type: ${type}`);
+      // console.log(`Disposition: ${disposition}`);
+      // for (let k in dnzb) {
+      //   console.log(`${k}: ${dnzb[k]}`);
+      // }
+      // console.log('===================HEADERS=================');
+
+      let options:NZBAddOptions = {};
+
+      if (dispositionMatch) {
+        options.nzbname = dispositionMatch[1];
+      }
+      if (dnzb.Category) {
+        options.cat = dnzb.Category;
+      }
+
+      this.addUrl(url, options)
+        .then((r:NZBResult) => {
+          console.info(`[NZBUnity] NZB intercepted, ${r.success ? 'Success' : 'Failure'}
+  ${url}
+  ${options.nzbname ? options.nzbname : ''}
+  ${!r.success ? 'Error: ' + r.error : ''}`
+          );
+        });
+
+      return { cancel: true };
+    } else {
+      return;
+    }
+  }
 
   handleMessage(message:MessageEvent) {
     if (this._debug) this.debugMessage(message);
@@ -153,6 +268,14 @@ class NZBUnity {
 
         case 'popup.refresh':
           this.refresh();
+          break;
+
+        case 'popup.openProfilePage':
+          if (this.nzbHost) {
+            chrome.tabs.create({
+              url: this.nzbHost.host
+            });
+          }
           break;
 
         case 'popup.command':
@@ -221,20 +344,6 @@ class NZBUnity {
     }
   }
 
-  sendMessage(name:string, data:any = null) {
-    chrome.runtime.sendMessage({ [`main.${name}`]: data });
-  }
-
-  sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any) {
-    if (tab) {
-      chrome.tabs.sendMessage(tab.id, { [`main.${name}`]: data });
-    }
-  }
-
-  sendOptionsMessage(name:string, data:any) {
-    this.sendTabMessage(this.optionsTab, name, data);
-  }
-
   /* OPTIONS */
 
   getOpt(keys: string | string[] | Object = null):Promise<NZBUnityOptions> {
@@ -299,7 +408,7 @@ class NZBUnity {
           let match = i.js && i.js[0] && i.js[0].match(/(\w+)\.js$/);
           let name = match ? match[1] : null;
 
-          if (name && name !== 'common') {
+          if (name && name !== 'site') {
             providers[name] = {
               Enabled: DefaultOptions.ProviderEnabled,
               Matches: i.matches,
@@ -362,11 +471,23 @@ class NZBUnity {
       .then(() => {
         // Ready to initizlize
         // TODO: NZBGet
-        if (profiles[name]) {
-          this.nzbHost = new SABnzbdHost({
-            host: profiles[name].ProfileHost,
-            apikey: profiles[name].ProfileApiKey
-          });
+        let profile:NZBUnityProfileOptions = profiles[name];
+
+        if (profile) {
+          if (profile.ProfileType === 'NZBGet') {
+            this.nzbHost = new NZBGetHost(<StringDictionary> {
+              displayName: name,
+              host: profile.ProfileHost,
+              username: profile.Username,
+              password: profile.Password
+            });
+          } else {
+            this.nzbHost = new SABnzbdHost(<StringDictionary> {
+              displayName: name,
+              host: profile.ProfileHost,
+              apikey: profile.ProfileApiKey
+            });
+          }
         }
       });
   }

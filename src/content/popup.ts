@@ -35,6 +35,11 @@ class Popup {
           this.sendMessage('refresh');
         });
 
+        $('#btn-server').on('click', (e) => {
+          e.preventDefault();
+          this.sendMessage('openProfilePage');
+        });
+
         $('#btn-options').on('click', (e) => {
           e.preventDefault();
           chrome.runtime.openOptionsPage();
@@ -60,11 +65,25 @@ class Popup {
     $('#error').empty();
 
     if (data) {
+      // Summary
       $('#status').text(data['status']);
       $('#timeleft').text(data['eta']);
       $('#speed').text(data['speed']);
       $('#sizeleft').text(`${data['mbleft']}MB`);
 
+      // Queue
+      $('#queue > ul').empty();
+      data['slots'].forEach((s:Dictionary) => {
+        console.log(s);
+
+
+
+
+      });
+
+
+
+      // Viddles
       $('#override-category').empty();
       data['categories'].forEach((k:string) => {
         $('#override-category').append(`<option value="${k}">${k}</option>`);
@@ -92,11 +111,17 @@ class Popup {
       switch (k) {
         case 'main.activeProfileSet':
           this.debug('activeProfileSet', val);
+          this.getOpt('ActiveProfile')
+            .then((opts) => {
+              this.profileCurrent.val(opts.ActiveProfile);
+              $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
+            });
           break;
 
         case 'main.refresh':
           if (val.success === true) {
             this.update(val.result);
+            $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
           } else if (val.success === false) {
             this.update({}, val.error);
           }
@@ -127,6 +152,21 @@ class Popup {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       let profiles:Object = changes['Profiles'].newValue;
+      let profilesCount:number = Object.keys(profiles).length;
+
+      let oldProfiles:Object = changes['Profiles'].newValue;
+      let oldProfilesCount:number = Object.keys(oldProfiles).length;
+
+      if (profilesCount !== oldProfilesCount) {
+        // Profile added or removed
+        this.profileSelectUpdate();
+
+        if (!profilesCount) {
+          // All profiles removed
+          this.profileCurrent.val('');
+        }
+      }
+
       for (let k in profiles) {
         if (profiles[k].ProfileName !== k) {
           this.profileNameChanged(k, profiles[k].ProfileName);
@@ -143,7 +183,9 @@ class Popup {
   /* PROFILES */
 
   profileNameChanged(oldName:string, newName:string) {
-    if (newName) {
+    if (this.profileCurrent.val() === oldName) {
+      this.profileSelectUpdate();
+      this.setActiveProfile(newName);
     }
   }
 
@@ -164,7 +206,6 @@ class Popup {
       this.getOpt('ActiveProfile')
         .then((opts) => {
           this.debug('[Popup.profileSelect]', opts.ActiveProfile);
-          this.profileCurrent.val(opts.ActiveProfile);
           this.sendMessage('profileSelect', opts.ActiveProfile);
         });
     }

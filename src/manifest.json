@@ -31,45 +31,30 @@
     "page": "content/options.html"
   },
   "permissions": [
-    "*://*/*",
+    "<all_urls>",
     "contextMenus",
     "notifications",
     "storage",
-    "tabs"
+    "tabs",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "content_scripts": [
     {
       "matches": [
-        "*://animenzb.com/*",
-        "*://*.animenzb.com/*",
-        "*://*.animezb.com/*",
         "*://*.binsearch.info/*",
         "*://*.binsearch.net/*",
         "*://*.binsearch.co.uk/*",
         "*://*.binsear.ch/*",
         "*://*.bintube.com/*",
         "*://*.dognzb.cr/*",
-        "*://*.fanzub.com/*",
-        "*://*.nzbclub.com/*",
         "*://*.nzbindex.com/*",
         "*://*.nzbindex.nl/*",
         "*://*.nzb-rss.com/*",
         "*://*.omgwtfnzbs.me/*",
-        "*://*.usenet4ever.info/*",
         "*://*.yubse.com/*"
       ],
-      "js": ["content/sites/common.js"]
-    },
-    {
-      "matches": [
-        "*://animenzb.com/*",
-        "*://*.animenzb.com/*"
-      ],
-      "js": ["content/sites/animenzb.js"]
-    },
-    {
-      "matches": ["*://*.animezb.com/*"],
-      "js": ["content/sites/animezb.js"]
+      "js": ["content/site.js"]
     },
     {
       "matches": [
@@ -89,14 +74,6 @@
       "js": ["content/sites/dognzb.js"]
     },
     {
-      "matches": ["*://*.fanzub.com/*"],
-      "js": ["content/sites/fanzub.js"]
-    },
-    {
-      "matches": ["*://*.nzbclub.com/*"],
-      "js": ["content/sites/nzbclub.js"]
-    },
-    {
       "matches": [
         "*://*.nzbindex.com/*",
         "*://*.nzbindex.nl/*"
@@ -110,10 +87,6 @@
     {
       "matches": ["*://*.omgwtfnzbs.me/*"],
       "js": ["content/sites/omgwtfnzbs.js"]
-    },
-    {
-      "matches": ["*://*.usenet4ever.info/*"],
-      "js": ["content/sites/nzbclub.js"]
     },
     {
       "matches": ["*://*.yubse.com/*"],
