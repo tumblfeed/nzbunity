@@ -5,7 +5,6 @@
     "src/background/main.ts",
     "src/content/options.ts",
     "src/content/popup.ts",
-    "src/content/site.ts",
     "src/content/sites/omgwtfnzbs.ts"
   ],
   "compileOnSave": false,

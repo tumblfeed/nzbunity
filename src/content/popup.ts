@@ -2,14 +2,34 @@ class Popup {
 
   public _debug:boolean = false;
   public storage:chrome.storage.StorageArea;
-  public profileCurrent:JQuery<HTMLElement>;
-  public profileInputs:JQuery<HTMLElement>;
-
   public profiles:NZBUnityProfileDictionary;
+  public profileCurrent:JQuery<HTMLElement>;
+  public btnRefresh:JQuery<HTMLElement>;
+  public btnServer:JQuery<HTMLElement>;
+  public btnOptions:JQuery<HTMLElement>;
+  public overrideCategory:JQuery<HTMLElement>;
+
+  public errorVal:JQuery<HTMLElement>;
+  public statusVal:JQuery<HTMLElement>;
+  public speedVal:JQuery<HTMLElement>;
+  public sizeVal:JQuery<HTMLElement>;
+  public timeVal:JQuery<HTMLElement>;
+  public queue:JQuery<HTMLElement>;
+
 
   constructor() {
     this.profileCurrent = $('#ProfileCurrent');
-    this.profileInputs = $('#profile-container input');
+    this.btnRefresh = $('#btn-refresh');
+    this.btnServer = $('#btn-server');
+    this.btnOptions = $('#btn-options');
+    this.overrideCategory = $('#override-category');
+
+    this.errorVal = $('#error');
+    this.statusVal = $('#status .val');
+    this.speedVal = $('#speed .val');
+    this.sizeVal = $('#sizeleft .val');
+    this.timeVal = $('#timeleft .val');
+    this.queue = $('#queue');
 
     // Init data
     this.storage = chrome.storage.local
@@ -30,17 +50,17 @@ class Popup {
         // Init storage on change watcher
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
-        $('#btn-refresh').on('click', (e) => {
+        this.btnRefresh.on('click', (e) => {
           e.preventDefault();
           this.sendMessage('refresh');
         });
 
-        $('#btn-server').on('click', (e) => {
+        this.btnServer.on('click', (e) => {
           e.preventDefault();
           this.sendMessage('openProfilePage');
         });
 
-        $('#btn-options').on('click', (e) => {
+        this.btnOptions.on('click', (e) => {
           e.preventDefault();
           chrome.runtime.openOptionsPage();
         });
@@ -59,39 +79,39 @@ class Popup {
     this.sendMessage('onInit', 'Popup initialized.');
   }
 
-  update(data:Object, error:string = null) {
-    this.debug('Popup.update', data, error);
+  update(queue:NZBQueueResult, error:string = null) {
+    // this.debug('Popup.update', queue, error);
+    this.errorVal.empty();
 
-    $('#error').empty();
-
-    if (data) {
+    if (queue) {
       // Summary
-      $('#status').text(data['status']);
-      $('#timeleft').text(data['eta']);
-      $('#speed').text(data['speed']);
-      $('#sizeleft').text(`${data['mbleft']}MB`);
+      this.statusVal.text(queue.status);
+      this.speedVal.text(queue.speed);
+      this.sizeVal.text(queue.sizeRemaining);
+      this.timeVal.text(queue.timeRemaining);
 
       // Queue
-      $('#queue > ul').empty();
-      data['slots'].forEach((s:Dictionary) => {
-        console.log(s);
+      this.queue.empty();
+      queue.queue.forEach((i) => {
+        console.log(i);
 
-
+        this.queue.append(`<div class="">
+          <span class="name" title="${i.name}">${this.trunc(i.name, 20)}</span>
+          ${i.category} ${i.size} ${i.percentage}
+        </div>`);
 
 
       });
 
-
-
       // Viddles
-      $('#override-category').empty();
-      data['categories'].forEach((k:string) => {
-        $('#override-category').append(`<option value="${k}">${k}</option>`);
+      this.overrideCategory.empty().append(`<option val=""></option>`);
+      queue.categories.forEach((k:string) => {
+        this.overrideCategory.append(`<option value="${k}">${k}</option>`);
       });
     }
 
     if (error) {
-      $('#error').text(error);
+      this.errorVal.text(error);
     }
   }
 
@@ -114,16 +134,14 @@ class Popup {
           this.getOpt('ActiveProfile')
             .then((opts) => {
               this.profileCurrent.val(opts.ActiveProfile);
-              $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
+              this.sendMessage('refresh');
             });
           break;
 
         case 'main.refresh':
-          if (val.success === true) {
-            this.update(val.result);
+          this.update(<NZBQueueResult> val)
+          if (val) {
             $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
-          } else if (val.success === false) {
-            this.update({}, val.error);
           }
           break;
 
@@ -235,6 +253,12 @@ class Popup {
         }
       });
     });
+  }
+
+  /* UTILITY */
+
+  trunc(s:string, n:number):string {
+    return (s.length > n) ? s.substr(0, n - 1) + '&hellip;' : s;
   }
 
   /* DEBUGGING */
