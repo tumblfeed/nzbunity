@@ -244,7 +244,7 @@ class PageUtil {
     link
       .on('click', (e) => {
         e.preventDefault();
-        console.log('link clicked', link.attr('href'), options);
+        console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
 
         img.attr('src', PageUtil.iconGrey);
 
