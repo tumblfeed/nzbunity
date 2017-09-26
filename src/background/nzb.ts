@@ -1,14 +1,14 @@
 declare interface NZBResult {
   success: boolean;
   operation?: string;
-  result?: NestedDictionary | Array<boolean|string|number|NestedDictionary>;
+  result?: boolean | number | string | NestedDictionary | Array<boolean|string|number|NestedDictionary>;
   error?: string;
 }
 
 declare interface NZBAddOptions {
+  url?: string;
   name?: string;
-  nzbname?: string;
-  cat?: string;
+  category?: string;
   script?: string;
   priority?: NZBPriority;
   pp?: NZBPostProcessing;
@@ -45,6 +45,35 @@ declare interface DirectNZB {
   Failure?: string;
 }
 
+declare interface NZBQueueResult {
+  status: string;
+  speed: string;
+  speedBytes: number;
+  sizeRemaining: string;
+  timeRemaining: string;
+  categories: string[];
+  queue: NZBQueueItem[];
+}
+
+declare interface NZBQueueItem {
+  id: string;
+  status: string;
+  name: string;
+  category: string;
+  size: string;
+  sizeBytes: number;
+  sizeRemaining: string;
+  sizeRemainingBytes: number;
+  timeRemaining: string;
+  percentage: number;
+}
+
+declare interface NZBAddUrlResult {
+  success: boolean;
+  result?: string;
+  error?: string;
+}
+
 abstract class NZBHost {
   name:string;
   displayName:string;
@@ -53,19 +82,21 @@ abstract class NZBHost {
   hostParsed:ParsedUrl;
   apiUrl:string;
 
+  infinityString:string = '∞';
+  // infinityString:string = '&#8734;';
+
   constructor(options:StringDictionary = {}) {
     this.displayName = options.displayName || this.name;
     this.host = options.host || 'localhost';
     this.hostParsed = Util.parseUrl(this.host);
   }
 
-  abstract call(operation:string, params:Dictionary):Promise<NZBResult>;
-  abstract getQueue():Promise<NZBResult>;
-  abstract getCategories():Promise<NZBResult>;
-  abstract addUrl(url:string, options:NZBAddOptions):Promise<NZBResult>;
-  abstract test():Promise<NZBResult>;
+  abstract call(operation:string, params:Dictionary|Array<any>):Promise<NZBResult>;
+  abstract getQueue():Promise<NZBQueueResult>;
+  abstract getCategories():Promise<string[]>;
+  abstract addUrl(url:string, options:NZBAddOptions):Promise<NZBAddUrlResult>;
+  abstract test():Promise<boolean>;
   // addNZB(url):Promise<any>;
-
 }
 
 class SABnzbdHost extends NZBHost {
@@ -114,32 +145,114 @@ class SABnzbdHost extends NZBHost {
       });
   }
 
-  getQueue():Promise<NZBResult> {
-    return this.call('queue');
-  }
+  getQueue():Promise<NZBQueueResult> {
+    let queue:NZBQueueResult;
 
-  getCategories():Promise<NZBResult> {
-    return this.call('get_cats')
+    return this.call('queue')
       .then((r) => {
-        r.result = (<string[]> r.result).filter((i) => {
-          return i !== '*';
+        if (!r.success) return null;
+
+        let speedBytes:number = null;
+        let speedMatch:string[] = r.result['speed'].match(/(\d+)\s+(\w+)/i);
+        if (speedMatch) {
+          speedBytes = parseInt(speedMatch[1]);
+
+          switch (speedMatch[2].toUpperCase()) {
+            case 'G':
+              speedBytes *= Util.Gigabyte;
+              break;
+            case 'M':
+              speedBytes *= Util.Megabyte;
+              break;
+            case 'K':
+              speedBytes *= Util.Kilobyte;
+              break;
+          }
+        }
+
+        queue = {
+          status: Util.ucFirst(r.result['status']),
+          speed: Util.humanSize(speedBytes) + '/s',
+          speedBytes: speedBytes,
+          sizeRemaining: r.result['sizeleft'],
+          timeRemaining: speedBytes > 0 ? r.result['timeleft'] : this.infinityString,
+          categories: null,
+          queue: []
+        };
+
+        r.result['slots'].forEach((s:StringDictionary) => {
+          let size:number = Math.floor(parseFloat(s['mb']) * Util.Megabyte); // MB convert to Bytes
+          let sizeRemaining:number = Math.floor(parseFloat(s['mbleft']) * Util.Megabyte); // MB convert to Bytes
+
+          let item:NZBQueueItem = {
+            id: s['nzo_id'],
+            status: Util.ucFirst(s['status']),
+            name: s['filename'],
+            category: s['cat'],
+            size: Util.humanSize(size),
+            sizeBytes: size,
+            sizeRemaining: Util.humanSize(sizeRemaining),
+            sizeRemainingBytes: sizeRemaining,
+            timeRemaining: speedBytes > 0 ? s['timeleft'] : this.infinityString,
+            percentage: Math.floor(((size - sizeRemaining) / size) * 100)
+          };
+
+          queue.queue.push(item);
         });
-        return r;
+
+        return this.getCategories()
+          .then((categories) => {
+            queue.categories = categories;
+            return queue;
+          });
       });
   }
 
-  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBResult> {
+  getCategories():Promise<string[]> {
+    return this.call('get_cats')
+      .then((r) => {
+        let categories:string[];
+
+        if (r.success) {
+          categories = (<string[]> r.result).filter((i) => {
+            return i !== '*';
+          });
+        }
+
+        return categories;
+      });
+  }
+
+  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
     let params:StringDictionary = { name: url };
 
     for (let k in options) {
-      params[k] = String(options[k]);
+      let val = String(options[k]);
+
+      if (k === 'name') {
+        params.nzbname = val;
+      } else if (k === 'category') {
+        params.cat = val;
+      } else {
+        params[k] = val;
+      }
     }
 
-    return this.call('addurl', params);
+    return this.call('addurl', params)
+      .then((r) => {
+        if (r.success) {
+          let ids:string[] = r.result['nzo_ids'];
+          r.result = ids.length ? ids[0] : null;
+        }
+        return <NZBAddUrlResult> r;
+      });
   }
 
-  test():Promise<NZBResult> {
-    return this.call('fullstatus', { skip_dashboard: 1 });
+  test():Promise<boolean> {
+    return this.call('fullstatus', { skip_dashboard: 1 })
+      .then((r) => {
+        return r.success;
+      });
   }
 }
 
@@ -157,16 +270,16 @@ class NZBGetHost extends NZBHost {
     this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
   }
 
-  call(operation:string, params:Dictionary = {}):Promise<NZBResult> {
+  call(operation:string, params:Array<any> = []):Promise<NZBResult> {
     let request:RequestOptions = {
       method: 'POST',
       url: this.apiUrl,
       username: this.username,
       password: this.password,
       json: true,
-      params: <NestedDictionary> {
+      params: {
         method: operation,
-        params: params.params || Object.values(params)
+        params: params
       }
     };
 
@@ -188,35 +301,115 @@ class NZBGetHost extends NZBHost {
       });
   }
 
-  getQueue():Promise<NZBResult> {
-    // TODO
-    return this.call('status');
+  getQueue():Promise<NZBQueueResult> {
+    let queue:NZBQueueResult;
+
+    return this.call('status')
+      .then((r) => {
+        if (!r.success) return null;
+
+        let status:string = r.result['ServerStandBy']
+          ? 'idle'
+          : r.result['DownloadPaused']
+            ? 'paused'
+            : 'downloading';
+
+        let speedBytes:number = r.result['DownloadRate']; // in Bytes / Second
+        let sizeRemaining:number = Math.floor(r.result['RemainingSizeMB'] * Util.Megabyte); // MB convert to Bytes
+        let timeRemaining:number = Math.floor(sizeRemaining / speedBytes); // Seconds
+
+        queue = {
+          status: Util.ucFirst(status),
+          speed: Util.humanSize(speedBytes) + '/s',
+          speedBytes: speedBytes,
+          sizeRemaining: Util.humanSize(sizeRemaining),
+          timeRemaining: speedBytes > 0 ? Util.humanSeconds(timeRemaining) : this.infinityString,
+          categories: null,
+          queue: []
+        };
+
+        return this.call('listgroups')
+      })
+      .then((r) => {
+        if (!(r && r.success)) return null;
+
+        (<Dictionary[]> r.result).forEach((s) => {
+          let size:number = Math.floor((<number> s['FileSizeMB']) * Util.Megabyte); // MB convert to Bytes
+          let sizeRemaining:number = Math.floor((<number> s['RemainingSizeMB']) * Util.Megabyte); // MB convert to Bytes
+          let timeRemaining:number = Math.floor(sizeRemaining / queue.speedBytes); // Seconds
+
+          let item:NZBQueueItem = {
+            id: <string> s['NZBID'],
+            status: Util.ucFirst(<string> s['Status']),
+            name: <string> s['NZBNicename'],
+            category: <string> s['Category'],
+            size: Util.humanSize(size),
+            sizeBytes: size,
+            sizeRemaining: Util.humanSize(sizeRemaining),
+            sizeRemainingBytes: sizeRemaining,
+            timeRemaining: queue.speedBytes > 0 ? Util.humanSeconds(timeRemaining) : this.infinityString,
+            percentage: Math.floor(((size - sizeRemaining) / size) * 100)
+          };
+
+          queue.queue.push(item);
+        });
+
+        return this.getCategories()
+          .then((categories) => {
+            queue.categories = categories;
+            return queue;
+          });
+      });
   }
 
-  getCategories():Promise<NZBResult> {
+  getCategories():Promise<string[]> {
     // Ok, this is weird. NZBGet API does not have a method to get categories, but the categories
     // are listed in the config, so let's get them there.
     return this.call('config')
       .then((r) => {
         let config:StringDictionary[] = <StringDictionary[]> r.result;
-        let categories:string[] = config
-          .filter((i) => {
-            return /Category\d+\.Name/i.test(i.Name);
-          })
-          .map((i) => {
-            return i.Value;
-          });
+        let categories:string[];
 
-        return { success: true, operation: 'getCategories', result: categories };
+        if (r.success) {
+          categories = config.filter((i) => {
+              return /Category\d+\.Name/i.test(i.Name);
+            })
+            .map((i) => {
+              return i.Value;
+            });
+        }
+
+        return categories;
       });
   }
 
-  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBResult> {
-    // TODO
-    return this.call('status');
+  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+    let params:Array<any> = [
+      '', // NZBFilename,
+      url, // NZBContent,
+      options.category || '', // Category,
+      options.priority || NZBPriority.normal, // Priority,
+      false, // AddToTop,
+      false, // AddPaused,
+      '', // DupeKey,
+      0, // DupeScore,
+      'SCORE', // DupeMode,
+      [] // PPParameters
+    ];
+
+    return this.call('append', params)
+      .then((r) => {
+        if (r.success) {
+          r.result = String(r.result);
+        }
+        return <NZBAddUrlResult> r;
+      });
   }
 
-  test():Promise<NZBResult> {
-    return this.call('status');
+  test():Promise<boolean> {
+    return this.call('status')
+      .then((r) => {
+        return r.success;
+      });
   }
 }

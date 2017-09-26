@@ -17,6 +17,12 @@
     "48": "content/images/icon-48.png",
     "128": "content/images/icon-128.png"
   },
+  "web_accessible_resources": [
+    "content/images/nzb-16-green.png",
+    "content/images/nzb-16-grey.png",
+    "content/images/nzb-16-orange.png",
+    "content/images/nzb-16-red.png"
+  ],
   "browser_action": {
     "browser_style": true,
     "default_icon": {
@@ -54,7 +60,10 @@
         "*://*.omgwtfnzbs.me/*",
         "*://*.yubse.com/*"
       ],
-      "js": ["content/site.js"]
+      "js": [
+        "content/vendor/jquery-3.2.1.slim.js",
+        "background/util.js"
+      ]
     },
     {
       "matches": [

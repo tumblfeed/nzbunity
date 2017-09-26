@@ -35,9 +35,9 @@ declare interface NZBUnityOptions extends NestedDictionary {
   EnableContextMenu: boolean,
   EnableNotifications: boolean,
   EnableNewznab: boolean,
-  CategoriesUseGroupNames: boolean,
-  CategoriesUseHeader: boolean,
-  CategoriesDefault: string
+  SimplifyCategories: boolean,
+  DefaultCategory: string,
+  OverrideCategory: string
 };
 
 const DisplayAvailableProviders:string[] = ['binsearch', 'nzbindex', 'yubse'];
@@ -56,9 +56,9 @@ const DefaultOptions:NZBUnityOptions = {
   EnableContextMenu: true,
   EnableNotifications: true,
   EnableNewznab: true,
-  CategoriesUseGroupNames: true,
-  CategoriesUseHeader: true,
-  CategoriesDefault: null
+  SimplifyCategories: true,
+  DefaultCategory: null,
+  OverrideCategory: null
 };
 
 class NZBUnity {
@@ -160,14 +160,14 @@ class NZBUnity {
     }
   }
 
-  refresh():Promise<NZBResult> {
+  refresh():Promise<NZBQueueResult> {
     this.startTimer();
     return this.getQueue();
   }
 
-  getQueue():Promise<NZBResult> {
+  getQueue():Promise<NZBQueueResult> {
     if (!this.nzbHost) {
-      return Promise.resolve({ success: false, operation: null, error: 'No connection to host'});
+      return Promise.resolve(null);
     }
 
     return this.nzbHost.getQueue()
@@ -177,22 +177,34 @@ class NZBUnity {
       });
   }
 
-  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBResult> {
+  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
     if (!this.nzbHost) {
-      return Promise.resolve({ success: false, operation: null, error: 'No connection to host'});
+      return null;
     }
 
-    return this.nzbHost.addUrl(url, options)
+    return this.getOpt()
+      .then((opts) => {
+        // Manage category options
+        if (opts.OverrideCategory) {
+          options.category = opts.OverrideCategory;
+        } else if (options.category && opts.SimplifyCategories) {
+          options.category = Util.simplifyCategory(options.category);
+        } else if (!options.category && opts.DefaultCategory) {
+          options.category = opts.DefaultCategory;
+        }
+
+        return this.nzbHost.addUrl(url, options)
+      })
       .then((result) => {
         this.sendMessage('addUrl', result);
         this.showNotification(
           'addUrl',
-          `${options.nzbname || url} Added`,
-          `${options.nzbname || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`
+          `${options.name || url} Added`,
+          `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`
         );
         return result;
       });
-  }
+}
 
   /* HANDLERS */
 
@@ -228,17 +240,17 @@ class NZBUnity {
       let options:NZBAddOptions = {};
 
       if (dispositionMatch) {
-        options.nzbname = dispositionMatch[1];
+        options.name = dispositionMatch[1];
       }
       if (dnzb.Category) {
-        options.cat = dnzb.Category;
+        options.category = dnzb.Category;
       }
 
       this.addUrl(url, options)
-        .then((r:NZBResult) => {
+        .then((r) => {
           console.info(`[NZBUnity] NZB intercepted, ${r.success ? 'Success' : 'Failure'}
   ${url}
-  ${options.nzbname ? options.nzbname : ''}
+  ${options.name || ''}
   ${!r.success ? 'Error: ' + r.error : ''}`
           );
         });
@@ -249,7 +261,7 @@ class NZBUnity {
     }
   }
 
-  handleMessage(message:MessageEvent) {
+  handleMessage(message:MessageEvent, sender:chrome.runtime.MessageSender, sendResponse:Function) {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
@@ -258,6 +270,14 @@ class NZBUnity {
       this.debug(k, val);
 
       switch (k) {
+        // Content Scripts
+        case 'content.addUrl':
+          this.addUrl(val.url, val)
+            .then((r:NZBAddUrlResult) => {
+              sendResponse({ 'addUrl': r.success });
+            });
+          break;
+
         // Popup Messages
         case 'popup.profileSelect':
           this.setActiveProfile(val)
@@ -438,7 +458,7 @@ class NZBUnity {
 
   /* PROFILE */
 
-  profileTest(name:string):Promise<object> {
+  profileTest(name:string):Promise<boolean> {
     if (!this.nzbHost) {
       return Promise.reject({ success: false, error: 'No connection to host' });
     }
