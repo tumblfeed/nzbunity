@@ -153,11 +153,25 @@
 
 
         <!-- Extension Settings -->
-        <h2>Extension Settings</h2>
-
-        <h3>General</h3>
+        <h2>General Settings</h2>
 
         <div class="options-pane">
+          <div class="form-check">
+            <label class="form-check-label">
+              <input id="SimplifyCategories" name="SimplifyCategories" class="form-check-input" type="checkbox" value="">
+              Simplify category names to just the primary category (eg. "Movies > HD" will be changed to "movies").
+            </label>
+          </div>
+
+          <div class="form-row">
+            <div class="col-form-label col-12 col-sm-4 col-md-3 col-lg-2">
+              <label for="DefaultCategory">Default category:</label>
+            </div>
+            <div class="col-12 col-sm-7 col-md-4">
+              <input type="text" id="DefaultCategory" name="DefaultCategory" class="form-control form-control-sm">
+            </div>
+          </div>
+
           <div class="form-row">
             <div class="col-form-label col-12 col-sm-4 col-md-3 col-lg-2">
               <label for="RefreshRate">Refresh Rate:</label>
@@ -216,36 +230,16 @@
             </label>
           </div>
         </div>
-
-        <h3>Categories</h3>
-
-        <div class="options-pane">
-          <p>For more information regarding categories, please read the wiki page.</p>
-
-          <div class="form-check">
-            <label class="form-check-label">
-              <input id="SimplifyCategories" name="SimplifyCategories" class="form-check-input" type="checkbox" value="">
-              Simplify category names to just the primary category (eg. "Movies > HD" will be changed to "movies").
-            </label>
-          </div>
-
-          <div class="form-row">
-            <div class="col-form-label col-12 col-sm-4 col-md-3 col-lg-2">
-              <label for="DefaultCategory">Default category:</label>
-            </div>
-            <div class="col-12 col-sm-7 col-md-4">
-              <input type="text" id="DefaultCategory" name="DefaultCategory" class="form-control form-control-sm">
-            </div>
-          </div>
-        </div>
         <!-- End Extension Settings -->
       </form>
     </div>
     <!-- /.container -->
 
-    <script src="vendor/jquery-3.2.1.slim.js"></script>
-    <script src="vendor/popper.min.js"></script>
-    <script src="vendor/bootstrap.min.js"></script>
+    <script src="../vendor/jquery-3.2.1.slim.js"></script>
+    <script src="../vendor/browser-polyfill.min.js"></script>
+    <script src="../vendor/popper.min.js"></script>
+    <script src="../vendor/bootstrap.min.js"></script>
+    <script src="../background/util.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

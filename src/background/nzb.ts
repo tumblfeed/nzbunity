@@ -1,10 +1,3 @@
-declare interface NZBResult {
-  success: boolean;
-  operation?: string;
-  result?: boolean | number | string | NestedDictionary | Array<boolean|string|number|NestedDictionary>;
-  error?: string;
-}
-
 declare interface NZBAddOptions {
   url?: string;
   name?: string;
@@ -45,10 +38,19 @@ declare interface DirectNZB {
   Failure?: string;
 }
 
+declare interface NZBResult {
+  success: boolean;
+  operation?: string;
+  result?: boolean | number | string | NestedDictionary | Array<boolean|string|number|NestedDictionary>;
+  error?: string;
+}
+
 declare interface NZBQueueResult {
   status: string;
   speed: string;
   speedBytes: number;
+  maxSpeed: string;
+  maxSpeedBytes: number;
   sizeRemaining: string;
   timeRemaining: string;
   categories: string[];
@@ -95,7 +97,10 @@ abstract class NZBHost {
   abstract getQueue():Promise<NZBQueueResult>;
   abstract getCategories():Promise<string[]>;
   abstract addUrl(url:string, options:NZBAddOptions):Promise<NZBAddUrlResult>;
-  abstract test():Promise<boolean>;
+  abstract setMaxSpeed(bytes:number):Promise<NZBResult>;
+  abstract resumeQueue():Promise<NZBResult>;
+  abstract pauseQueue():Promise<NZBResult>;
+  abstract test():Promise<NZBResult>;
   // addNZB(url):Promise<any>;
 }
 
@@ -170,10 +175,14 @@ class SABnzbdHost extends NZBHost {
           }
         }
 
+        let maxSpeedBytes:number = parseInt(r.result['speedlimit_abs']);
+
         queue = {
           status: Util.ucFirst(r.result['status']),
           speed: Util.humanSize(speedBytes) + '/s',
           speedBytes: speedBytes,
+          maxSpeed: maxSpeedBytes ? Util.humanSize(maxSpeedBytes) : '',
+          maxSpeedBytes: maxSpeedBytes,
           sizeRemaining: r.result['sizeleft'],
           timeRemaining: speedBytes > 0 ? r.result['timeleft'] : this.infinityString,
           categories: null,
@@ -248,10 +257,44 @@ class SABnzbdHost extends NZBHost {
       });
   }
 
-  test():Promise<boolean> {
+  setMaxSpeed(bytes:number):Promise<NZBResult> {
+    let speed = bytes ? `${bytes / Util.Kilobyte}K` : '100';
+    return this.call('config', { name: 'speedlimit', value: speed })
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  resumeQueue():Promise<NZBResult> {
+    return this.call('resume')
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  pauseQueue():Promise<NZBResult> {
+    return this.call('pause')
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  test():Promise<NZBResult> {
     return this.call('fullstatus', { skip_dashboard: 1 })
       .then((r) => {
-        return r.success;
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
       });
   }
 }
@@ -315,6 +358,7 @@ class NZBGetHost extends NZBHost {
             : 'downloading';
 
         let speedBytes:number = r.result['DownloadRate']; // in Bytes / Second
+        let maxSpeedBytes:number = parseInt(r.result['DownloadLimit']);
         let sizeRemaining:number = Math.floor(r.result['RemainingSizeMB'] * Util.Megabyte); // MB convert to Bytes
         let timeRemaining:number = Math.floor(sizeRemaining / speedBytes); // Seconds
 
@@ -322,6 +366,8 @@ class NZBGetHost extends NZBHost {
           status: Util.ucFirst(status),
           speed: Util.humanSize(speedBytes) + '/s',
           speedBytes: speedBytes,
+          maxSpeed: maxSpeedBytes ? Util.humanSize(maxSpeedBytes) : '',
+          maxSpeedBytes: maxSpeedBytes,
           sizeRemaining: Util.humanSize(sizeRemaining),
           timeRemaining: speedBytes > 0 ? Util.humanSeconds(timeRemaining) : this.infinityString,
           categories: null,
@@ -406,10 +452,44 @@ class NZBGetHost extends NZBHost {
       });
   }
 
-  test():Promise<boolean> {
+  setMaxSpeed(bytes:number):Promise<NZBResult> {
+    let speed = bytes ? bytes / Util.Kilobyte : 0;
+    return this.call('rate', [speed])
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  resumeQueue():Promise<NZBResult> {
+    return this.call('resumedownload')
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  pauseQueue():Promise<NZBResult> {
+    return this.call('pausedownload')
+      .then((r) => {
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
+      });
+  }
+
+  test():Promise<NZBResult> {
     return this.call('status')
       .then((r) => {
-        return r.success;
+        if (r.success) {
+          r.result = true;
+        }
+        return r;
       });
   }
 }

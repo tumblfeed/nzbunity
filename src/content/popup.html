@@ -12,55 +12,57 @@
   </head>
   <body id="popup">
 
-    <div id="info">
+    <div id="head">
       <div id="errors"></div>
 
-      <div class="form-inline" >
-        Active Profile: <select id="ProfileCurrent"></select>
+      <div id="profile">
+        <span>Active Profile:</span>
+        <select id="ProfileCurrent" class="custom-select"></select>
+      </div>
+    </div>
+
+    <div id="summary">
+      <span id="QueuePause">
+        <i class="icon fa fa-lg fa-play-circle"></i>
+        <span id="statusVal"></span>
+      </span>
+
+      <span>
+        <span id="speedVal"></span>
+        <span>(<span id="maxSpeedVal"></span>)</span>
+      </span>
+
+      <span>
+        <span id="sizeleftVal"></span>
+        <span>Left</span>
+        <span>(<span id="timeleftVal"></span>)</span>
+      </span>
+    </div>
+
+    <div id="controls">
+      <div id="override">
+        Override Category: <select id="OverrideCategory" class="custom-select"></select>
       </div>
 
-      <div id="summary" class="row">
-        <div class="col-6">
-          <div id="status">Status <span class="val"></span></div>
-          <div id="timeleft">Time Remaining <span class="val"></span></div>
-        </div>
-
-        <div class="col-6">
-          <div id="speed">Speed <span class="val"></span></div>
-          <div id="sizeleft">Size Remaining <span class="val"></span></div>
-        </div>
+      <div id="max-speed">
+        Max Speed: <input id="MaxSpeed" type="number" step="0.1" min="0"> MB/s
       </div>
     </div>
 
     <div id="queue">
     </div>
 
-    <div class="menu">
-      <nav class="nav flex-column">
-        <a id="btn-refresh" class="nav-link disabled" disabled href="#">Refresh</a>
-        <a id="btn-server" class="nav-link disabled" disabled href="#">Open Server</a>
-        <a id="btn-options" class="nav-link" href="#">Open Options</a>
-      </nav>
+    <nav id="menu">
+      <a id="btn-refresh" class="btn btn-info disabled" disabled href="#">Refresh</a>
+      <a id="btn-server" class="btn btn-info disabled" disabled href="#">Open Server</a>
+      <a id="btn-options" class="btn btn-info" href="#">Open Options</a>
+    </nav>
 
-      <div class="form-inline">
-        Max Speed: <input id="max-speed" type="text"> KBps <button id="btn-speed">Set</button>
-      </div>
-
-      <div>
-        Override Category: <select id="override-category"></select>
-      </div>
-    </div>
-
-
-    <div class="form-inline" style="margin:15px 0 5px; padding-top:5px; border-top:1px solid grey;">
-        <input id="command" type="text" placeholder="Command"> <button id="btn-command">Send</button>
-    </div>
-    <pre id="output"></pre>
-
-
-    <script src="vendor/jquery-3.2.1.slim.js"></script>
-    <script src="vendor/popper.min.js"></script>
-    <script src="vendor/bootstrap.min.js"></script>
+    <script src="../vendor/jquery-3.2.1.slim.js"></script>
+    <script src="../vendor/browser-polyfill.min.js"></script>
+    <script src="../vendor/popper.min.js"></script>
+    <script src="../vendor/bootstrap.min.js"></script>
+    <script src="../background/util.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

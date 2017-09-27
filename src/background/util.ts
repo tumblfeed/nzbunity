@@ -37,6 +37,8 @@ declare interface CreateAddLinkOptions {
 }
 
 class Util {
+  static readonly storage = browser.storage.local;
+
   static readonly byteMultiplier = 1024;
   static readonly Byte = Math.pow(Util.byteMultiplier, 0);
   static readonly Kilobyte = Math.pow(Util.byteMultiplier, 1);
@@ -184,15 +186,18 @@ class Util {
   }
 
   static humanSize(bytes:number) {
-    var i = bytes ? Math.floor(Math.log(bytes) / Math.log(Util.byteMultiplier)) : 0;
-    return (bytes / Math.pow(Util.byteMultiplier, i)).toFixed(2) + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+    let i:number = bytes ? Math.floor(Math.log(bytes) / Math.log(Util.byteMultiplier)) : 0;
+    let n:string = (bytes / Math.pow(Util.byteMultiplier, i)).toFixed(2).replace(/\.?0+$/, '');
+
+    return n + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
   }
 
   static humanSeconds(seconds:number) {
     let hours:number = Math.floor(((seconds % 31536000) % 86400) / 3600);
     let minutes:number = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
     seconds = (((seconds % 31536000) % 86400) % 3600) % 60;
-    return `${hours}:${minutes}:${seconds}`;
+
+    return `${hours}:${minutes}:${seconds}`.replace(/^0+:/, '');
   }
 
   static ucFirst(s:string):string {
@@ -212,10 +217,10 @@ class Util {
 }
 
 class PageUtil {
-  static readonly iconGreen:string = chrome.extension.getURL('content/images/nzb-16-green.png');
-  static readonly iconGrey:string = chrome.extension.getURL('content/images/nzb-16-grey.png');
-  static readonly iconOrange:string = chrome.extension.getURL('content/images/nzb-16-orange.png');
-  static readonly iconRed:string = chrome.extension.getURL('content/images/nzb-16-reg.png');
+  static readonly iconGreen:string = browser.extension.getURL('content/images/nzb-16-green.png');
+  static readonly iconGrey:string = browser.extension.getURL('content/images/nzb-16-grey.png');
+  static readonly iconOrange:string = browser.extension.getURL('content/images/nzb-16-orange.png');
+  static readonly iconRed:string = browser.extension.getURL('content/images/nzb-16-reg.png');
 
   static getBaseUrl():string {
     let l:Location = window.location;
@@ -241,22 +246,26 @@ class PageUtil {
       width: '16px'
     });
 
-    link
-      .on('click', (e) => {
-        e.preventDefault();
-        console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
+    link.on('click', (e) => {
+      e.preventDefault();
+      console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
 
-        img.attr('src', PageUtil.iconGrey);
+      img.attr('src', PageUtil.iconGrey);
 
-        chrome.runtime.sendMessage({ 'content.addUrl': options }, (success) => {
-          // console.log('got response', success);
-          if (success || success === undefined) {
-            img.attr('src', PageUtil.iconGreen);
-          } else {
-            img.attr('src', PageUtil.iconRed);
-          }
-        })
-      });
+      browser.runtime.sendMessage({ 'content.addUrl': options })
+        .then((r:NZBAddUrlResult) => {
+          // console.log('got response', r);
+          setTimeout(() => {
+            if (r.success) {
+              img.attr('src', PageUtil.iconGreen);
+              link.trigger('addUrl.success');
+            } else {
+              img.attr('src', PageUtil.iconRed);
+              link.trigger('addUrl.failure');
+            }
+          }, 1000);
+        });
+    });
 
     if (adjacent) {
       link.insertAfter(adjacent);

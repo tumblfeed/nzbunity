@@ -1,41 +1,44 @@
 class Popup {
 
   public _debug:boolean = false;
-  public storage:chrome.storage.StorageArea;
   public profiles:NZBUnityProfileDictionary;
   public profileCurrent:JQuery<HTMLElement>;
   public btnRefresh:JQuery<HTMLElement>;
   public btnServer:JQuery<HTMLElement>;
   public btnOptions:JQuery<HTMLElement>;
-  public overrideCategory:JQuery<HTMLElement>;
 
   public errorVal:JQuery<HTMLElement>;
   public statusVal:JQuery<HTMLElement>;
   public speedVal:JQuery<HTMLElement>;
+  public maxSpeedVal:JQuery<HTMLElement>;
   public sizeVal:JQuery<HTMLElement>;
   public timeVal:JQuery<HTMLElement>;
   public queue:JQuery<HTMLElement>;
 
+  public queuePause:JQuery<HTMLElement>;
+  public overrideCategory:JQuery<HTMLElement>;
+  public maxSpeed:JQuery<HTMLElement>;
 
   constructor() {
     this.profileCurrent = $('#ProfileCurrent');
     this.btnRefresh = $('#btn-refresh');
     this.btnServer = $('#btn-server');
     this.btnOptions = $('#btn-options');
-    this.overrideCategory = $('#override-category');
 
     this.errorVal = $('#error');
-    this.statusVal = $('#status .val');
-    this.speedVal = $('#speed .val');
-    this.sizeVal = $('#sizeleft .val');
-    this.timeVal = $('#timeleft .val');
+    this.statusVal = $('#statusVal');
+    this.speedVal = $('#speedVal');
+    this.maxSpeedVal = $('#maxSpeedVal');
+    this.sizeVal = $('#sizeleftVal');
+    this.timeVal = $('#timeleftVal');
     this.queue = $('#queue');
 
-    // Init data
-    this.storage = chrome.storage.local
+    this.queuePause = $('#QueuePause');
+    this.overrideCategory = $('#OverrideCategory');
+    this.maxSpeed = $('#MaxSpeed');
 
     // Init options
-    this.getOpt(null)
+    Util.storage.get(null)
       .then((opts) => {
         this._debug = opts.Debug;
         this.debug('[Popup.constructor] Got data!', opts);
@@ -48,7 +51,34 @@ class Popup {
         this.setActiveProfile();
 
         // Init storage on change watcher
-        chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+        browser.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+
+        // Controls
+        this.overrideCategory.on('change', (e) => {
+          Util.storage.set({ OverrideCategory: this.overrideCategory.val() });
+        });
+
+        this.maxSpeed.on('change', (e) => {
+          let val:string = <string> this.maxSpeed.val();
+          let n:number = parseFloat(val);
+
+          if (n && n <= 0) {
+            n = 0;
+          }
+
+          this.maxSpeed.val(n ? n : '');
+          this.sendMessage('setMaxSpeed', n ? n * Util.Megabyte : null);
+        });
+
+        // Buttons
+        this.queuePause.on('click', (e) => {
+          e.preventDefault();
+          if (this.queuePause.find('.icon').hasClass('fa-pause-circle')) {
+            this.sendMessage('pauseQueue');
+          } else {
+            this.sendMessage('resumeQueue');
+          }
+        });
 
         this.btnRefresh.on('click', (e) => {
           e.preventDefault();
@@ -62,19 +92,14 @@ class Popup {
 
         this.btnOptions.on('click', (e) => {
           e.preventDefault();
-          chrome.runtime.openOptionsPage();
-        });
-
-        // TODO: Remove
-        $('#btn-command').on('click', (e) => {
-          this.sendMessage('command', $('#command').val());
+          browser.runtime.openOptionsPage();
         });
 
         this.sendMessage('refresh');
       });
 
     // Handle messages from the UI
-    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     this.sendMessage('onInit', 'Popup initialized.');
   }
@@ -84,30 +109,46 @@ class Popup {
     this.errorVal.empty();
 
     if (queue) {
+      console.log(queue);
+
+      this.maxSpeed.val(Number(queue.maxSpeedBytes / Util.Megabyte).toFixed(1));
+
       // Summary
       this.statusVal.text(queue.status);
       this.speedVal.text(queue.speed);
+      this.maxSpeedVal.text(queue.maxSpeed);
       this.sizeVal.text(queue.sizeRemaining);
       this.timeVal.text(queue.timeRemaining);
+
+      if (queue.status.toLowerCase() === 'paused') {
+        this.queuePause.find('.icon').removeClass('fa-pause-circle').addClass('fa-play-circle');
+      } else {
+        this.queuePause.find('.icon').removeClass('fa-play-circle').addClass('fa-pause-circle');
+      }
 
       // Queue
       this.queue.empty();
       queue.queue.forEach((i) => {
-        console.log(i);
-
-        this.queue.append(`<div class="">
-          <span class="name" title="${i.name}">${this.trunc(i.name, 20)}</span>
-          ${i.category} ${i.size} ${i.percentage}
-        </div>`);
-
-
+        // console.log(i);
+        this.queue.append(`
+          <div class="nzb">
+            <span class="name" title="${i.name}">${Util.trunc(i.name, 30)}</span>
+            <span class="category">${i.category}</span>
+            <span class="size">${i.size}</span>
+            <span class="bar" style="width:${i.percentage}%;"></span>
+          </div>
+        `);
       });
 
       // Viddles
+      let currentOverride:string = <string> this.overrideCategory.val();
+
       this.overrideCategory.empty().append(`<option val=""></option>`);
       queue.categories.forEach((k:string) => {
         this.overrideCategory.append(`<option value="${k}">${k}</option>`);
       });
+
+      this.overrideCategory.val(queue.categories.includes(currentOverride) ? currentOverride : '');
     }
 
     if (error) {
@@ -117,8 +158,8 @@ class Popup {
 
   /* MESSAGING */
 
-  sendMessage(name:string, data:any = null) {
-    chrome.runtime.sendMessage({ [`popup.${name}`]: data });
+  sendMessage(name:string, data:any = null):Promise<any> {
+    return browser.runtime.sendMessage({ [`popup.${name}`]: data });
   }
 
   handleMessage(message:MessageEvent) {
@@ -129,17 +170,8 @@ class Popup {
       let val:any = message[k];
 
       switch (k) {
-        case 'main.activeProfileSet':
-          this.debug('activeProfileSet', val);
-          this.getOpt('ActiveProfile')
-            .then((opts) => {
-              this.profileCurrent.val(opts.ActiveProfile);
-              this.sendMessage('refresh');
-            });
-          break;
-
         case 'main.refresh':
-          this.update(<NZBQueueResult> val)
+          this.update(<NZBQueueResult> val);
           if (val) {
             $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
           }
@@ -155,18 +187,13 @@ class Popup {
         case 'options.profilesSaved':
           this.profileSelectUpdate();
           break;
-
-        // TODO: Remove
-        case 'main.commandResult':
-          $('#output').empty().text(JSON.stringify(val, null, 2));
-          break;
       }
     }
   }
 
   /* HANDLERS */
 
-  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
+  handleStorageChanged(changes:{ string: browser.storage.StorageChange }, area:string) {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       let profiles:Object = changes['Profiles'].newValue;
@@ -218,47 +245,26 @@ class Popup {
     if (name) {
       if (this.profiles[name]) {
         this.debug('[Popup.profileSelect]', name);
-        this.sendMessage('profileSelect', name);
+        this.sendMessage('profileSelect', name)
+          .then(this.handleActiveProfileSet.bind(this));
       }
     } else {
-      this.getOpt('ActiveProfile')
+      Util.storage.get('ActiveProfile')
         .then((opts) => {
           this.debug('[Popup.profileSelect]', opts.ActiveProfile);
-          this.sendMessage('profileSelect', opts.ActiveProfile);
+          this.sendMessage('profileSelect', opts.ActiveProfile)
+            .then(this.handleActiveProfileSet.bind(this));
         });
     }
   }
 
-  /* OPTIONS */
-
-  getOpt(keys: string | string[] | Object = null):Promise<NZBUnityOptions> {
-    return new Promise((resolve, reject) => {
-      this.storage.get(keys, (result) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(<NZBUnityOptions> result);
-        }
+  handleActiveProfileSet(r:NZBResult) {
+    this.debug('activeProfileSet', r);
+    Util.storage.get('ActiveProfile')
+      .then((opts) => {
+        this.profileCurrent.val(opts.ActiveProfile);
+        this.sendMessage('refresh');
       });
-    });
-  }
-
-  setOpt(items:NestedDictionary):Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.storage.set(items, () => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  /* UTILITY */
-
-  trunc(s:string, n:number):string {
-    return (s.length > n) ? s.substr(0, n - 1) + '&hellip;' : s;
   }
 
   /* DEBUGGING */

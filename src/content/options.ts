@@ -1,7 +1,6 @@
 class OptionsPage {
 
   public _debug:boolean = false;
-  public storage:chrome.storage.StorageArea;
   public form:JQuery<HTMLElement>;
   public elements:JQuery<HTMLElement>;
 
@@ -22,16 +21,14 @@ class OptionsPage {
     this.profileButtons = $('#profile-controls button, #profileTest');
     this.profileInputs = $('#profile-container').find('input, select');
 
-    // Init data
-    this.storage = chrome.storage.local
-
     // Init tab stuff
-    chrome.tabs.getCurrent((tab:chrome.tabs.Tab) => {
-      this.sendMessage('onTab', tab);
-    });
+    browser.tabs.getCurrent()
+      .then((tab:browser.tabs.Tab) => {
+        this.sendMessage('onTab', tab);
+      });
 
     // Init options
-    this.getOpt(null)
+    Util.storage.get(null)
       .then((opts) => {
         this._debug = opts.Debug;
         this.debug('[OptionsPage.constructor] Got data!', opts);
@@ -61,7 +58,7 @@ class OptionsPage {
             ? el.prop('checked')
             : el.val();
 
-          this.setOpt({ [el.attr('id')]: val });
+          Util.storage.set({ [el.attr('id')]: val });
         });
 
         this.debug('[OptionsPage.constructor] Bound form elements: ',
@@ -94,26 +91,32 @@ class OptionsPage {
         this.providerInputs.on('change', this.handleProviderInput.bind(this));
 
         // Init storage on change watcher
-        chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+        browser.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
         // Reset watcher
         $('#ResetOptions').on('click', (e)=> {
           if (confirm('Are you sure you want to reset all settings? This cannot be undone.')) {
-            this.sendMessage('resetOptions', true);
+            this.sendMessage('resetOptions', true)
+              .then((r:NZBResult) => {
+                this.debug('Options reset, reloading');
+                if(r.success) {
+                  window.location.reload();
+                }
+              });
           }
         });
       });
 
     // Handle messages from the UI
-    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     this.sendMessage('onInit', 'Options initialized.');
   }
 
   /* MESSAGING */
 
-  sendMessage(name:string, data:any) {
-    chrome.runtime.sendMessage({ [`options.${name}`]: data });
+  sendMessage(name:string, data:any):Promise<any> {
+    return browser.runtime.sendMessage({ [`options.${name}`]: data });
   }
 
   handleMessage(message:MessageEvent) {
@@ -124,33 +127,8 @@ class OptionsPage {
       let val:any = message[k];
 
       switch (k) {
-        case 'main.resetOptions':
-          if(message[k]) {
-            window.location.reload();
-          }
-          break;
-
         case 'main.profileTestStart':
           this.profileTestStart();
-          break;
-
-        case 'main.profileTestResult':
-          console.log(val);
-          if (val.success) {
-            this.profileTestSuccess();
-          } else {
-            let error:string;
-
-            if (typeof val.error === 'string') {
-              error = val.error;
-            } if (val.error.statusText) {
-              error = val.error.statusText;
-            } if (val.error.status === 0) {
-              error = 'Could not connect to host';
-            }
-
-            this.profileTestFailure(error);
-          }
           break;
       }
     }
@@ -158,7 +136,7 @@ class OptionsPage {
 
   /* HANDLERS */
 
-  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
+  handleStorageChanged(changes:{ string: browser.storage.StorageChange }, area:string) {
     // this.debug('[OptionsPage.handleStorageChanged] ',
     //     Object.keys(changes)
     //         .map((k) => { return `${k} -> ${changes[k].newValue}`; })
@@ -215,7 +193,7 @@ class OptionsPage {
 
     if (match && this.providers[match[2]]) {
       this.providers[match[2]][match[1]] = el.prop('checked');
-      this.setOpt({ Providers: this.providers });
+      Util.storage.set({ Providers: this.providers });
     }
   }
 
@@ -240,7 +218,7 @@ class OptionsPage {
   }
 
   profileSave() {
-    return this.setOpt({ Profiles: this.profiles })
+    return Util.storage.set({ Profiles: this.profiles })
       .then(() => {
         this.sendMessage('profilesSaved', this.profiles);
       });
@@ -356,7 +334,24 @@ class OptionsPage {
   profileTest() {
     let name:string = this.profileData.ProfileName;
     this.debug('[OptionsPage.profileTest] ', name);
-    this.sendMessage('profileTest', name);
+    this.sendMessage('profileTest', name)
+      .then((r) => {
+        if (r.success) {
+          this.profileTestSuccess();
+        } else {
+          let error:string;
+
+          if (typeof r.error === 'string') {
+            error = r.error;
+          } if (r.error.statusText) {
+            error = r.error.statusText;
+          } if (r.error.status === 0) {
+            error = 'Could not connect to host';
+          }
+
+          this.profileTestFailure(error);
+        }
+      });
   }
 
   getProfileTestButton(color:string = 'info'):JQuery<HTMLElement> {
@@ -429,36 +424,6 @@ class OptionsPage {
         </div>
       </div>`
     );
-  }
-
-  /* OPTIONS */
-
-  getOpt(keys: string | string[] | Object = null):Promise<NZBUnityOptions> {
-    return new Promise((resolve, reject) => {
-      this.storage.get(keys, (result) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(<NZBUnityOptions> result);
-        }
-      });
-    });
-  }
-
-  setOpt(items:NestedDictionary):Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.storage.set(items, () => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  setOptByMessage(options:Object) {
-    chrome.runtime.sendMessage({ 'options.setOptions': options });
   }
 
   /* DEBUGGING */
