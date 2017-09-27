@@ -191,6 +191,8 @@ body#popup {
       line-height: 19px;
 
       .icon {
+        background: $light;
+        border-radius: 20px;
         color: $blue;
       }
     }
@@ -261,7 +263,13 @@ body#popup {
 
     .btn {
       flex-grow: 0;
+      height: 26px;
+      line-height: 18px;
       width: 90px;
+
+      .fa {
+        font-size: 18px;
+      }
     }
   }
 }
