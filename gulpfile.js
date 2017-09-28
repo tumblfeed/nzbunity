@@ -11,6 +11,7 @@ const path = require('path');
 const ts = require('gulp-typescript');
 const sass = require('gulp-sass');
 const sourcemaps = require('gulp-sourcemaps');
+const zip = require('gulp-zip');
 
 // Options
 
@@ -45,7 +46,8 @@ var isDev = !(argv.production || /^prod/i.test(process.env.NODE_ENV));
 var paths = {
   tsPath: path.resolve('./src/**/*.ts'),
   sassPath: path.resolve('./src/content/css/*.scss'),
-  buildPath: path.resolve('./build')
+  buildPath: path.resolve('./build'),
+  distPath: path.resolve('./dist')
 };
 
 var copyFiles = [
@@ -147,10 +149,22 @@ gulp.task('sass', () => {
 });
 
 /**
+ *
+ */
+gulp.task('zip', () => {
+  console.log(paths.distPath);
+
+  gulp.src(paths.buildPath + '/**/*')
+    .pipe(zip('nzbunity.zip'))
+    .pipe(gulp.dest(paths.distPath));
+});
+
+/**
  * gulp build
  * Runs frontend build tasks and then Maven package.
  */
 gulp.task('build', ['copy', 'typescript', 'sass']);
+gulp.task('dist', ['build', 'zip']);
 
 // Watchers
 
