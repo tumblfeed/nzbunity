@@ -68,40 +68,16 @@
       ]
     },
     {
-      "matches": [
-        "*://*.binsearch.info/*",
-        "*://*.binsearch.net/*",
-        "*://*.binsearch.co.uk/*",
-        "*://*.binsear.ch/*"
-      ],
-      "js": ["content/sites/binsearch.js"]
-    },
-    {
-      "matches": ["*://*.bintube.com/*"],
-      "js": ["content/sites/bintube.js"]
-    },
-    {
       "matches": ["*://*.dognzb.cr/*"],
       "js": ["content/sites/dognzb.js"]
     },
     {
-      "matches": [
-        "*://*.nzbindex.com/*",
-        "*://*.nzbindex.nl/*"
-      ],
-      "js": ["content/sites/nzbindex.js"]
-    },
-    {
-      "matches": ["*://*.nzb-rss.com/*"],
-      "js": ["content/sites/nzbrss.js"]
+      "matches": ["*://*.nzbgeek.info/*"],
+      "js": ["content/sites/nzbgeek.js"]
     },
     {
       "matches": ["*://*.omgwtfnzbs.me/*"],
       "js": ["content/sites/omgwtfnzbs.js"]
-    },
-    {
-      "matches": ["*://*.yubse.com/*"],
-      "js": ["content/sites/yubse.js"]
     }
   ]
 }

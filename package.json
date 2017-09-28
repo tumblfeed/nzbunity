@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "MPL-2.0",
   "description": "Adds the ability to send and control Usenet NZB files from various NZB sites directly to SABnzbd+ or NZBGet download clients.",
   "author": "John Hutchison",
@@ -32,6 +32,7 @@
     "gulp-sourcemaps": "^2.6.0",
     "gulp-typescript": "^3.2.2",
     "gulp-util": "^3.0.8",
+    "gulp-zip": "^4.0.0",
     "typescript": "^2.5.2",
     "web-ext-types": "^0.3.1",
     "yargs": "^4.7.0"

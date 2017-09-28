@@ -6,6 +6,7 @@
     "src/content/options.ts",
     "src/content/popup.ts",
     "src/content/sites/dognzb.ts",
+    "src/content/sites/nzbgeek.ts",
     "src/content/sites/omgwtfnzbs.ts"
   ],
   "compileOnSave": false,
