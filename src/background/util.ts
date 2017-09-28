@@ -151,7 +151,6 @@ class Util {
             resolve(xhr.response);
           }
         } else {
-          console.error(1, xhr);
           reject({
             status: xhr.status,
             statusText: xhr.statusText
@@ -167,7 +166,6 @@ class Util {
       };
 
       xhr.onerror = () => {
-        console.error(2, xhr);
         reject({
           status: xhr.status,
           statusText: xhr.statusText
