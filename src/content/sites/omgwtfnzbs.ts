@@ -1,5 +1,4 @@
 class NZBUnityOmgwtfnzbs {
-
   public username:string;
   public apikey:string;
   public apiurl:string;
@@ -7,10 +6,8 @@ class NZBUnityOmgwtfnzbs {
   constructor() {
     Util.storage.get('Providers')
       .then((opts) => {
-        let enabled:boolean = true;
-        if (opts.Providers && opts.Providers.omgwtfnzbs) {
-          enabled = opts.Providers.omgwtfnzbs.Enabled;
-        }
+        let provider = opts.Providers && opts.Providers.omgwtfnzbs;
+        let enabled:boolean = provider ? provider.Enabled : true;
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
