@@ -152,8 +152,6 @@ gulp.task('sass', () => {
  *
  */
 gulp.task('zip', () => {
-  console.log(paths.distPath);
-
   gulp.src(paths.buildPath + '/**/*')
     .pipe(zip('nzbunity.zip'))
     .pipe(gulp.dest(paths.distPath));
