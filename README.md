@@ -111,7 +111,7 @@ A good example of a 1-click site adapter can be found in `src/content/sites/omgw
     PageUtil.createAddUrlLink(
       options:{ url: string, category?: string },
       adjacent:JQuery<HTMLElement>|HTMLElement = null
-    ):JQuery<HTMLAnchorElement>
+    ):JQuery<HTMLElement>
 
 Which will create the link, assign the handler, and return the link. If the adjacent element is provided, it will also insert the link in the DOM as a sibling to adjacent.
 

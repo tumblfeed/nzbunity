@@ -367,7 +367,7 @@ class PageUtil {
     return Util.request(options);
   }
 
-  static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLAnchorElement> {
+  static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
     // console.log('createAddUrlLink', url, category);
     let link = $(
       `<a class="NZBUnityLink" href="${options.url}" title="Download with NZB Unity">`
