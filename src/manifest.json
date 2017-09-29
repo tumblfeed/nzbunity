@@ -1,12 +1,11 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "author": "John Hutchison",
-  "description": "Adds the ability to send and control Usenet NZB files from various NZB sites directly to SABnzbd+ or NZBGet download clients.",
+  "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
     "scripts": [
-      "vendor/browser-polyfill.min.js",
       "background/util.js",
       "background/nzb.js",
       "background/main.js"
@@ -63,7 +62,6 @@
       ],
       "js": [
         "vendor/jquery-3.2.1.slim.js",
-        "vendor/browser-polyfill.min.js",
         "background/util.js"
       ]
     },

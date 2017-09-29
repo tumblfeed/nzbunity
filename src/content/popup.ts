@@ -51,7 +51,7 @@ class Popup {
         this.setActiveProfile();
 
         // Init storage on change watcher
-        browser.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+        chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
         // Controls
         this.overrideCategory.on('change', (e) => {
@@ -92,14 +92,14 @@ class Popup {
 
         this.btnOptions.on('click', (e) => {
           e.preventDefault();
-          browser.runtime.openOptionsPage();
+          chrome.runtime.openOptionsPage();
         });
 
         this.sendMessage('refresh');
       });
 
     // Handle messages from the UI
-    browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     this.sendMessage('onInit', 'Popup initialized.');
   }
@@ -159,7 +159,7 @@ class Popup {
   /* MESSAGING */
 
   sendMessage(name:string, data:any = null):Promise<any> {
-    return browser.runtime.sendMessage({ [`popup.${name}`]: data });
+    return Util.sendMessage({ [`popup.${name}`]: data });
   }
 
   handleMessage(message:MessageEvent) {
@@ -193,7 +193,7 @@ class Popup {
 
   /* HANDLERS */
 
-  handleStorageChanged(changes:{ string: browser.storage.StorageChange }, area:string) {
+  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       let profiles:Object = changes['Profiles'].newValue;

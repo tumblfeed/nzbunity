@@ -5,6 +5,7 @@
 // Includes
 
 const autoprefixer = require('gulp-autoprefixer');
+const clean = require('gulp-clean');
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const path = require('path');
@@ -86,6 +87,15 @@ gulp.task('paths', () => {
  * gulp copy
  * Copies all static files that do not require pre-processing / compilation
  */
+gulp.task('clean', () => {
+  return gulp.src([paths.buildPath + '/*', paths.distPath + '/*.zip'], {read: false})
+    .pipe(clean());
+});
+
+/**
+ * gulp clean
+ * Deletes all files in the build and dist directories
+ */
 gulp.task('copy', () => {
   gutil.log(
     gutil.colors.magenta('Copying files ') + envStr(),
@@ -149,20 +159,19 @@ gulp.task('sass', () => {
 });
 
 /**
- *
- */
-gulp.task('zip', () => {
-  gulp.src(paths.buildPath + '/**/*')
-    .pipe(zip('nzbunity.zip'))
-    .pipe(gulp.dest(paths.distPath));
-});
-
-/**
  * gulp build
  * Runs frontend build tasks and then Maven package.
  */
 gulp.task('build', ['copy', 'typescript', 'sass']);
-gulp.task('dist', ['build', 'zip']);
+
+/**
+ * Zips up the build directory into the dist directory (webextensions are just zips)
+ */
+gulp.task('dist', ['build'], () => {
+  gulp.src(paths.buildPath + '/**/*')
+    .pipe(zip('nzbunity.zip'))
+    .pipe(gulp.dest(paths.distPath));
+});
 
 // Watchers
 

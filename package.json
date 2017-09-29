@@ -1,8 +1,8 @@
 {
   "name": "nzbunity",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "license": "MPL-2.0",
-  "description": "Adds the ability to send and control Usenet NZB files from various NZB sites directly to SABnzbd+ or NZBGet download clients.",
+  "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "John Hutchison",
   "contributors": [
     "clutterskull@gmail.com"
@@ -27,6 +27,7 @@
     "bootstrap-sass": "~> 3.3.7",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.0",
+    "gulp-clean": "^0.3.2",
     "gulp-debug": "^3.1.0",
     "gulp-sass": "^2.2.0",
     "gulp-sourcemaps": "^2.6.0",

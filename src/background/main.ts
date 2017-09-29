@@ -1,66 +1,6 @@
-declare interface NZBUnityProfileOptions extends Dictionary {
-  ProfileName: string,
-  ProfileType: string,
-  ProfileHost: string,
-  ProfileApiKey: string,
-  ProfileUsername: string,
-  ProfilePassword: string
-}
-
-declare interface NZBUnityProviderOptions extends Dictionary {
-  Enabled: boolean,
-  Matches: string[],
-  Js: string[]
-}
-
-declare interface NZBUnityProfileDictionary {
-  [key:string]: NZBUnityProfileOptions
-}
-
-declare interface NZBUnityProviderDictionary {
-  [key:string]: NZBUnityProviderOptions
-}
-
-declare interface NZBUnityOptions extends NestedDictionary {
-  Initialized: boolean,
-  Debug: boolean,
-  Profiles: NZBUnityProfileDictionary,
-  ActiveProfile: string,
-  Providers: NZBUnityProviderDictionary,
-  ProviderNewznab: string,
-  ProviderEnabled: boolean,
-  RefreshRate: number,
-  InterceptDownloads: boolean,
-  EnableNotifications: boolean,
-  EnableNewznab: boolean,
-  SimplifyCategories: boolean,
-  DefaultCategory: string,
-  OverrideCategory: string
-};
-
-const DisplayAvailableProviders:string[] = ['binsearch', 'nzbindex', 'yubse'];
-
-const DefaultOptions:NZBUnityOptions = {
-  Initialized: false,
-  Debug: false,
-  Profiles: {},
-  ActiveProfile: null,
-  ProviderEnabled: true,
-  ProviderDisplay: true,
-  Providers: {},
-  ProviderNewznab: '',
-  RefreshRate: 15,
-  InterceptDownloads: true,
-  EnableNotifications: true,
-  EnableNewznab: true,
-  SimplifyCategories: true,
-  DefaultCategory: null,
-  OverrideCategory: null
-};
-
 class NZBUnity {
   public _debug:boolean;
-  public optionsTab:browser.tabs.Tab;
+  public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
   private refreshTimer:number;
 
@@ -80,7 +20,7 @@ class NZBUnity {
         this.debug('[NZBUnity.constructor] Active profile connected');
 
         // Handle messages from the UI
-        browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
+        chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
         this.debug('[NZBUnity.constructor] Message handler initialized');
 
         // Intercept response headers to check for NZB content
@@ -88,7 +28,7 @@ class NZBUnity {
       })
       .then((opts) => {
         if (opts.InterceptDownloads) {
-          browser.webRequest.onHeadersReceived.addListener(
+          chrome.webRequest.onHeadersReceived.addListener(
             this.handleHeadersReceived.bind(this),
             {
               urls: ["<all_urls>"],
@@ -109,9 +49,9 @@ class NZBUnity {
     Util.storage.get('EnableNotifications')
       .then((opts) => {
         if (opts.EnableNotifications) {
-          browser.notifications.create(`nzbunity.${id}`, {
+          chrome.notifications.create(`nzbunity.${id}`, {
             'type': 'basic',
-            'iconUrl': browser.extension.getURL('content/images/icon-32.png'),
+            'iconUrl': chrome.extension.getURL('content/images/icon-32.png'),
             'title': `NZB Unity - ${title}`,
             'message': message
           });
@@ -119,13 +59,13 @@ class NZBUnity {
       });
   }
 
-  sendMessage(name:string, data:any = null) {
-    browser.runtime.sendMessage({ [`main.${name}`]: data });
+  sendMessage(name:string, data:any = null):Promise<any> {
+    return Util.sendMessage({ [`main.${name}`]: data });
   }
 
-  sendTabMessage(tab:browser.tabs.Tab, name:string, data:any) {
+  sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any):Promise<any> {
     if (tab) {
-      browser.tabs.sendMessage(tab.id, { [`main.${name}`]: data });
+      return Util.sendTabMessage(tab.id, { [`main.${name}`]: data });
     }
   }
 
@@ -256,7 +196,7 @@ class NZBUnity {
     }
   }
 
-  handleMessage(message:MessageEvent) {
+  handleMessage(message:MessageEvent, sender:any, sendResponse:(response:any) => void) {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
@@ -265,9 +205,17 @@ class NZBUnity {
       this.debug(k, val);
 
       switch (k) {
+        case 'util.request':
+          console.log('util.request', val);
+          break;
+
         // Content Scripts
         case 'content.addUrl':
-          return this.addUrl(val.url, val);
+          this.addUrl(val.url, val)
+            .then((r) => {
+              sendResponse(r);
+            });
+          break;
 
         // Popup Messages
         case 'popup.profileSelect':
@@ -307,7 +255,7 @@ class NZBUnity {
 
         case 'popup.openProfilePage':
           if (this.nzbHost) {
-            browser.tabs.create({
+            chrome.tabs.create({
               url: this.nzbHost.host
             });
           }
@@ -328,7 +276,11 @@ class NZBUnity {
           break;
 
         case 'options.resetOptions':
-          return this.resetOptions();
+          this.resetOptions()
+            .then((r) => {
+              this.sendOptionsMessage('resetOptions', true);
+            });
+        break;
 
         case 'options.profileNameChanged':
           Util.storage.get('ActiveProfile')
@@ -345,10 +297,14 @@ class NZBUnity {
 
         case 'options.profileTest':
           this.sendOptionsMessage('profileTestStart', true);
-          return this.profileTest(val)
+          this.profileTest(val)
+            .then((r) => {
+              this.sendOptionsMessage('profileTestEnd', r);
+            })
             .catch((err) => {
-              return { success: false, error: err };
+              this.sendOptionsMessage('profileTestEnd', { success: false, error: err });
             });
+          break;
       }
     }
   }
@@ -482,6 +438,12 @@ class NZBUnity {
   }
 
   /* DEBUGGING */
+
+  enableDebug(debug:boolean = true) {
+    Util.storage.set({ Debug: debug }).then(() => {
+      this.debugOpts();
+    });
+  }
 
   error(...args:any[]) {
     console.error.apply(this, args);

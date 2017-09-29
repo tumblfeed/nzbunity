@@ -22,10 +22,9 @@ class OptionsPage {
     this.profileInputs = $('#profile-container').find('input, select');
 
     // Init tab stuff
-    browser.tabs.getCurrent()
-      .then((tab:browser.tabs.Tab) => {
-        this.sendMessage('onTab', tab);
-      });
+    chrome.tabs.getCurrent((tab:chrome.tabs.Tab) => {
+      this.sendMessage('onTab', tab);
+    });
 
     // Init options
     Util.storage.get(null)
@@ -91,32 +90,26 @@ class OptionsPage {
         this.providerInputs.on('change', this.handleProviderInput.bind(this));
 
         // Init storage on change watcher
-        browser.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+        chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
         // Reset watcher
         $('#ResetOptions').on('click', (e)=> {
           if (confirm('Are you sure you want to reset all settings? This cannot be undone.')) {
-            this.sendMessage('resetOptions', true)
-              .then((r:NZBResult) => {
-                this.debug('Options reset, reloading');
-                if(r.success) {
-                  window.location.reload();
-                }
-              });
+            this.sendMessage('resetOptions', true);
           }
         });
       });
 
     // Handle messages from the UI
-    browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     this.sendMessage('onInit', 'Options initialized.');
   }
 
   /* MESSAGING */
 
-  sendMessage(name:string, data:any):Promise<any> {
-    return browser.runtime.sendMessage({ [`options.${name}`]: data });
+  sendMessage(name:string, data:any = null):Promise<any> {
+    return Util.sendMessage({ [`options.${name}`]: data });
   }
 
   handleMessage(message:MessageEvent) {
@@ -127,16 +120,28 @@ class OptionsPage {
       let val:any = message[k];
 
       switch (k) {
+        case 'main.resetOptions':
+          if (val) {
+            this.debug('Options reset, reloading');
+            window.location.reload();
+          }
+          break;
+
         case 'main.profileTestStart':
           this.profileTestStart();
           break;
+
+        case 'main.profileTestEnd':
+          this.profileTestEnd(val);
+          break;
+
       }
     }
   }
 
   /* HANDLERS */
 
-  handleStorageChanged(changes:{ string: browser.storage.StorageChange }, area:string) {
+  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
     // this.debug('[OptionsPage.handleStorageChanged] ',
     //     Object.keys(changes)
     //         .map((k) => { return `${k} -> ${changes[k].newValue}`; })
@@ -212,7 +217,7 @@ class OptionsPage {
 
       return this.profileSave()
         .then(() => {
-          this.sendMessage('profileNameChanged', { old: oldName, new: newName });
+          return this.sendMessage('profileNameChanged', { old: oldName, new: newName });
         });
     }
   }
@@ -220,7 +225,7 @@ class OptionsPage {
   profileSave() {
     return Util.storage.set({ Profiles: this.profiles })
       .then(() => {
-        this.sendMessage('profilesSaved', this.profiles);
+        return this.sendMessage('profilesSaved', this.profiles);
       });
   }
 
@@ -334,24 +339,29 @@ class OptionsPage {
   profileTest() {
     let name:string = this.profileData.ProfileName;
     this.debug('[OptionsPage.profileTest] ', name);
-    this.sendMessage('profileTest', name)
-      .then((r) => {
-        if (r.success) {
-          this.profileTestSuccess();
+    this.sendMessage('profileTest', name);
+  }
+
+  profileTestEnd(r:any) {
+    if (r) {
+      if (r.success) {
+        this.profileTestSuccess();
+      } else {
+        let error:string;
+
+        if (typeof r.error === 'string') {
+          error = r.error;
+        } if (r.error && r.error['statusText']) {
+          error = r.error['statusText'];
         } else {
-          let error:string;
-
-          if (typeof r.error === 'string') {
-            error = r.error;
-          } if (r.error.statusText) {
-            error = r.error.statusText;
-          } if (r.error.status === 0) {
-            error = 'Could not connect to host';
-          }
-
-          this.profileTestFailure(error);
+          error = 'Could not connect to host';
         }
-      });
+
+        this.profileTestFailure(error);
+      }
+    } else {
+      this.profileTestFailure('Unknown error');
+    }
   }
 
   getProfileTestButton(color:string = 'info'):JQuery<HTMLElement> {
@@ -369,6 +379,7 @@ class OptionsPage {
   }
 
   profileTestStart():JQuery<HTMLElement> {
+    this.profileTestClear();
     return this.getProfileTestButton('secondary')
       .prop('disabled', true)
       .find('.icon')
