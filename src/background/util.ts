@@ -165,6 +165,7 @@ class Util {
   static sendMessage(message:any):Promise<any> {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage(message, (response:any) => {
+        // console.info('[2]', response);
         resolve(response);
       })
     });
@@ -388,15 +389,15 @@ class PageUtil {
       img.attr('src', PageUtil.iconGrey);
 
       Util.sendMessage({ 'content.addUrl': options })
-        .then((r:NZBAddUrlResult) => {
-          // console.log('got response', r);
+        .then((r:boolean) => {
+          // console.log('[3]', r);
           setTimeout(() => {
-            if (r.success) {
-              img.attr('src', PageUtil.iconGreen);
-              link.trigger('addUrl.success');
-            } else {
+            if (r === false) {
               img.attr('src', PageUtil.iconRed);
               link.trigger('addUrl.failure');
+            } else {
+              img.attr('src', PageUtil.iconGreen);
+              link.trigger('addUrl.success');
             }
           }, 1000);
         });

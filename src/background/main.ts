@@ -213,7 +213,8 @@ class NZBUnity {
         case 'content.addUrl':
           this.addUrl(val.url, val)
             .then((r) => {
-              sendResponse(r);
+              // console.info('[1]', r);
+              sendResponse(r && r.success);
             });
           break;
 
