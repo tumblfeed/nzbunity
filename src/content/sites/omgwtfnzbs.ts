@@ -37,10 +37,11 @@ class NZBUnityOmgwtfnzbs {
   }
 
   getApiKey():Promise<string> {
-    return PageUtil.request({ url: '/account', params: { action: 'api' } })
+    return PageUtil.request({ url: '/account' })
       .then((r) => {
-        let el = $(r).find('[color="orange"]');
-        return el.length ? el[0].innerText : null
+        let el = $(r).find('a[href="account?action=api"]');
+        let api:string = el.length ? el[0].innerText : null;
+        return api.match(/^[a-f0-9]+$/i) ? api : null; // api key must be hex
       })
   }
 
