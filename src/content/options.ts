@@ -13,6 +13,9 @@ class OptionsPage {
 
   public providerInputs:JQuery<HTMLElement>;
 
+  public interceptDownloads:JQuery<HTMLElement>;
+  public interceptExclude:JQuery<HTMLElement>;
+
   constructor() {
     this.providers = {};
     this.form = $('#FormSettings');
@@ -20,6 +23,8 @@ class OptionsPage {
     this.profileCurrent = $('#ProfileCurrent');
     this.profileButtons = $('#profile-controls button, #profileTest');
     this.profileInputs = $('#profile-container').find('input, select');
+    this.interceptDownloads = $('#InterceptDownloads');
+    this.interceptExclude = $('#InterceptExclude');
 
     // Init tab stuff
     chrome.tabs.getCurrent((tab:chrome.tabs.Tab) => {
@@ -88,6 +93,11 @@ class OptionsPage {
 
         this.providerInputs = $('input[type="checkbox"][id^="Provider"]');
         this.providerInputs.on('change', this.handleProviderInput.bind(this));
+
+        // Enable / Disable exclude textbox on intercept change
+        this.interceptDownloads.on('change', (e) => {
+          this.interceptExclude.prop('disabled', !this.interceptDownloads.prop('checked'));
+        });
 
         // Init storage on change watcher
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));

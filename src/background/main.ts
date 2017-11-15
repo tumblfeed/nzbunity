@@ -3,6 +3,7 @@ class NZBUnity {
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
   private refreshTimer:number;
+  private interceptExclude:string;
 
   constructor() {
     // Initialize default options
@@ -23,20 +24,16 @@ class NZBUnity {
         chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
         this.debug('[NZBUnity.constructor] Message handler initialized');
 
+        // Init storage on change watcher
+        chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
+
         // Intercept response headers to check for NZB content
-        return Util.storage.get('InterceptDownloads');
+        return Util.storage.get(['InterceptDownloads', 'InterceptExclude']);
       })
       .then((opts) => {
         if (opts.InterceptDownloads) {
-          chrome.webRequest.onHeadersReceived.addListener(
-            this.handleHeadersReceived.bind(this),
-            {
-              urls: ["<all_urls>"],
-              types: ["main_frame", "sub_frame"]
-            },
-            ["responseHeaders", "blocking"]
-          );
-          this.debug('[NZBUnity.constructor] NZB download intercept initialized');
+          this.enableIntercept();
+          this.interceptExclude = opts.InterceptExclude;
         }
       })
       .then(() => {
@@ -139,62 +136,9 @@ class NZBUnity {
         );
         return result;
       });
-}
+  }
 
   /* HANDLERS */
-
-  handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
-    let url:string = details.url;
-    let type:string;
-    let disposition:string;
-    let dnzb:DirectNZB = {};
-
-    details.responseHeaders.forEach((h) => {
-      if (h.name === 'Content-Type') {
-        type = h.value.split(/;\s*/)[0].toLowerCase();
-      } else if (h.name === 'Content-Disposition') {
-        disposition = h.value;
-      } else if (h.name.startsWith('X-DNZB')) {
-        dnzb[h.name.replace('X-DNZB-', '')] = h.value;
-      }
-    });
-
-    // Intercept if NZB
-    let dispositionMatch = disposition && disposition.match(/^attachment;\s*filename="?(.*(\.nzb))"?$/i);
-    if (type === 'application/x-nzb' || dispositionMatch) {
-
-      // console.log('===================HEADERS=================');
-      // console.log(`URL: ${url}`);
-      // console.log(`Type: ${type}`);
-      // console.log(`Disposition: ${disposition}`);
-      // for (let k in dnzb) {
-      //   console.log(`${k}: ${dnzb[k]}`);
-      // }
-      // console.log('===================HEADERS=================');
-
-      let options:NZBAddOptions = {};
-
-      if (dispositionMatch) {
-        options.name = dispositionMatch[1];
-      }
-      if (dnzb.Category) {
-        options.category = dnzb.Category;
-      }
-
-      this.addUrl(url, options)
-        .then((r) => {
-          console.info(`[NZBUnity] NZB intercepted, ${r.success ? 'Success' : 'Failure'}
-  ${url}
-  ${options.name || ''}
-  ${!r.success ? 'Error: ' + r.error : ''}`
-          );
-        });
-
-      return { cancel: true };
-    } else {
-      return;
-    }
-  }
 
   handleMessage(message:MessageEvent, sender:any, sendResponse:(response:any) => void) {
     if (this._debug) this.debugMessage(message);
@@ -313,6 +257,31 @@ class NZBUnity {
     }
   }
 
+  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
+    // this.debug('[OptionsPage.handleStorageChanged] ',
+    //   Object.keys(changes)
+    //     .map((k) => { return `${k} -> ${changes[k].newValue}`; })
+    //     .join(', ')
+    // );
+
+    // If Intercept download has changed, we need to enable/disable
+    if (changes['InterceptDownloads']) {
+      if (changes['InterceptDownloads'].newValue) {
+        this.enableIntercept();
+        return Util.storage.get(['InterceptExclude'])
+          .then((opts) => {
+            this.interceptExclude = opts.InterceptExclude;
+          });
+      } else {
+        this.disableIntercept();
+      }
+    }
+
+    if (changes['InterceptExclude']) {
+      this.interceptExclude = changes['InterceptExclude'].newValue;
+    }
+  }
+
   /* OPTIONS */
 
   resetOptions():Promise<void> {
@@ -379,6 +348,90 @@ class NZBUnity {
     return opt.every((k:string) => {
       return Object.keys(DefaultOptions).indexOf(k) >= 0;
     });
+  }
+
+  /* INTERCEPT */
+
+  enableIntercept() {
+    chrome.webRequest.onHeadersReceived.addListener(
+      this.handleHeadersReceived.bind(this),
+      {
+        urls: ["<all_urls>"],
+        types: ["main_frame", "sub_frame"]
+      },
+      ["responseHeaders", "blocking"]
+    );
+    this.debug('[NZBUnity.constructor] NZB download intercept enabled');
+  }
+
+  disableIntercept() {
+    chrome.webRequest.onHeadersReceived.removeListener(
+      this.handleHeadersReceived.bind(this)
+    );
+    this.debug('[NZBUnity.constructor] NZB download intercept disabled');
+  }
+
+  isInterceptExcluded(url:string):boolean {
+    if (!this.interceptExclude || !url) return false;
+
+    return this.interceptExclude.split(/\s*,\s*/)
+      .map((v:string) => { return new RegExp(v); })
+      .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
+  }
+
+  handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
+    let url:string = details.url;
+    let type:string;
+    let disposition:string;
+    let dnzb:DirectNZB = {};
+
+    details.responseHeaders.forEach((h) => {
+      if (h.name === 'Content-Type') {
+        type = h.value.split(/;\s*/)[0].toLowerCase();
+      } else if (h.name === 'Content-Disposition') {
+        disposition = h.value;
+      } else if (h.name.startsWith('X-DNZB')) {
+        dnzb[h.name.replace('X-DNZB-', '')] = h.value;
+      }
+    });
+
+    // Intercept if NZB and not excluded
+    let dispositionMatch = disposition && disposition.match(/^attachment;\s*filename="?(.*(\.nzb))"?$/i);
+    if (
+      !this.isInterceptExcluded(url)
+      && (type === 'application/x-nzb' || dispositionMatch)
+    ) {
+      // console.log('===================HEADERS=================');
+      // console.log(`URL: ${url}`);
+      // console.log(`Type: ${type}`);
+      // console.log(`Disposition: ${disposition}`);
+      // for (let k in dnzb) {
+      //   console.log(`${k}: ${dnzb[k]}`);
+      // }
+      // console.log('===================HEADERS=================');
+
+      let options:NZBAddOptions = {};
+
+      if (dispositionMatch) {
+        options.name = dispositionMatch[1];
+      }
+      if (dnzb.Category) {
+        options.category = dnzb.Category;
+      }
+
+      this.addUrl(url, options)
+        .then((r) => {
+          console.info(`[NZBUnity] NZB intercepted, ${r.success ? 'Success' : 'Failure'}
+  ${url}
+  ${options.name || ''}
+  ${!r.success ? 'Error: ' + r.error : ''}`
+          );
+        });
+
+      return { cancel: true };
+    } else {
+      return;
+    }
   }
 
   /* PROFILE */
