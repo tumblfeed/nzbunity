@@ -255,11 +255,14 @@ class NZBUnity {
           break;
 
         case 'popup.openProfilePage':
-          if (this.nzbHost) {
-            chrome.tabs.create({
-              url: this.nzbHost.host
+          this.getActiveProfile()
+            .then((profile) => {
+              if (profile) {
+                chrome.tabs.create({
+                  url: profile.ProfileServerUrl || profile.ProfileHost
+                });
+              }
             });
-          }
           break;
 
         // Options Messages
@@ -435,6 +438,13 @@ class NZBUnity {
         } else {
           return { success: false, error: 'Profile not found' };
         }
+      });
+  }
+
+  getActiveProfile():Promise<NZBUnityProfileOptions> {
+    return Util.storage.get(['ActiveProfile', 'Profiles'])
+      .then((opts) => {
+        return opts.Profiles[opts.ActiveProfile];
       });
   }
 

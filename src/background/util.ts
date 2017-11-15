@@ -17,7 +17,8 @@ declare interface NZBUnityProfileOptions extends Dictionary {
   ProfileHost: string,
   ProfileApiKey: string,
   ProfileUsername: string,
-  ProfilePassword: string
+  ProfilePassword: string,
+  ProfileServerUrl: string
 }
 
 declare interface NZBUnityProviderOptions extends Dictionary {
