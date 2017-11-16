@@ -120,3 +120,20 @@ Which will create the link, assign the handler, and return the link. If the adja
 
 The PageUtil source has some other handy functions, it's recommended to read the source.
 
+## Changelog
+
+### 1.1.3
+
+Initial public release
+
+### 1.2.0
+
+* Bugfixes
+* New profile option "Open serrver URL"
+* New general option "Intercept Exclude"
+
+### 1.2.1
+
+* New API method for sending NZB file data to SABnzbd and NZBGet. This allows building 1-Click site profiles that first use whatever means necessary in the site to download the NZB data and then upload that.
+* New 1-Click site profile for nzbking.com
+
