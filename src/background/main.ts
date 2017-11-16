@@ -108,23 +108,28 @@ class NZBUnity {
       });
   }
 
+  normalizeCategory(category:string | null | undefined):Promise<string> {
+    return Util.storage.get(['OverrideCategory', 'DefaultCategory', 'SimplifyCategories'])
+      .then((opts) => {
+        // Manage category options
+        if (opts.OverrideCategory) {
+          return opts.OverrideCategory;
+        } else if (category && opts.SimplifyCategories) {
+          return Util.simplifyCategory(category);
+        } else if (!category && opts.DefaultCategory) {
+          return opts.DefaultCategory;
+        }
+      });
+  }
+
   addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
     if (!this.nzbHost) {
       return null;
     }
 
-    return Util.storage.get(['OverrideCategory', 'DefaultCategory', 'SimplifyCategories'])
-      .then((opts) => {
-        // Manage category options
-        if (opts.OverrideCategory) {
-          this.debug(`[NZBUnity.addUrl] Override caterory: ${opts.OverrideCategory}`);
-          options.category = opts.OverrideCategory;
-        } else if (options.category && opts.SimplifyCategories) {
-          options.category = Util.simplifyCategory(options.category);
-        } else if (!options.category && opts.DefaultCategory) {
-          options.category = opts.DefaultCategory;
-        }
-
+    return this.normalizeCategory(options.category)
+      .then((category:string) => {
+        options.category = category;
         return this.nzbHost.addUrl(url, options)
       })
       .then((result) => {
@@ -133,6 +138,27 @@ class NZBUnity {
           'addUrl',
           `${options.name || url} Added`,
           `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`
+        );
+        return result;
+      });
+  }
+
+  addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+    if (!this.nzbHost) {
+      return null;
+    }
+
+    return this.normalizeCategory(options.category)
+      .then((category:string) => {
+        options.category = category;
+        return this.nzbHost.addFile(filename, content, options);
+      })
+      .then((result) => {
+        this.sendMessage('addUrl', result);
+        this.showNotification(
+          'addUrl',
+          `${filename} Added`,
+          `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`
         );
         return result;
       });
@@ -156,6 +182,14 @@ class NZBUnity {
         // Content Scripts
         case 'content.addUrl':
           this.addUrl(val.url, val)
+            .then((r) => {
+              // console.info('[1]', r);
+              sendResponse(r && r.success);
+            });
+          break;
+
+        case 'content.addFile':
+          this.addFile(val.filename, val.content, val)
             .then((r) => {
               // console.info('[1]', r);
               sendResponse(r && r.success);

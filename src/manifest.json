@@ -48,17 +48,10 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.binsearch.info/*",
-        "*://*.binsearch.net/*",
-        "*://*.binsearch.co.uk/*",
-        "*://*.binsear.ch/*",
-        "*://*.bintube.com/*",
         "*://*.dognzb.cr/*",
-        "*://*.nzbindex.com/*",
-        "*://*.nzbindex.nl/*",
-        "*://*.nzb-rss.com/*",
-        "*://*.omgwtfnzbs.me/*",
-        "*://*.yubse.com/*"
+        "*://*.nzbgeek.info/*",
+        "*://*.nzbking.com/*",
+        "*://*.omgwtfnzbs.me/*"
       ],
       "js": [
         "vendor/jquery-3.2.1.slim.js",
@@ -72,6 +65,10 @@
     {
       "matches": ["*://*.nzbgeek.info/*"],
       "js": ["content/sites/nzbgeek.js"]
+    },
+    {
+      "matches": ["*://*.nzbking.com/*"],
+      "js": ["content/sites/nzbking.js"]
     },
     {
       "matches": ["*://*.omgwtfnzbs.me/*"],

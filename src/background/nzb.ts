@@ -97,6 +97,7 @@ abstract class NZBHost {
   abstract getQueue():Promise<NZBQueueResult>;
   abstract getCategories():Promise<string[]>;
   abstract addUrl(url:string, options:NZBAddOptions):Promise<NZBAddUrlResult>;
+  abstract addFile(filename:string, content:string, options:NZBAddOptions):Promise<NZBAddUrlResult>;
   abstract setMaxSpeed(bytes:number):Promise<NZBResult>;
   abstract resumeQueue():Promise<NZBResult>;
   abstract pauseQueue():Promise<NZBResult>;
@@ -126,6 +127,16 @@ class SABnzbdHost extends NZBHost {
         mode: operation
       }
     };
+
+    if (operation === 'addfile') {
+      request.method = 'POST';
+      request.multipart = true;
+    }
+
+    if (request.method === 'POST') {
+      request.url = `${this.apiUrl}?output=json&mode=${operation}&apikey=${this.apikey}`;
+      request.params = {};
+    }
 
     for (let k in params) {
       request.params[k] = String(params[k]);
@@ -249,11 +260,74 @@ class SABnzbdHost extends NZBHost {
 
     return this.call('addurl', params)
       .then((r) => {
-        if (r.success) {
-          let ids:string[] = r.result['nzo_ids'];
-          r.result = ids.length ? ids[0] : null;
+        let nzbResult:NZBAddUrlResult = <NZBAddUrlResult> r;
+        if (nzbResult.success) {
+          let ids:string[] = nzbResult.result['nzo_ids'];
+          nzbResult.result = ids.length ? ids[0] : null;
         }
-        return <NZBAddUrlResult> r;
+        return nzbResult;
+      });
+  }
+
+  addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+    let operation = 'addfile';
+    let params:StringDictionary = {
+      apikey: this.apikey,
+      mode: operation,
+      output: 'json',
+      nzbname: filename
+    };
+
+    for (let k in options) {
+      let val = String(options[k]);
+
+      if (k === 'category') {
+        params.cat = val;
+      } else {
+        params[k] = val;
+      }
+    }
+
+    delete params.content;
+    delete params.filename;
+
+    let request:RequestOptions = {
+      method: 'POST',
+      multipart: true,
+      url: this.apiUrl + '?' + Util.uriEncodeQuery(params),
+      files: {
+        name: {
+          filename: filename,
+          type: 'application/nzb',
+          content: content
+        }
+      }
+    };
+
+    return Util.request(request)
+      .then((r) => {
+        // check for error condition
+        if (r.status === false && r.error) {
+          return { success: false, operation: operation, error: r.error };
+        }
+
+        // Collapse single key result
+        if (Object.keys(r).length === 1) {
+          r = r[Object.keys(r)[0]];
+        }
+
+        return { success: true, operation: operation, result: r };
+      })
+      .then((r) => {
+        let nzbResult:NZBAddUrlResult = <NZBAddUrlResult> r;
+        if (nzbResult.success) {
+          let ids:string[] = nzbResult.result['nzo_ids'];
+          nzbResult.result = ids.length ? ids[0] : null;
+        }
+        return nzbResult;
+      })
+      .catch((err) => {
+        return { success: false, operation: operation, error: err };
       });
   }
 
@@ -433,6 +507,29 @@ class NZBGetHost extends NZBHost {
     let params:Array<any> = [
       '', // NZBFilename,
       url, // NZBContent,
+      options.category || '', // Category,
+      options.priority || NZBPriority.normal, // Priority,
+      false, // AddToTop,
+      false, // AddPaused,
+      '', // DupeKey,
+      0, // DupeScore,
+      'SCORE', // DupeMode,
+      [] // PPParameters
+    ];
+
+    return this.call('append', params)
+      .then((r) => {
+        if (r.success) {
+          r.result = String(r.result);
+        }
+        return <NZBAddUrlResult> r;
+      });
+  }
+
+  addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+    let params:Array<any> = [
+      filename, // NZBFilename,
+      btoa(content), // NZBContent,
       options.category || '', // Category,
       options.priority || NZBPriority.normal, // Priority,
       false, // AddToTop,

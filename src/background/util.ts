@@ -87,10 +87,18 @@ declare interface RequestOptions {
   url: string;
   headers?: StringDictionary;
   params?: NestedDictionary;
-  body?: string;
+  body?: string | FormData;
   username?: string;
   password?: string;
   json?: boolean;
+  multipart?: boolean;
+  files?: {
+    [key:string]: {
+      filename: string;
+      type: string;
+      content: any;
+    }
+  };
 }
 
 declare interface CreateAddLinkOptions {
@@ -231,7 +239,7 @@ class Util {
       let search:StringDictionary = parsed.search;
       let headers:StringDictionary = options.headers || {};
 
-      if (options.params) {
+      if (options.params || options.files || options.multipart) {
         // GET requests, pack everything in the URL
         if (method === 'GET') {
           search = search || {};
@@ -244,6 +252,8 @@ class Util {
         } else if (!options.body) {
           let type = headers['Content-Type']
             || (options.json && 'json')
+            || (options.files && 'multipart')
+            || (options.multipart && 'multipart')
             || 'form';
 
           switch (type) {
@@ -251,6 +261,18 @@ class Util {
             case 'application/json':
               headers['Content-Type'] = 'application/json';
               options.body = JSON.stringify(options.params);
+              break;
+
+            case 'multipart':
+            case 'multipart/form-data':
+              delete headers['Content-Type'];
+              options.body = new FormData();
+              for (let k in options.params) {
+                options.body.append(k, <string> options.params[k]);
+              }
+              for (let k in options.files) {
+                options.body.append(k, new Blob([options.files[k].content], { type: options.files[k].type }), options.files[k].filename);
+              }
               break;
 
             case 'form':
