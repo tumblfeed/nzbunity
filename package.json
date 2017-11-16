@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "John Hutchison",
@@ -22,8 +22,10 @@
     "url": "https://github.com/clutterskull/nzbunity/issues"
   },
   "dependencies": {
+    "@types/bootstrap": "^3.3.36",
     "@types/chrome": "0.0.48",
     "@types/jquery": "^3.2.12",
+    "@types/popper.js": "^1.11.0",
     "bootstrap-sass": "~> 3.3.7",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.0",

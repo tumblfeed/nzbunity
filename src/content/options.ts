@@ -113,6 +113,14 @@ class OptionsPage {
     // Handle messages from the UI
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
+    // Init tooltips
+    $('[data-toggle="tooltip"]').tooltip({
+      animation: true,
+      container: 'body',
+      html: true,
+      placement: 'bottom'
+    });
+
     this.sendMessage('onInit', 'Options initialized.');
   }
 

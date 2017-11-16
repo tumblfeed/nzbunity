@@ -8,6 +8,16 @@ $fa-font-path: "../fonts";
   justify-content: space-evenly;
 }
 
+.tooltip {
+  .tooltip-inner {
+    background: #222;
+    font-size: .85em;
+    max-width: 250px;
+    padding: 5px 8px;
+    // width: 250px;
+  }
+}
+
 // Options Page Styles
 body#options {
   background: rgb(66, 79, 90);
@@ -52,7 +62,7 @@ body#options {
   #FormSettings {
 
     .explanation {
-      font-size: .8em;
+      font-size: .85em;
     }
 
     .custom-select {

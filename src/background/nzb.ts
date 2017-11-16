@@ -113,7 +113,10 @@ class SABnzbdHost extends NZBHost {
     super(options);
     this.apikey = options.apikey || '';
 
-    let pathname = `${this.hostParsed.pathname}/sabnzbd/api`.replace(/\/+/g, '/');
+    // If path is empty, default to /sabnzbd
+    let apiPath:string = /^\/*$/i.test(this.hostParsed.pathname) ? 'sabnzbd/api' : 'api';
+
+    let pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
     this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
   }
 
@@ -127,16 +130,6 @@ class SABnzbdHost extends NZBHost {
         mode: operation
       }
     };
-
-    if (operation === 'addfile') {
-      request.method = 'POST';
-      request.multipart = true;
-    }
-
-    if (request.method === 'POST') {
-      request.url = `${this.apiUrl}?output=json&mode=${operation}&apikey=${this.apikey}`;
-      request.params = {};
-    }
 
     for (let k in params) {
       request.params[k] = String(params[k]);

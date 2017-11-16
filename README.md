@@ -30,11 +30,14 @@ In order to use NZB Unity, at least one server profile must be defined. To get s
 * Type -- Either SABnzbd or NZBGet are supported.
   * SABnzbd profiles *must* use API Key.
   * NZBGet profiles *must* use Username and Password.
-* Host -- Either protocol and host name or FQDN of the server to connect to. Protocol must be included if HTTPS connections are desired (eg, "https://myserver.com:8081", "http://myserver:8080", and "myserver:8080" are all valid). Please also see note under Test Connection above.
+* Host -- Either protocol and host name or FQDN of the server to connect to.
+  * Protocol and path are optional, defaults will be used if not specified (eg, "https://myserver.com:8081", "http://myserver:8080", "https://myserver:8080/mysab", and "myserver:8080" are all valid).
+  * Protocol must be included if HTTPS connections are desired. Please also see note under Test Connection above.
+  * SABnzbd connections will default to the path "/sabnzbd", but you may specify a different path. Using the root path "/" is currently unsupported (it will use the default in this case).
 * API Key -- **SABnzbd Only**. The full use API key for the SABnzbd server. Currently, NZB only API keys are unsupported as they do not give access to the queue.
 * Username -- **NZBGet Only**. Username for NZBGet API. Note that this can be a limited access user (NZB Unity does not access config).
 * Password -- **NZBGet Only**. Password for the NZBGet API.
-* "Open server" URL -- Optional, if specified the popup UI "Open server" button will open a tab to this URL instead of the profile Host.
+* "Open server" URL -- Optional, if specified the toolbar UI "Open server" button will open a tab to this URL instead of the profile Host.
 
 ### Other Options
 
