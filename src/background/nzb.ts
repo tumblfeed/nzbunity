@@ -25,17 +25,17 @@ enum NZBPostProcessing {
 }
 
 declare interface DirectNZB {
-  RCode?: string;
-  RText?: string;
-  Name?: string;
-  Category?: string;
-  MoreInfo?: string;
-  NFO?: string;
-  Propername?: string;
-  Episodename?: string;
-  Year?: string;
-  Details?: string;
-  Failure?: string;
+  rcode?: string;
+  rtext?: string;
+  name?: string;
+  category?: string;
+  moreinfo?: string;
+  nfo?: string;
+  propername?: string;
+  episodename?: string;
+  year?: string;
+  details?: string;
+  failure?: string;
 }
 
 declare interface NZBResult {

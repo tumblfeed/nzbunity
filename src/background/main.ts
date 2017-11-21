@@ -427,12 +427,14 @@ class NZBUnity {
     let dnzb:DirectNZB = {};
 
     details.responseHeaders.forEach((h) => {
-      if (h.name === 'Content-Type') {
+      let k:string = h.name.toLowerCase();
+
+      if (k === 'content-type') {
         type = h.value.split(/;\s*/)[0].toLowerCase();
-      } else if (h.name === 'Content-Disposition') {
+      } else if (k === 'content-disposition') {
         disposition = h.value;
-      } else if (h.name.startsWith('X-DNZB')) {
-        dnzb[h.name.replace('X-DNZB-', '')] = h.value;
+      } else if (k.startsWith('x-dnzb')) {
+        dnzb[k.replace('x-dnzb-', '')] = h.value;
       }
     });
 
@@ -453,12 +455,10 @@ class NZBUnity {
 
       let options:NZBAddOptions = {};
 
-      if (dispositionMatch) {
-        options.name = dispositionMatch[1];
-      }
-      if (dnzb.Category) {
-        options.category = dnzb.Category;
-      }
+      if (dnzb.name) options.name = dnzb.name;
+      else if (dispositionMatch) options.name = dispositionMatch[1];
+
+      if (dnzb.category) options.category = dnzb.category;
 
       this.addUrl(url, options)
         .then((r) => {
