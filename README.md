@@ -140,3 +140,8 @@ Initial public release
 * New API method for sending NZB file data to SABnzbd and NZBGet. This allows building 1-Click site profiles that first use whatever means necessary in the site to download the NZB data and then upload that.
 * New 1-Click site profile for nzbking.com
 
+### 1.2.3
+
+* Fixes "Open server" button prefixing addon URL to site URL.
+* Fixes intercept for sites that send header keys in lower case.
+* Fixes NZBGet Authentication.
