@@ -236,8 +236,15 @@ class NZBUnity {
           this.getActiveProfile()
             .then((profile) => {
               if (profile) {
+                let profileUrl:string = profile.ProfileServerUrl || profile.ProfileHost;
+
+                // Ensure protocol so the browser doesn't prefix the addon url
+                if (!/^[a-z]+:\/\//i.test(profileUrl)) {
+                  profileUrl = `http://${profileUrl}`;
+                }
+
                 chrome.tabs.create({
-                  url: profile.ProfileServerUrl || profile.ProfileHost
+                  url: profileUrl
                 });
               }
             });
