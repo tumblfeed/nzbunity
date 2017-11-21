@@ -292,7 +292,13 @@ class Util {
       // console.debug({ 'util.request': `${method} ${url}` });
 
       let xhr = new XMLHttpRequest();
+
       xhr.open(method, url, true, options.username || null, options.password || null);
+
+      if (options.username && options.password) {
+        xhr.withCredentials = true;
+        xhr.setRequestHeader('Authorization', 'Basic ' + btoa(`${options.username}:${options.password}`));
+      }
 
       for (let k in headers || {}) {
         xhr.setRequestHeader(k, headers[k]);

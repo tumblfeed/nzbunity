@@ -509,7 +509,6 @@ class NZBUnity {
       })
       .then(() => {
         // Ready to initizlize
-        // TODO: NZBGet
         let profile:NZBUnityProfileOptions = profiles[name];
 
         if (profile) {
@@ -517,8 +516,8 @@ class NZBUnity {
             this.nzbHost = new NZBGetHost(<StringDictionary> {
               displayName: name,
               host: profile.ProfileHost,
-              username: profile.Username,
-              password: profile.Password
+              username: profile.ProfileUsername,
+              password: profile.ProfilePassword
             });
           } else {
             this.nzbHost = new SABnzbdHost(<StringDictionary> {
