@@ -5,6 +5,8 @@
     "src/background/main.ts",
     "src/content/options.ts",
     "src/content/popup.ts",
+    "src/content/sites/newznab.ts",
+    "src/content/sites/newznab-detect.ts",
     "src/content/sites/dognzb.ts",
     "src/content/sites/nzbgeek.ts",
     "src/content/sites/nzbking.ts",

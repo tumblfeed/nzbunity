@@ -4,6 +4,8 @@ class NZBUnity {
   public nzbHost:NZBHost;
   private refreshTimer:number;
   private interceptExclude:string;
+  private newznabDetect:boolean;
+  private newznabProviders:string;
 
   constructor() {
     // Initialize default options
@@ -28,13 +30,17 @@ class NZBUnity {
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
         // Intercept response headers to check for NZB content
-        return Util.storage.get(['InterceptDownloads', 'InterceptExclude']);
+        return Util.storage.get(['InterceptDownloads', 'InterceptExclude', 'EnableNewznab', 'ProviderNewznab']);
       })
       .then((opts) => {
         if (opts.InterceptDownloads) {
           this.enableIntercept();
           this.interceptExclude = opts.InterceptExclude;
         }
+
+        this.newznabDetect = opts.EnableNewznab;
+        this.newznabProviders = opts.ProviderNewznab;
+        this.enableNewznab();
       })
       .then(() => {
         this.debug('[NZBUnity.constructor] Init Done, starting!');
@@ -179,6 +185,26 @@ class NZBUnity {
           console.log('util.request', val);
           break;
 
+        // Newznab detection
+        case 'newznab.enable':
+          Util.storage.get(['ProviderNewznab'])
+            .then((opts) => {
+              let providers = opts.ProviderNewznab
+                .split(/\s*,\s*/)
+                .filter((i) => { return i; });
+
+              providers.push(val);
+
+              return Util.storage.set({
+                ProviderNewznab: providers.join(',')
+              });
+            })
+            .then(() => {
+              this.debug(`[NZBUnity.handleMessage] ${val} added to Newznab providers`);
+              sendResponse(true);
+            });
+          break;
+
         // Content Scripts
         case 'content.addUrl':
           this.addUrl(val.url, val)
@@ -321,6 +347,10 @@ class NZBUnity {
     if (changes['InterceptExclude']) {
       this.interceptExclude = changes['InterceptExclude'].newValue;
     }
+
+    if (changes['ProviderNewznab']) {
+      this.newznabProviders = changes['ProviderNewznab'].newValue;
+    }
   }
 
   /* OPTIONS */
@@ -402,14 +432,14 @@ class NZBUnity {
       },
       ["responseHeaders", "blocking"]
     );
-    this.debug('[NZBUnity.constructor] NZB download intercept enabled');
+    this.debug('[NZBUnity] NZB download intercept enabled');
   }
 
   disableIntercept() {
     chrome.webRequest.onHeadersReceived.removeListener(
       this.handleHeadersReceived.bind(this)
     );
-    this.debug('[NZBUnity.constructor] NZB download intercept disabled');
+    this.debug('[NZBUnity] NZB download intercept disabled');
   }
 
   isInterceptExcluded(url:string):boolean {
@@ -472,6 +502,40 @@ class NZBUnity {
       return { cancel: true };
     } else {
       return;
+    }
+  }
+
+  /* NEWZNAB */
+
+  enableNewznab() {
+    chrome.tabs.onUpdated.addListener(this.handleNewznabTabUpdated.bind(this));
+    this.debug('[NZBUnity] Newznab detection enabled');
+  }
+
+  disableNewznab() {
+    chrome.tabs.onUpdated.removeListener(this.handleNewznabTabUpdated.bind(this));
+    this.debug('[NZBUnity] Newznab detection disabled');
+  }
+
+  isNewznabProvider(url:string):boolean {
+    if (!this.newznabProviders || !url) return false;
+
+    return this.newznabProviders.split(/\s*,\s*/)
+      .map((v:string) => { return new RegExp(v); })
+      .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
+  }
+
+  handleNewznabTabUpdated(tabId:number, changes:chrome.tabs.TabChangeInfo, tab:chrome.tabs.Tab) {
+    if (tab.status === 'complete') {
+      if (this.isNewznabProvider(tab.url)) {
+        // Check if URL matches known newznab sites, as this is less intrusive
+        chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.2.1.slim.js' });
+        chrome.tabs.executeScript(tabId, { file: 'background/util.js' });
+        chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab.js' });
+      } else if (this.newznabDetect) {
+        // If autodetection is enabled, check every site for newznabbiness
+        chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab-detect.js' });
+      }
     }
   }
 

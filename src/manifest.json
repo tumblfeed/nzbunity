@@ -21,7 +21,9 @@
     "content/images/nzb-16-green.png",
     "content/images/nzb-16-grey.png",
     "content/images/nzb-16-orange.png",
-    "content/images/nzb-16-red.png"
+    "content/images/nzb-16-red.png",
+    "content/images/nzb-32-green.png",
+    "content/images/nzb-64-green.png"
   ],
   "browser_action": {
     "browser_style": true,
