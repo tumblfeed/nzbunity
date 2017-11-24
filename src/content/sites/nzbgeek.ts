@@ -56,4 +56,6 @@ class NZBUnityNzbgeek {
   }
 }
 
-let nzbgeek = new NZBUnityNzbgeek();
+$(($) => {
+  let nzbgeek = new NZBUnityNzbgeek();
+});

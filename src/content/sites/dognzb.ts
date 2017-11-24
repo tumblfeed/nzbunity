@@ -78,4 +78,6 @@ class NZBUnityDognzb {
   }
 }
 
-let dognzb = new NZBUnityDognzb();
+$(($) => {
+  let dognzb = new NZBUnityDognzb();
+});

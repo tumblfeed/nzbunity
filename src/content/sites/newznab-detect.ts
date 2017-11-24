@@ -1,6 +1,6 @@
 class NZBUnityNewznabDetect {
-  constructor() {
-    if (this.detect()) {
+  static detect() {
+    if (NZBUnityNewznabDetect.isNewznab()) {
       console.log('[NewznabDetect] Newznab page detected');
 
       // Newznab usually has jQuery already, if so use it to notify the user
@@ -93,7 +93,7 @@ class NZBUnityNewznabDetect {
     }
   }
 
-  detect():boolean {
+  static isNewznab():boolean {
     return <boolean> (
       (
         document.querySelectorAll('[name=RSSTOKEN]').length > 0
@@ -104,4 +104,6 @@ class NZBUnityNewznabDetect {
   }
 }
 
-let newznabDetect = new NZBUnityNewznabDetect();
+NZBUnityNewznabDetect.detect();
+
+undefined;

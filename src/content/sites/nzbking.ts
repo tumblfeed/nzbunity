@@ -112,4 +112,6 @@ class NZBUnityNzbking {
   }
 }
 
-let nzbking = new NZBUnityNzbking();
+$(($) => {
+  let nzbking = new NZBUnityNzbking();
+});

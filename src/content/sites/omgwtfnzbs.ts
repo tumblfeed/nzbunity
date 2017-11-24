@@ -104,8 +104,6 @@ class NZBUnityOmgwtfnzbs {
   }
 }
 
-let omgwtfnzbs = new NZBUnityOmgwtfnzbs();
-
-
-
-
+$(($) => {
+  let omgwtfnzbs = new NZBUnityOmgwtfnzbs();
+});
