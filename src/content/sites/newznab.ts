@@ -83,7 +83,9 @@ class NZBUnityNewznab {
           'vertical-align': 'middle',
           'white-space': 'nowrap'
         })
-        .on('click', () => {
+        .on('click', (e) => {
+          e.preventDefault();
+
           $('#browsetable .nzb_check:checked').each(function(i, el) {
             let check = $(el);
             let id = <string> check.val();

@@ -446,6 +446,7 @@ class NZBUnity {
     if (!this.interceptExclude || !url) return false;
 
     return this.interceptExclude.split(/\s*,\s*/)
+      .concat(['nzbking.com'])
       .map((v:string) => { return new RegExp(v); })
       .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
   }
@@ -472,6 +473,7 @@ class NZBUnity {
     let dispositionMatch = disposition && disposition.match(/^attachment;\s*filename="?(.*(\.nzb))"?$/i);
     if (
       !this.isInterceptExcluded(url)
+      && (details.method == 'GET')
       && (type === 'application/x-nzb' || dispositionMatch)
     ) {
       // console.log('===================HEADERS=================');
@@ -493,9 +495,9 @@ class NZBUnity {
       this.addUrl(url, options)
         .then((r) => {
           console.info(`[NZBUnity] NZB intercepted, ${r.success ? 'Success' : 'Failure'}
-  ${url}
-  ${options.name || ''}
-  ${!r.success ? 'Error: ' + r.error : ''}`
+            ${url}
+            ${options.name || ''}
+            ${!r.success ? 'Error: ' + r.error : ''}`
           );
         });
 

@@ -145,3 +145,11 @@ Initial public release
 * Fixes "Open server" button prefixing addon URL to site URL.
 * Fixes intercept for sites that send header keys in lower case.
 * Fixes NZBGet Authentication.
+
+### 1.3.0
+
+* Fixes a couple errors on site profile initialization.
+* Adds general Newznab support (tested on nznbplanet, simplynzbs, and drunkenslug).
+  * New option field to list Newznab sites which the user would like 1-click functionality on.
+  * Method to automatically detect Newznab sites and prompt the user to include in their options.
+* Additional error checking for NZB intercept.
