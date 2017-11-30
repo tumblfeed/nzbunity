@@ -93,7 +93,7 @@ class NZBUnityNzbindex {
               }, 1000);
             })
             .catch((e) => {
-              console.error(`[NZB Unity] Error fetching NZB content (${filename}): ${e.status} ${e.statusText}`);
+              console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
             });
         })
         .prependTo(this.form);
