@@ -7,8 +7,10 @@
     "src/content/popup.ts",
     "src/content/sites/newznab.ts",
     "src/content/sites/newznab-detect.ts",
+    "src/content/sites/binsearch.ts",
     "src/content/sites/dognzb.ts",
     "src/content/sites/nzbgeek.ts",
+    "src/content/sites/nzbindex.ts",
     "src/content/sites/nzbking.ts",
     "src/content/sites/omgwtfnzbs.ts"
   ],

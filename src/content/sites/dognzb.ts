@@ -48,7 +48,7 @@ class NZBUnityDognzb {
           url: this.getNzbUrl(id),
           category: category
         }, el)
-          .on('addUrl.success', (e) => {
+          .on('nzb.success', (e) => {
             catLabel.closest('tr')
               .prepend('<td width="19"><div class="dog-icon-tick"></div></td>');
           });
@@ -79,5 +79,5 @@ class NZBUnityDognzb {
 }
 
 $(($) => {
-  let dognzb = new NZBUnityDognzb();
+  let nzbIntegration = new NZBUnityDognzb();
 });

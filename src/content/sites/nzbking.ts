@@ -1,4 +1,9 @@
 class NZBUnityNzbking {
+  public form:JQuery<HTMLElement>;
+  public csrfToken:string;
+  public isList:boolean;
+  public isDetail:boolean;
+
   constructor() {
     Util.storage.get('Providers')
       .then((opts) => {
@@ -7,111 +12,138 @@ class NZBUnityNzbking {
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
-          this.initializeLinks();
+          this.form = $('form[name="r"]');
+          this.csrfToken = <string> this.form.find('input[name="csrfmiddlewaretoken"]').val();
+          this.isList = /^\/(group|search)/.test(window.location.pathname);
+          this.isDetail = /^\/(details)/.test(window.location.pathname);
+
+          if (this.form && this.csrfToken) {
+            console.info(this.csrfToken);
+            this.initializeLinks();
+          } else {
+            console.error(`[NZB Unity] Could not locate csrf token, 1-click disabled`);
+          }
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
         }
       });
   }
 
+  getNzbIds():string[] {
+    return this.form.serializeArray()
+      .filter((i) => { return i.name === 'nzb' })
+      .map((i) => { return i.value });
+  }
+
   initializeLinks() {
-    // Create direct download links
-    $('form[name="r"] [type="submit"]').each((i, el) => {
-
-      let button:JQuery<HTMLElement> = $(el);
-      let form:JQuery<HTMLElement> = button.closest('form');
-      let link = $(
-        `<a class="NZBUnityLink" href="#" title="Download with NZB Unity">`
-          + `<img src="${PageUtil.iconGreen}">`
-        + `</a>`
-      );
-      let img = link.find('img');
-
-      console.log(form, button, link);
-
-      link
-        .css({
-          float: 'left',
-          margin: '4px -4px 0 10px',
-          height: '16px',
-          width: '16px'
-        })
+    // Create direct download button
+    this.form.find('[type="submit"]').each((i, el) => {
+      let submit:JQuery<HTMLElement> = $(el);
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .on('click', (e) => {
           e.preventDefault();
-          console.info(`[NZB Unity] Adding NZB(s)`);
 
-          img.attr('src', PageUtil.iconGrey);
+          let nzbIds:string[] = this.getNzbIds();
+          if (nzbIds.length) {
+            console.info(`[NZB Unity] Adding ${nzbIds.length} NZB(s)`);
+            button.trigger('nzb.pending');
 
-          let values:JQuery.NameValuePair[] = form.serializeArray();
-          let csrfToken:string = values
-            .find((i) => { return i.name === 'csrfmiddlewaretoken'; })
-            .value;
-          let nzbIds:string[] = values
-            .filter((i) => { return i.name === 'nzb' })
-            .map((i) => { return i.value });
+            Promise.all(nzbIds.map((nzbId) => {
+              let category = '';
+              let filename = nzbId;
 
-          nzbIds.forEach((nzbId) => {
-            let category = '*';
-            let filename = nzbId;
-
-            // This currently works but results in unstable filenames.
-            // if (/\/(search|groups)\//.test(window.location.pathname)) {
-            //   let s = $(`input[value="${nzbId}"]`).closest('tr').find('.s');
-            //   if (s.length) {
-            //     filename = s[0].innerText;
-            //   }
-            // }
-
-            // if (/\/details/.test(window.location.pathname)) {
-            //   let s = $('.xMenuT .s');
-            //   if (s.length) {
-            //     filename = s[0].innerText;
-            //   }
-            // }
-
-            // NZBKing requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
-            Util.request({
-              method: 'POST',
-              url: 'http://nzbking.com/nzb/',
-              params: {
-                csrfmiddlewaretoken: csrfToken,
-                nzb: nzbId
-              }
-            }).then((nzbContent) => {
-              Util.sendMessage({
-                'content.addFile': {
-                  filename: filename,
-                  content: nzbContent,
-                  category: category
+              // NZBKing requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
+              return Util.request({
+                method: 'POST',
+                url: 'http://nzbking.com/nzb/',
+                params: {
+                  csrfmiddlewaretoken: this.csrfToken,
+                  nzb: nzbId
                 }
-              }).then((r:boolean) => {
-                  setTimeout(() => {
-                    if (r === false) {
-                      img.attr('src', PageUtil.iconRed);
-                      link.trigger('addUrl.failure');
-                    } else {
-                      img.attr('src', PageUtil.iconGreen);
-                      link.trigger('addUrl.success');
+              })
+                .then((nzbContent) => {
+                  return Util.sendMessage({
+                    'content.addFile': {
+                      filename: filename,
+                      content: nzbContent,
+                      category: category
                     }
+                  });
+                })
+                .catch((e) => {
+                  console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
+                });
+            }))
+              .then((results:any[]) => {
+                setTimeout(() => {
+                  if (results.some((r) => { return r === false; })) {
+                    button.trigger('nzb.failure');
+                  } else {
+                    button.trigger('nzb.success');
+                  }
+                }, 1000);
+              });
+          }
+        })
+        .insertBefore(submit);
+
+      if (this.isDetail) {
+        button.text('Download All').attr('title', 'Download with NZB Unity');
+      }
+
+      // Direct download links
+      if (this.isList) {
+        $('input[name="nzb"][type="checkbox"]').each((i, el) => {
+          let checkbox = $(el);
+          let link = PageUtil.createLink()
+            .css({ 'margin': '0 0 3px 3px' })
+            .on('click', (e) => {
+              e.preventDefault();
+              link.trigger('nzb.pending');
+
+              let nzbId = checkbox.val();
+              let category = '';
+              let filename = nzbId;
+
+              console.info(`[NZB Unity] Adding NZB ${nzbId}`);
+
+              // NZBKing requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
+              return Util.request({
+                method: 'POST',
+                url: 'http://nzbking.com/nzb/',
+                params: {
+                  csrfmiddlewaretoken: this.csrfToken,
+                  nzb: nzbId
+                }
+              })
+                .then((nzbContent) => {
+                  return Util.sendMessage({
+                    'content.addFile': {
+                      filename: filename,
+                      content: nzbContent,
+                      category: category
+                    }
+                  });
+                })
+                .then((r) => {
+                  setTimeout(() => {
+                    link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
                   }, 1000);
+                })
+                .catch((e) => {
+                  link.trigger('nzb.failure');
+                  console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
                 });
 
-            }).catch((e) => {
-              img.attr('src', PageUtil.iconRed);
-              console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-            });
-          });
+            })
+            .insertAfter(checkbox);
+        });
+      }
 
-        })
-        .on('addUrl.success', (e) => {
-          // link.closest('tr').find('a[href*="details"]').first()
-          //   .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
-        })
-        .insertBefore(button);
     });
   }
 }
 
 $(($) => {
-  let nzbking = new NZBUnityNzbking();
+  let nzbIntegration = new NZBUnityNzbking();
 });

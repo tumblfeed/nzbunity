@@ -83,7 +83,7 @@ class NZBUnityOmgwtfnzbs {
         category: category
       }, el)
         .css({ margin: '0 .2em 0 .5em' })
-        .on('addUrl.success', (e) => {
+        .on('nzb.success', (e) => {
           link.closest('tr').find('a[href*="details"]').first()
             .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
         });
@@ -105,5 +105,5 @@ class NZBUnityOmgwtfnzbs {
 }
 
 $(($) => {
-  let omgwtfnzbs = new NZBUnityOmgwtfnzbs();
+  let nzbIntegration = new NZBUnityOmgwtfnzbs();
 });

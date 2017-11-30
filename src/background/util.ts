@@ -388,6 +388,8 @@ class PageUtil {
   static readonly iconGrey:string = chrome.extension.getURL('content/images/nzb-16-grey.png');
   static readonly iconOrange:string = chrome.extension.getURL('content/images/nzb-16-orange.png');
   static readonly iconRed:string = chrome.extension.getURL('content/images/nzb-16-reg.png');
+  static readonly backgroundNormal:string = 'rgb(23, 162, 184)';
+  static readonly backgroundPending:string = 'rgb(156, 166, 168)';
 
   static getBaseUrl():string {
     let l:Location = window.location;
@@ -399,40 +401,47 @@ class PageUtil {
     return Util.request(options);
   }
 
+  static requestAndAddFile(filename:string, category:string = '', url:string = '', params:StringDictionary = {}):Promise<any> {
+    // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
+    // Fetches a single NZB from a POST request and adds it to the server as a file upload
+    return Util.request({
+      method: 'POST',
+      url: url || PageUtil.getBaseUrl(),
+      params: params
+    })
+    .then((nzbContent) => {
+      return Util.sendMessage({
+        'content.addFile': {
+          filename: filename,
+          content: nzbContent,
+          category: category
+        }
+      });
+    });
+  }
+
   static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
     // console.log('createAddUrlLink', url, category);
-    let link = $(
-      `<a class="NZBUnityLink" href="${options.url}" title="Download with NZB Unity">`
-        + `<img src="${PageUtil.iconGreen}">`
-      + `</a>`
-    );
-    let img = link.find('img');
+    let link = PageUtil.createLink()
+      .attr('href', options.url)
+      .css({
+        height: '16px',
+        width: '16px'
+      })
+      .on('click', (e) => {
+        e.preventDefault();
+        console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
 
-    link.css({
-      height: '16px',
-      width: '16px'
-    });
+        link.trigger('nzb.pending');
 
-    link.on('click', (e) => {
-      e.preventDefault();
-      console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
-
-      img.attr('src', PageUtil.iconGrey);
-
-      Util.sendMessage({ 'content.addUrl': options })
-        .then((r:boolean) => {
-          // console.log('[3]', r);
-          setTimeout(() => {
-            if (r === false) {
-              img.attr('src', PageUtil.iconRed);
-              link.trigger('addUrl.failure');
-            } else {
-              img.attr('src', PageUtil.iconGreen);
-              link.trigger('addUrl.success');
-            }
-          }, 1000);
-        });
-    });
+        Util.sendMessage({ 'content.addUrl': options })
+          .then((r:boolean) => {
+            // console.log('[3]', r);
+            setTimeout(() => {
+              link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
+            }, 1000);
+          });
+      });
 
     if (adjacent) {
       link.insertAfter(adjacent);
@@ -441,8 +450,67 @@ class PageUtil {
     return link;
   }
 
-  static addUrl() {
+  static createLink():JQuery<HTMLElement> {
+    return $(`
+      <a class="NZBUnityLink" title="Download with NZB Unity">
+        <img src="${PageUtil.iconGreen}">
+      </a>
+    `)
+      .css({
+        'cursor': 'pointer',
+        'display': 'inline-block'
+      })
+      .on('nzb.pending', (e) => {
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconGrey);
+      })
+      .on('nzb.success', (e) => {
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconGreen);
+      })
+      .on('nzb.failure', (e) => {
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconRed);
+      });
+  }
 
+  static createButton():JQuery<HTMLElement> {
+    return $(`
+      <button class="NZBUnityDownloadAll"
+        title="Download selected items with NZB Unity"
+      >
+        Download Selected
+      </button>
+    `)
+      .css({
+        'background': `${PageUtil.backgroundNormal} url(${PageUtil.iconGreen}) no-repeat scroll 4px center`,
+        'border': '1px solid rgb(19, 132, 150)',
+        'border-radius': '4px',
+        'color': '#fff',
+        'cursor': 'pointer',
+        'display': 'inline-block',
+        'font-size': '11px',
+        'font-weight': 'normal',
+        'margin': '0 0.5em 0 0',
+        'padding': '3px 8px 3px 25px',
+        'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
+        'white-space': 'nowrap'
+      })
+      .on('nzb.pending', (e) => {
+        $(e.currentTarget).css({
+          'background-color': PageUtil.backgroundPending,
+          'background-image': `url(${PageUtil.iconGrey})`
+        });
+      })
+      .on('nzb.success', (e) => {
+        $(e.currentTarget).css({
+          'background-color': PageUtil.backgroundNormal,
+          'background-image': `url(${PageUtil.iconGreen})`
+        });
+      })
+      .on('nzb.failure', (e) => {
+        $(e.currentTarget).css({
+          'background-color': PageUtil.backgroundNormal,
+          'background-image': `url(${PageUtil.iconRed})`
+        });
+      });
   }
 
 }

@@ -48,7 +48,7 @@ class NZBUnityNzbgeek {
         category: category
       }, el)
         .css({  })
-        .on('addUrl.success', (e) => {
+        .on('nzb.success', (e) => {
           link.closest('tr').find('a[href*="details"]').first()
             .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
         });
@@ -57,5 +57,5 @@ class NZBUnityNzbgeek {
 }
 
 $(($) => {
-  let nzbgeek = new NZBUnityNzbgeek();
+  let nzbIntegration = new NZBUnityNzbgeek();
 });

@@ -65,58 +65,47 @@ class NZBUnityNewznab {
     // Create download all buttons
     $('.nzb_multi_operations_download').each((i, el) => {
       let getNzbUrl = (id:string) => { return this.getNzbUrl(id); };
-      let button:JQuery<HTMLElement> = $(`<button class="NZBUnityDownloadAll">NZB Unity Download</button>`)
-        .css({
-          'background': '#17a2b8',
-          'border': '1px solid #1599ae',
-          'border-radius': '0.3em',
-          'color': '#fff',
-          'display': 'inline-block',
-          'font-size': '.875em',
-          'font-weight': 'normal',
-          'height': '2em',
-          'line-height': '1em',
-          'margin': '0 0.2em 0 0',
-          'padding': '0.15em 0.4em',
-          'text-align': 'center',
-          'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
-          'vertical-align': 'middle',
-          'white-space': 'nowrap'
-        })
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .on('click', (e) => {
           e.preventDefault();
 
-          $('#browsetable .nzb_check:checked').each(function(i, el) {
-            let check = $(el);
-            let id = <string> check.val();
+          let checked:JQuery<HTMLElement> = $('#browsetable .nzb_check:checked');
+          if (checked.length) {
+            console.info(`[NZB Unity] Adding ${checked.length} NZB(s)`);
+            button.trigger('nzb.pending');
 
-            if (/[a-d0-9]+/.test(id)) {
-              // Get the category
-              let category:string = '';
-              let catSrc:string = 'default';
+            checked.each(function(i, el) {
+              let check = $(el);
+              let id = <string> check.val();
 
-              if ($('#category').length) {
-                // Short circuit if there is a category element (usually the details page)
-                category = $('#category').text();
-                catSrc = '#';
-              } else if (check.closest('tr').find('[href^="/browse?t"]').length) {
-                // Everything else (usually the browse page)
-                category = check.closest('tr').find('[href^="/browse?t"]').attr('title').replace(/^Browse /, '');
-                catSrc = 'href';
+              if (/[a-d0-9]+/.test(id)) {
+                // Get the category
+                let category:string = '';
+                let catSrc:string = 'default';
+
+                if ($('#category').length) {
+                  // Short circuit if there is a category element (usually the details page)
+                  category = $('#category').text();
+                  catSrc = '#';
+                } else if (check.closest('tr').find('[href^="/browse?t"]').length) {
+                  // Everything else (usually the browse page)
+                  category = check.closest('tr').find('[href^="/browse?t"]').attr('title').replace(/^Browse /, '');
+                  catSrc = 'href';
+                }
+
+                let split:string[] = category.split(/[^\w-]/); // Either "Movies: HD" or "Movies HD"
+                category = split.length ? split[0] : category;
+
+                let options = {
+                  url: getNzbUrl(id),
+                  category: category
+                };
+
+                console.info(`[NZB Unity] Adding URL`, options);
+                Util.sendMessage({ 'content.addUrl': options });
               }
-
-              let split:string[] = category.split(/[^\w-]/); // Either "Movies: HD" or "Movies HD"
-              category = split.length ? split[0] : category;
-
-              let options = {
-                url: getNzbUrl(id),
-                category: category
-              };
-
-              console.info(`[NZB Unity] Adding URL`, options);
-              Util.sendMessage({ 'content.addUrl': options });
-            }
-          });
+            });
+          }
         });
 
       if ($(el).parent().hasClass('btn-group')) {
@@ -131,7 +120,7 @@ class NZBUnityNewznab {
 }
 
 $(($) => {
-  let newznab = new NZBUnityNewznab();
+  let nzbIntegration = new NZBUnityNewznab();
 });
 
 undefined;

@@ -50,8 +50,11 @@
   "content_scripts": [
     {
       "matches": [
+        "*://*.binsearch.info/*",
         "*://*.dognzb.cr/*",
         "*://*.nzbgeek.info/*",
+        "*://*.nzbindex.com/*",
+        "*://*.nzbindex.nl/*",
         "*://*.nzbking.com/*",
         "*://*.omgwtfnzbs.me/*"
       ],
@@ -61,12 +64,20 @@
       ]
     },
     {
+      "matches": ["*://*.binsearch.info/*"],
+      "js": ["content/sites/binsearch.js"]
+    },
+    {
       "matches": ["*://*.dognzb.cr/*"],
       "js": ["content/sites/dognzb.js"]
     },
     {
       "matches": ["*://*.nzbgeek.info/*"],
       "js": ["content/sites/nzbgeek.js"]
+    },
+    {
+      "matches": ["*://*.nzbindex.com/*", "*://*.nzbindex.nl/*"],
+      "js": ["content/sites/nzbindex.js"]
     },
     {
       "matches": ["*://*.nzbking.com/*"],

@@ -1,4 +1,6 @@
 class NZBUnity {
+  static readonly interceptExcludeAlways:string[] = ['nzbking.com', 'binsearch.info'];
+
   public _debug:boolean;
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
@@ -446,7 +448,7 @@ class NZBUnity {
     if (!this.interceptExclude || !url) return false;
 
     return this.interceptExclude.split(/\s*,\s*/)
-      .concat(['nzbking.com'])
+      .concat(NZBUnity.interceptExcludeAlways)
       .map((v:string) => { return new RegExp(v); })
       .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
   }
