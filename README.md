@@ -153,3 +153,9 @@ Initial public release
   * New option field to list Newznab sites which the user would like 1-click functionality on.
   * Method to automatically detect Newznab sites and prompt the user to include in their options.
 * Additional error checking for NZB intercept.
+
+### 1.4.0
+
+* New 1-Click site profiles for binsearch.info and nzbindex.com (nzbindex.nl)
+* Streamlines nzbking.com
+* Adds helper method for POST-request sites.

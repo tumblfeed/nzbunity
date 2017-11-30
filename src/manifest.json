@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.3.0",
-  "author": "John Hutchison",
+  "version": "1.4.0",
+  "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
     "scripts": [
