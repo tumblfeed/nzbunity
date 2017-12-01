@@ -1,5 +1,12 @@
 class NZBUnity {
-  static readonly interceptExcludeAlways:string[] = ['nzbking.com', 'binsearch.info'];
+  static readonly interceptExcludeAlways:string[] = [
+    'binsearch.info',
+    'dognzb.cr',
+    'nzbgeek.info',
+    'nzbindex.(com|nl)',
+    'nzbking.com',
+    'omgwtfnzbs.me'
+  ];
 
   public _debug:boolean;
   public optionsTab:chrome.tabs.Tab;

@@ -89,18 +89,58 @@ class NZBUnityOmgwtfnzbs {
         });
     });
 
-    // If NZB intercept is enabled, we should go ahead and make that work as well.
-    Util.storage.get('InterceptDownloads')
-      .then((opts) => {
-        if (opts.InterceptDownloads) {
-          $('a[href*="send?"]').each((i, el) => {
-            let a:JQuery<HTMLElement> = $(el);
-            let idMatch:string[] = a.attr('href').match(/id=(\w+)/i);
-            let id:string = idMatch && idMatch[1];
-            a.attr('href', this.getNzbUrl(id));
-          });
-        }
-      });
+    // Create download all buttons
+    $('#browseDLButton').each((i, el) => {
+      let getNzbUrl = (id:string) => { return this.getNzbUrl(id); };
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
+        .css({ 'margin': '0.2em' })
+        .on('click', (e) => {
+          e.preventDefault();
+
+          let checked:JQuery<HTMLElement> = $('.nzbt_row .checkbox:checked');
+          if (checked.length) {
+            console.info(`[NZB Unity] Adding ${checked.length} NZB(s)`);
+            button.trigger('nzb.pending');
+
+            Promise.all(checked.map((i, el) => {
+              let check = $(el);
+              let id = <string> check.val();
+
+              // Get the category
+              let category:string = '';
+              let catSrc:string = 'default';
+
+              if (check.closest('li,tr').find('[href^="/browse?cat"]').length) {
+                category = check.closest('li,tr').find('[href^="/browse?cat"]').text();
+                catSrc = 'href';
+              }
+
+              let split:string[] = category.split(/[^\w-]/); // Either "Movies: HD" or "Movies HD"
+              category = split.length ? split[0] : category;
+
+              let options = {
+                url: getNzbUrl(id),
+                category: category
+              };
+
+              console.info(`[NZB Unity] Adding URL`, options);
+              return Util.sendMessage({ 'content.addUrl': options });
+            }))
+              .then((results:any[]) => {
+                setTimeout(() => {
+                  if (results.some((r) => { return r === false; })) {
+                    button.trigger('nzb.failure');
+                  } else {
+                    button.trigger('nzb.success');
+                  }
+                }, 1000);
+              });
+          }
+        })
+        .insertBefore($(el));
+    });
+
+
   }
 }
 

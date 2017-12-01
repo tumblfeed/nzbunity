@@ -159,3 +159,8 @@ Initial public release
 * New 1-Click site profiles for binsearch.info and nzbindex.com (nzbindex.nl)
 * Streamlines nzbking.com
 * Adds helper method for POST-request sites.
+
+### 1.5.0
+
+* Multiple download button for dognzb and omgwtfnzbs
+* New 1-Click site profiles for nzb.su and nzbfinder.ws

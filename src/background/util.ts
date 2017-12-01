@@ -409,15 +409,15 @@ class PageUtil {
       url: url || PageUtil.getBaseUrl(),
       params: params
     })
-    .then((nzbContent) => {
-      return Util.sendMessage({
-        'content.addFile': {
-          filename: filename,
-          content: nzbContent,
-          category: category
-        }
+      .then((nzbContent) => {
+        return Util.sendMessage({
+          'content.addFile': {
+            filename: filename,
+            content: nzbContent,
+            category: category
+          }
+        });
       });
-    });
   }
 
   static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
@@ -449,6 +449,32 @@ class PageUtil {
 
     return link;
   }
+
+  static createAddUrlButton(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
+    // console.log('createAddUrlLink', url, category);
+    let button = PageUtil.createButton()
+      .on('click', (e) => {
+        e.preventDefault();
+        console.info(`[NZB Unity] Adding URL: ${button.attr('href')}`);
+
+        button.trigger('nzb.pending');
+
+        Util.sendMessage({ 'content.addUrl': options })
+          .then((r:boolean) => {
+            // console.log('[3]', r);
+            setTimeout(() => {
+              button.trigger(r === false ? 'nzb.failure' : 'nzb.success');
+            }, 1000);
+          });
+      });
+
+    if (adjacent) {
+      button.insertAfter(adjacent);
+    }
+
+    return button;
+  }
+
 
   static createLink():JQuery<HTMLElement> {
     return $(`

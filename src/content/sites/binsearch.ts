@@ -33,11 +33,47 @@ class NZBUnityBinsearch {
   }
 
   initializeLinks() {
-    // Create direct download button
-    let button:JQuery<HTMLElement>;
-
+    // Direct download links
     if (this.isList) {
-      button = PageUtil.createButton()
+      this.form.find('input[type="checkbox"]').each((i, el) => {
+        let checkbox = $(el);
+        let link = PageUtil.createLink()
+          .css({ 'margin': '0 0 3px 3px' })
+          .on('click', (e) => {
+            e.preventDefault();
+            link.trigger('nzb.pending');
+
+            let nzbId = checkbox.attr('name');
+
+            console.info(`[NZB Unity] Adding NZB ${nzbId}`);
+
+            return PageUtil.requestAndAddFile(
+              nzbId,
+              '',
+              `https://www.binsearch.info${this.form.attr('action')}`,
+              {
+                action: 'nzb',
+                [nzbId]: 'on'
+              }
+            )
+              .then((r) => {
+                setTimeout(() => {
+                  link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
+                }, 1000);
+              })
+              .catch((e) => {
+                link.trigger('nzb.failure');
+                console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
+              });
+
+          })
+          .insertAfter(checkbox);
+      });
+    }
+
+    // Create direct download button
+    if (this.isList) {
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .on('click', (e) => {
           e.preventDefault();
 
@@ -47,27 +83,15 @@ class NZBUnityBinsearch {
             button.trigger('nzb.pending');
 
             Promise.all(nzbIds.map((nzbId) => {
-              let category = '';
-              let filename = nzbId;
-
-              // binsearch requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
-              return Util.request({
-                method: 'POST',
-                url: `https://www.binsearch.info${this.form.attr('action')}`,
-                params: {
+              return PageUtil.requestAndAddFile(
+                nzbId,
+                '',
+                `https://www.binsearch.info${this.form.attr('action')}`,
+                {
                   action: 'nzb',
                   [nzbId]: 'on'
                 }
-              })
-                .then((nzbContent) => {
-                  return Util.sendMessage({
-                    'content.addFile': {
-                      filename: filename,
-                      content: nzbContent,
-                      category: category
-                    }
-                  });
-                })
+              )
                 .catch((e) => {
                   console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
                 });
@@ -87,7 +111,7 @@ class NZBUnityBinsearch {
     }
 
     if (this.isDetail) {
-      button = PageUtil.createButton()
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .text('Download All')
         .attr('title', 'Download with NZB Unity')
         .on('click', (e) => {
@@ -99,7 +123,6 @@ class NZBUnityBinsearch {
               .find((i) => { return i.name === 'b' })
               .value
           };
-          let category = '';
           let filename = params.b;
 
           this.form.find('input[type="checkbox"]').each((i, el) => {
@@ -109,21 +132,12 @@ class NZBUnityBinsearch {
           console.info(`[NZB Unity] Adding ${filename}`);
           button.trigger('nzb.pending');
 
-          // binsearch requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
-          Util.request({
-            method: 'POST',
-            url: window.location.toString(),
-            params: params
-          })
-            .then((nzbContent) => {
-              return Util.sendMessage({
-                'content.addFile': {
-                  filename: filename,
-                  content: nzbContent,
-                  category: category
-                }
-              });
-            })
+          return PageUtil.requestAndAddFile(
+            filename,
+            '',
+            window.location.toString(),
+            params
+          )
             .then((r) => {
               setTimeout(() => {
                 button.trigger(r === false ? 'nzb.failure' : 'nzb.success');
@@ -135,55 +149,6 @@ class NZBUnityBinsearch {
         })
         .prependTo(this.form);
 
-    }
-
-    // Direct download links
-    if (this.isList) {
-      this.form.find('input[type="checkbox"]').each((i, el) => {
-        let checkbox = $(el);
-        let link = PageUtil.createLink()
-          .css({ 'margin': '0 0 3px 3px' })
-          .on('click', (e) => {
-            e.preventDefault();
-            link.trigger('nzb.pending');
-
-            let nzbId = checkbox.attr('name');
-            let category = '';
-            let filename = nzbId;
-
-            console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-
-            // binsearch requires a POST request to retreive NZBs. Since SAB can't do that, get the data here and upload it.
-            Util.request({
-              method: 'POST',
-              url: `https://www.binsearch.info${this.form.attr('action')}`,
-              params: {
-                action: 'nzb',
-                [nzbId]: 'on'
-              }
-            })
-              .then((nzbContent) => {
-                return Util.sendMessage({
-                  'content.addFile': {
-                    filename: filename,
-                    content: nzbContent,
-                    category: category
-                  }
-                });
-              })
-              .then((r) => {
-                setTimeout(() => {
-                  link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-                }, 1000);
-              })
-              .catch((e) => {
-                link.trigger('nzb.failure');
-                console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-              });
-
-          })
-          .insertAfter(checkbox);
-      });
     }
   }
 }

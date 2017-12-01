@@ -54,6 +54,59 @@ class NZBUnityDognzb {
           });
       });
 
+      // Create download all buttons
+      $('[onclick^="doZipDownload"]').each((i, el) => {
+        let getNzbUrl = (id:string) => { return this.getNzbUrl(id); };
+        let button:JQuery<HTMLElement> = PageUtil.createButton()
+          .css({ 'margin': '0 0.3em 0 0' })
+          .on('click', (e) => {
+            e.preventDefault();
+
+            let checked:JQuery<HTMLElement> = $('#featurebox .ckbox:checked');
+            if (checked.length) {
+              console.info(`[NZB Unity] Adding ${checked.length} NZB(s)`);
+              button.trigger('nzb.pending');
+
+              Promise.all(checked.map((i, el) => {
+                let check = $(el);
+                let idMatch:string[] = check.closest('tr')
+                  .find('[onclick^="doOneDownload"]').attr('onclick').match(/\('(\w+)'\)/i);
+                let id = idMatch && idMatch[1];
+
+                if (/[a-d0-9]+/.test(id)) {
+                  // Get the category
+                  let catLabel:JQuery<HTMLElement> = check.closest('tr')
+                    .find('.label').not('.label-empty').not('.label-important');
+                  let category:string = catLabel.text();
+                  let catSrc:string = 'default';
+
+                  let options = {
+                    url: getNzbUrl(id),
+                    category: category
+                  };
+
+                  console.info(`[NZB Unity] Adding URL`, options);
+                  return Util.sendMessage({ 'content.addUrl': options });
+                } else {
+                  return Promise.resolve();
+                }
+              }))
+                .then((results:any[]) => {
+                  setTimeout(() => {
+                    if (results.some((r) => { return r === false; })) {
+                      button.trigger('nzb.failure');
+                    } else {
+                      button.trigger('nzb.success');
+                    }
+                  }, 1000);
+                });
+            }
+          })
+          .insertBefore($(el));
+      });
+
+
+
     } else if (window.location.pathname.startsWith('/details')) {
       let id:string = window.location.pathname.match(/\/details\/(\w+)/i)[1];
 

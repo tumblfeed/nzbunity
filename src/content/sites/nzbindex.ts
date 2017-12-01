@@ -37,11 +37,43 @@ class NZBUnityNzbindex {
   }
 
   initializeLinks() {
-    // Create direct download button
-    let button:JQuery<HTMLElement>;
-
+    // Direct download links
     if (this.isList) {
-      button = PageUtil.createButton()
+      this.form.find('input[name="r[]"][type="checkbox"]').each((i, el) => {
+        let checkbox = $(el);
+        let link = PageUtil.createLink()
+          .css({ 'display': 'block' })
+          .on('click', (e) => {
+            e.preventDefault();
+
+            let nzbUrl = checkbox.closest('tr').find('a[href*="/download/"]').attr('href')
+            let nzbId = <string> checkbox.val();
+
+            console.info(`[NZB Unity] Adding NZB ${nzbId}`);
+            link.trigger('nzb.pending');
+
+            Util.sendMessage({ 'content.addUrl': {
+              category: '',
+              url: nzbUrl || this.getNzbUrl(nzbId)
+            }})
+              .then((r) => {
+                setTimeout(() => {
+                  link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
+                }, 1000);
+              })
+              .catch((e) => {
+                link.trigger('nzb.failure');
+                console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
+              });
+
+          })
+          .insertAfter(checkbox);
+      });
+    }
+
+    // Create direct download button
+    if (this.isList) {
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .on('click', (e) => {
           e.preventDefault();
 
@@ -72,7 +104,7 @@ class NZBUnityNzbindex {
     }
 
     if (this.isDetail && this.form.find('[name="r[]"]')) {
-      button = PageUtil.createButton()
+      let button:JQuery<HTMLElement> = PageUtil.createButton()
         .text('Download All')
         .attr('title', 'Download with NZB Unity')
         .on('click', (e) => {
@@ -98,47 +130,6 @@ class NZBUnityNzbindex {
         })
         .prependTo(this.form);
 
-    }
-
-    // Direct download links
-    if (this.isList) {
-      // nzbindex happens to have download links that work just fine with intercept.
-      // Make download link if intercept is not enabled
-      Util.storage.get('InterceptDownloads')
-      .then((opts) => {
-        if (!opts.InterceptDownloads) {
-          this.form.find('input[name="r[]"][type="checkbox"]').each((i, el) => {
-            let checkbox = $(el);
-            let link = PageUtil.createLink()
-              .css({ 'display': 'block' })
-              .on('click', (e) => {
-                e.preventDefault();
-
-                let nzbUrl = checkbox.closest('tr').find('a[href*="/download/"]').attr('href')
-                let nzbId = <string> checkbox.val();
-
-                console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-                link.trigger('nzb.pending');
-
-                Util.sendMessage({ 'content.addUrl': {
-                  category: '',
-                  url: nzbUrl || this.getNzbUrl(nzbId)
-                }})
-                  .then((r) => {
-                    setTimeout(() => {
-                      link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-                    }, 1000);
-                  })
-                  .catch((e) => {
-                    link.trigger('nzb.failure');
-                    console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-                  });
-
-              })
-              .insertAfter(checkbox);
-          });
-        }
-      });
     }
   }
 }
