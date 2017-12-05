@@ -164,3 +164,7 @@ Initial public release
 
 * Multiple download button for dognzb and omgwtfnzbs
 * New 1-Click site profiles for nzb.su and nzbfinder.ws
+
+### 1.5.1
+
+* Newznab API URL fix for newz-complex.org

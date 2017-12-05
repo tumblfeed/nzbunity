@@ -8,6 +8,12 @@ class NZBUnityNewznab {
     this.uid = $('[name="UID"]').attr('value');
     this.apikey = $('[name="RSSTOKEN"]').attr('value');
     this.apiurl = `${window.location.protocol}//${window.location.host}/api`;
+
+    // Site specific api urls
+    if (/newz-complex\.org/i.test(window.location.host)) {
+      this.apiurl = `${window.location.protocol}//${window.location.host}/www/api`;
+    }
+
     console.info(this.apiurl, this.uid, this.apikey);
 
     if (this.uid && this.apikey) {
