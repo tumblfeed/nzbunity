@@ -125,8 +125,8 @@ class SABnzbdHost extends NZBHost {
       method: 'GET',
       url: this.apiUrl,
       params: {
-        apikey: this.apikey,
         output: 'json',
+        apikey: this.apikey,
         mode: operation
       }
     };

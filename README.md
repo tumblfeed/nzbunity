@@ -135,12 +135,12 @@ Initial public release
 * New profile option "Open serrver URL"
 * New general option "Intercept Exclude"
 
-### 1.2.1
+#### 1.2.1
 
 * New API method for sending NZB file data to SABnzbd and NZBGet. This allows building 1-Click site profiles that first use whatever means necessary in the site to download the NZB data and then upload that.
 * New 1-Click site profile for nzbking.com
 
-### 1.2.3
+#### 1.2.3
 
 * Fixes "Open server" button prefixing addon URL to site URL.
 * Fixes intercept for sites that send header keys in lower case.
@@ -165,6 +165,11 @@ Initial public release
 * Multiple download button for dognzb and omgwtfnzbs
 * New 1-Click site profiles for nzb.su and nzbfinder.ws
 
-### 1.5.1
+#### 1.5.1
 
 * Newznab API URL fix for newz-complex.org
+
+#### 1.5.2
+
+* Fixes several small internal warning messages related to sendMessage handling
+* Fixes SABnzbd API bug where queue was being returned as empty by SAB in some cases

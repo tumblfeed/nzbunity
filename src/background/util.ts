@@ -174,20 +174,44 @@ class Util {
   }
 
   static sendMessage(message:any):Promise<any> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response:any) => {
-        // console.info('[2]', response);
+        let error = Util.getLastError();
+        if (error) {
+          reject(error);
+        }
+
+        // console.info('[Util.sendMessage] Response:', response);
         resolve(response);
       })
     });
   }
 
   static sendTabMessage(tabId:number, message:any):Promise<any> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.tabs.sendMessage(tabId, message, (response:any) => {
+        let error = Util.getLastError();
+        if (error) {
+          reject(error);
+        }
+
+        // console.info('[Util.sendTabMessage] Response:', response);
         resolve(response);
       })
     });
+  }
+
+  static getLastError():string {
+    let error:chrome.runtime.LastError = chrome.runtime.lastError;
+    if (error
+      // Receiving end not existing isn't really concerning, ignore.
+      && !/Receiving end does not exist/i.test(error.message)
+    ) {
+      console.warn('[Util.sendTabMessage] Last error: ', error.message);
+      return error.message;
+    }
+
+    return null;
   }
 
   // Adapted from https://www.abeautifulsite.net/parsing-urls-in-javascript

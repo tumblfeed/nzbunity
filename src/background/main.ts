@@ -72,6 +72,7 @@ class NZBUnity {
   }
 
   sendMessage(name:string, data:any = null):Promise<any> {
+    // this.debug('sendMessage', name);
     return Util.sendMessage({ [`main.${name}`]: data });
   }
 
@@ -82,6 +83,7 @@ class NZBUnity {
   }
 
   sendOptionsMessage(name:string, data:any) {
+    // this.debug('sendOptionsMessage', this.optionsTab, name);
     this.sendTabMessage(this.optionsTab, name, data);
   }
 
@@ -92,11 +94,7 @@ class NZBUnity {
 
     Util.storage.get('RefreshRate')
       .then((opts) => {
-        this.refreshTimer = setInterval(() =>{
-          this.getQueue().then((result) => {
-            this.sendMessage('refresh', result);
-          });
-        }, opts.RefreshRate * 1000);
+        this.refreshTimer = setInterval(this.getQueue.bind(this), opts.RefreshRate * 1000);
       });
   }
 
@@ -537,7 +535,7 @@ class NZBUnity {
   }
 
   handleNewznabTabUpdated(tabId:number, changes:chrome.tabs.TabChangeInfo, tab:chrome.tabs.Tab) {
-    if (tab.status === 'complete') {
+    if (tab.status === 'complete' && /^https?:/.test(tab.url)) {
       if (this.isNewznabProvider(tab.url)) {
         // Check if URL matches known newznab sites, as this is less intrusive
         chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.2.1.slim.js' }, () => {
