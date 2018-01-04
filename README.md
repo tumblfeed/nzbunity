@@ -177,3 +177,5 @@ Initial public release
 ### 1.6.0
 
 * Toolbar icon will change color and title depending on download status (grey for idle, green for activity)
+* New 1-Click site profile for gingadaddy.com, currently non-functional due to API restrictions (fix planned for 1.6.1)
+* Fixes filtering error on dognzb.cr

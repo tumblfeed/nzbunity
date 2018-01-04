@@ -52,6 +52,7 @@
       "matches": [
         "*://*.binsearch.info/*",
         "*://*.dognzb.cr/*",
+        "*://*.gingadaddy.com/*",
         "*://*.nzbfinder.ws/*",
         "*://*.nzbgeek.info/*",
         "*://*.nzbindex.com/*",
@@ -72,6 +73,10 @@
     {
       "matches": ["*://*.dognzb.cr/*"],
       "js": ["content/sites/dognzb.js"]
+    },
+    {
+      "matches": ["*://*.gingadaddy.com/*"],
+      "js": ["content/sites/gingadaddy.js"]
     },
     {
       "matches": ["*://*.nzbfinder.ws/*"],

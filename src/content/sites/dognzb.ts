@@ -1,5 +1,6 @@
 class NZBUnityDognzb {
   public username:string;
+  public observer:MutationObserver;
 
   constructor() {
     Util.storage.get('Providers')
@@ -9,8 +10,15 @@ class NZBUnityDognzb {
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
-
           this.username = this.getUsername();
+
+          // dognzb uses an ajax filter, watch for dom changes.
+          this.observer = new MutationObserver((mutations) => {
+            console.info(`[NZB Unity] Content changed, updating links...`);
+            this.initializeLinks();
+          });
+          this.observer.observe(document.getElementById('content'), { childList: true });
+
           this.initializeLinks();
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
