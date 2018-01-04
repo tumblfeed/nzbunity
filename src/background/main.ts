@@ -116,6 +116,7 @@ class NZBUnity {
 
     return this.nzbHost.getQueue()
       .then((result) => {
+        Util.setMenuIcon(result.status, result.status);
         this.sendMessage('refresh', result);
         return result;
       });

@@ -173,34 +173,6 @@ class Util {
     }
   }
 
-  static sendMessage(message:any):Promise<any> {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(message, (response:any) => {
-        let error = Util.getLastError();
-        if (error) {
-          reject(error);
-        }
-
-        // console.info('[Util.sendMessage] Response:', response);
-        resolve(response);
-      })
-    });
-  }
-
-  static sendTabMessage(tabId:number, message:any):Promise<any> {
-    return new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(tabId, message, (response:any) => {
-        let error = Util.getLastError();
-        if (error) {
-          reject(error);
-        }
-
-        // console.info('[Util.sendTabMessage] Response:', response);
-        resolve(response);
-      })
-    });
-  }
-
   static getLastError():string {
     let error:chrome.runtime.LastError = chrome.runtime.lastError;
     if (error
@@ -212,6 +184,64 @@ class Util {
     }
 
     return null;
+  }
+
+  static sendMessage(message:any):Promise<any> {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response:any) => {
+        let error = Util.getLastError();
+        if (error) {
+          reject(error);
+        } else {
+          // console.info('[Util.sendMessage] Response:', response);
+          resolve(response);
+        }
+      })
+    });
+  }
+
+  static sendTabMessage(tabId:number, message:any):Promise<any> {
+    return new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(tabId, message, (response:any) => {
+        let error = Util.getLastError();
+        if (error) {
+          reject(error);
+        } else {
+          // console.info('[Util.sendTabMessage] Response:', response);
+          resolve(response);
+        }
+      })
+    });
+  }
+
+  static setMenuIcon(color:string = null, status:string = null):Promise<void> {
+    return new Promise((resolve, reject) => {
+      color = color ? color.toLowerCase() : 'green';
+      if (/^(active|downloading)/i.test(color)) color = 'green';
+      if (/^(inactive|idle|gray)/i.test(color)) color = 'grey';
+
+      if (!/grey|green|orange/.test(color)) {
+        return reject('Ivalid color');
+      }
+
+      chrome.browserAction.setTitle({ title: 'NZB Unity' + (status ? ` - ${status}` : '') });
+
+      let icons:chrome.browserAction.TabIconDetails = {
+        path: {}
+      };
+      [16, 32, 64].forEach((size) => {
+        icons.path[size] = chrome.extension.getURL(`content/images/nzb-${size}-${color}.png`);
+      });
+
+      return chrome.browserAction.setIcon(icons, () => {
+        let error = Util.getLastError();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   // Adapted from https://www.abeautifulsite.net/parsing-urls-in-javascript

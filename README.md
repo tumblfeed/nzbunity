@@ -173,3 +173,7 @@ Initial public release
 
 * Fixes several small internal warning messages related to sendMessage handling
 * Fixes SABnzbd API bug where queue was being returned as empty by SAB in some cases
+
+### 1.6.0
+
+* Toolbar icon will change color and title depending on download status (grey for idle, green for activity)

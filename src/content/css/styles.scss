@@ -207,9 +207,11 @@ body#popup {
       line-height: 19px;
 
       .icon {
-        background: $light;
-        border-radius: 20px;
+        background: white;
+        border-radius: 100px;
         color: $blue;
+        font-size: 20px;
+        margin-right: 0.25em;
       }
     }
   }
