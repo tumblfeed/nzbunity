@@ -19,13 +19,18 @@ class Popup {
   public overrideCategory:JQuery<HTMLElement>;
   public maxSpeed:JQuery<HTMLElement>;
 
+  public messages = {
+    queueEmpty: '<div id="queueEmpty" class="empty">Queue empty, add some NZBs!</div>',
+    noProfiles: '<div id="noProfiles" class="empty">No server profile, click the gear to get started! <i class="fa fa-arrow-down"></i></div>',
+  };
+
   constructor() {
     this.profileCurrent = $('#ProfileCurrent');
     this.btnRefresh = $('#btn-refresh');
     this.btnServer = $('#btn-server');
     this.btnOptions = $('#btn-options');
 
-    this.errorVal = $('#error');
+    this.errorVal = $('#errors');
     this.statusVal = $('#statusVal');
     this.speedVal = $('#speedVal');
     this.maxSpeedVal = $('#maxSpeedVal');
@@ -44,6 +49,10 @@ class Popup {
         this.debug('[Popup.constructor] Got data!', opts);
 
         this.profiles = opts.Profiles;
+
+        if (Object.keys(this.profiles).length === 0) {
+          this.queue.empty().append(this.messages.noProfiles);
+        }
 
         // Set up profile listeners
         this.profileCurrent.on('change', this.handleProfileSelect.bind(this));
@@ -110,17 +119,20 @@ class Popup {
     // this.debug('Popup.update', queue, error);
     this.errorVal.empty();
 
-    if (queue) {
+    if (Object.keys(this.profiles).length === 0) {
+      this.queue.empty().append(this.messages.noProfiles);
+
+    } else if (queue) {
       console.log(queue);
 
       this.maxSpeed.val(Number(queue.maxSpeedBytes / Util.Megabyte).toFixed(1));
 
       // Summary
-      this.statusVal.text(queue.status);
-      this.speedVal.text(`${queue.speed}`);
-      this.maxSpeedVal.text(`(${queue.maxSpeed})`);
-      this.sizeVal.text(`${queue.sizeRemaining} Left`);
-      this.timeVal.text(`(${queue.timeRemaining})`);
+      this.statusVal.text(queue.status || 'Idle');
+      this.speedVal.text(`${queue.speed || '0 B/s'}`);
+      this.maxSpeedVal.text(`(${queue.maxSpeed || '0'})`);
+      this.sizeVal.text(`${queue.sizeRemaining || '0 B'} Left`);
+      this.timeVal.text(`(${queue.timeRemaining || '∞'})`);
 
       if (queue.status.toLowerCase() === 'paused') {
         this.queuePause.find('.icon-glyph').removeClass('fa-pause').addClass('fa-play');
@@ -144,7 +156,7 @@ class Popup {
           `);
         });
       } else {
-        this.queue.append('<div class="empty">Queue Empty, add some NZBs!</div>');
+        this.queue.append(this.messages.queueEmpty);
       }
 
       // Viddles
@@ -205,10 +217,10 @@ class Popup {
   handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
-      let profiles:Object = changes['Profiles'].newValue;
-      let profilesCount:number = Object.keys(profiles).length;
+      this.profiles = changes['Profiles'].newValue;
+      let profilesCount:number = Object.keys(this.profiles).length;
 
-      let oldProfiles:Object = changes['Profiles'].newValue;
+      let oldProfiles:Object = changes['Profiles'].oldValue;
       let oldProfilesCount:number = Object.keys(oldProfiles).length;
 
       if (profilesCount !== oldProfilesCount) {
@@ -221,9 +233,9 @@ class Popup {
         }
       }
 
-      for (let k in profiles) {
-        if (profiles[k].ProfileName !== k) {
-          this.profileNameChanged(k, profiles[k].ProfileName);
+      for (let k in this.profiles) {
+        if (this.profiles[k].ProfileName !== k) {
+          this.profileNameChanged(k, this.profiles[k].ProfileName);
         }
       }
     }
