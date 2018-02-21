@@ -2,25 +2,33 @@ class NZBUnityNewznab {
   public uid:string;
   public apikey:string;
   public apiurl:string;
+  public replace:boolean = false;
 
   constructor() {
-    console.info(`[NZB Unity] Initializing Newznab 1-click functionality...`);
-    this.uid = $('[name="UID"]').attr('value');
-    this.apikey = $('[name="RSSTOKEN"]').attr('value');
-    this.apiurl = `${window.location.protocol}//${window.location.host}/api`;
+    Util.storage.get(['ReplaceLinks'])
+      .then((opts) => {
+        this.replace = opts.ReplaceLinks;
+        this.uid = $('[name="UID"]').attr('value');
+        this.apikey = $('[name="RSSTOKEN"]').attr('value');
+        this.apiurl = `${window.location.origin}/api`;
 
-    // Site specific api urls
-    if (/newz-complex\.org/i.test(window.location.host)) {
-      this.apiurl = `${window.location.protocol}//${window.location.host}/www/api`;
-    }
+        // Site specific api urls
+        if (/newz-complex\.org/i.test(window.location.host)) {
+          this.apiurl = `${window.location.origin}/www/api`;
+        }
+        if (/usenet-crawler\.com/i.test(window.location.host)) {
+          this.apiurl = `${window.location.protocol}//api.usenet-crawler.com`;
+        }
 
-    console.info(this.apiurl, this.uid, this.apikey);
+        console.info(`[NZB Unity] Initializing Newznab 1-click functionality...`);
+        console.info(this.apiurl, this.uid, this.apikey);
 
-    if (this.uid && this.apikey) {
-      this.initializeLinks();
-    } else {
-      console.error('[NZB Unity] Could not get UID or API key');
-    }
+        if (this.uid && this.apikey) {
+          this.initializeLinks();
+        } else {
+          console.error('[NZB Unity] Could not get UID or API key');
+        }
+      });
   }
 
   getNzbUrl(guid:string):string {
@@ -49,9 +57,14 @@ class NZBUnityNewznab {
       let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
         url: this.getNzbUrl(id),
         category: category
-      })
-        .css({ margin: '0 .2em 0 .5em' })
-        .appendTo(a.closest('td'));
+      });
+
+      if (this.replace) {
+        a.replaceWith(link);
+      } else {
+        link.css({ margin: '0 .2em 0 .5em' });
+        link.appendTo(a.closest('td'));
+      }
     });
 
     // Create download all buttons

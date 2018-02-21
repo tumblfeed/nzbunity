@@ -50,6 +50,8 @@ class Popup {
         this.profileSelectUpdate();
         this.setActiveProfile();
 
+        this.setActiveTheme(opts.UITheme);
+
         // Init storage on change watcher
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
@@ -115,30 +117,35 @@ class Popup {
 
       // Summary
       this.statusVal.text(queue.status);
-      this.speedVal.text(queue.speed);
-      this.maxSpeedVal.text(queue.maxSpeed);
-      this.sizeVal.text(queue.sizeRemaining);
-      this.timeVal.text(queue.timeRemaining);
+      this.speedVal.text(`${queue.speed}`);
+      this.maxSpeedVal.text(`(${queue.maxSpeed})`);
+      this.sizeVal.text(`${queue.sizeRemaining} Left`);
+      this.timeVal.text(`(${queue.timeRemaining})`);
 
       if (queue.status.toLowerCase() === 'paused') {
-        this.queuePause.find('.icon').removeClass('fa-pause-circle').addClass('fa-play-circle');
+        this.queuePause.find('.icon-glyph').removeClass('fa-pause').addClass('fa-play');
       } else {
-        this.queuePause.find('.icon').removeClass('fa-play-circle').addClass('fa-pause-circle');
+        this.queuePause.find('.icon-glyph').removeClass('fa-play').addClass('fa-pause');
       }
 
       // Queue
       this.queue.empty();
-      queue.queue.forEach((i) => {
-        // console.log(i);
-        this.queue.append(`
-          <div class="nzb">
-            <span class="name" title="${i.name}">${Util.trunc(i.name, 30)}</span>
-            <span class="category">${i.category}</span>
-            <span class="size">${i.size}</span>
-            <span class="bar" style="width:${i.percentage}%;"></span>
-          </div>
-        `);
-      });
+
+      if (queue.queue.length) {
+        queue.queue.forEach((i) => {
+          // console.log(i);
+          this.queue.append(`
+            <div class="nzb">
+              <span class="name" title="${i.name}">${Util.trunc(i.name, 30)}</span>
+              <span class="category">${i.category}</span>
+              <span class="size">${i.size}</span>
+              <span class="bar" style="width:${i.percentage}%;"></span>
+            </div>
+          `);
+        });
+      } else {
+        this.queue.append('<div class="empty">Queue Empty, add some NZBs!</div>');
+      }
 
       // Viddles
       let currentOverride:string = <string> this.overrideCategory.val();
@@ -162,7 +169,7 @@ class Popup {
     return Util.sendMessage({ [`popup.${name}`]: data });
   }
 
-  handleMessage(message:MessageEvent) {
+  handleMessage(message:MessageEvent, sender:any, sendResponse:(response:any) => void) {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
@@ -189,6 +196,8 @@ class Popup {
           break;
       }
     }
+
+    sendResponse(undefined);
   }
 
   /* HANDLERS */
@@ -218,6 +227,10 @@ class Popup {
         }
       }
     }
+    // Set theme if changed
+    if (changes['UITheme']) {
+      this.setActiveTheme(changes['UITheme'].newValue);
+    }
   }
 
   handleProfileSelect(e:Event) {
@@ -244,14 +257,14 @@ class Popup {
   setActiveProfile(name:string = undefined) {
     if (name) {
       if (this.profiles[name]) {
-        this.debug('[Popup.profileSelect]', name);
+        // this.debug('[Popup.profileSelect]', name);
         this.sendMessage('profileSelect', name)
           .then(this.handleActiveProfileSet.bind(this));
       }
     } else {
       Util.storage.get('ActiveProfile')
         .then((opts) => {
-          this.debug('[Popup.profileSelect]', opts.ActiveProfile);
+          // this.debug('[Popup.profileSelect]', opts.ActiveProfile);
           this.sendMessage('profileSelect', opts.ActiveProfile)
             .then(this.handleActiveProfileSet.bind(this));
         });
@@ -267,6 +280,13 @@ class Popup {
       });
   }
 
+  setActiveTheme(theme:string = '') {
+    this.debug('setActiveTheme', theme);
+    if (theme) {
+      $('body').removeClass().addClass(`theme-${theme}`);
+    }
+  }
+
   /* DEBUGGING */
 
   error(...args:any[]) {
@@ -278,12 +298,9 @@ class Popup {
   }
 
   debugMessage(message:MessageEvent) {
-    let msg = '';
     for (let k in message) {
-      msg += `${k}: ${message[k]}`;
+      console.debug('[Popup.debugMessage]', k, message[k]);
     }
-
-    console.debug('[Popup.debugMessage]', msg);
   }
 }
 

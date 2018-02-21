@@ -78,13 +78,16 @@ class NZBUnity {
 
   sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any):Promise<any> {
     if (tab) {
-      return Util.sendTabMessage(tab.id, { [`main.${name}`]: data });
+      return Util.sendTabMessage(tab.id, { [`main.${name}`]: data })
+        .catch((err) => {});
+    } else {
+      return Promise.reject('Tab is required');
     }
   }
 
   sendOptionsMessage(name:string, data:any) {
     // this.debug('sendOptionsMessage', this.optionsTab, name);
-    this.sendTabMessage(this.optionsTab, name, data);
+    return this.sendTabMessage(this.optionsTab, name, data);
   }
 
   /* OPERATIONS */
@@ -119,6 +122,20 @@ class NZBUnity {
         Util.setMenuIcon(result.status, result.status);
         this.sendMessage('refresh', result);
         return result;
+      })
+      .catch((err) => {
+        console.warn('Could not retrieve Queue from host, please check settings.');
+        return {
+          status: 'Disconnected',
+          speed: '0',
+          speedBytes: 0,
+          maxSpeed: '0',
+          maxSpeedBytes: 0,
+          sizeRemaining: '0',
+          timeRemaining: '0',
+          categories: [],
+          queue: [],
+        };
       });
   }
 
@@ -191,6 +208,7 @@ class NZBUnity {
       switch (k) {
         case 'util.request':
           console.log('util.request', val);
+          sendResponse(undefined);
           break;
 
         // Newznab detection
@@ -233,6 +251,7 @@ class NZBUnity {
         // Popup Messages
         case 'popup.profileSelect':
           this.setActiveProfile(val);
+          sendResponse(undefined);
           break;
 
         case 'popup.resumeQueue':
@@ -240,6 +259,7 @@ class NZBUnity {
             this.nzbHost.resumeQueue()
               .then((r) => {
                 this.refresh();
+                sendResponse(undefined);
               });
           }
           break;
@@ -249,6 +269,7 @@ class NZBUnity {
             this.nzbHost.pauseQueue()
               .then((r) => {
                 this.refresh();
+                sendResponse(undefined);
               });
           }
           break;
@@ -258,12 +279,14 @@ class NZBUnity {
             this.nzbHost.setMaxSpeed(val)
               .then((r) => {
                 this.refresh();
+                sendResponse(undefined);
               });
           }
           break;
 
         case 'popup.refresh':
           this.refresh();
+          sendResponse(undefined);
           break;
 
         case 'popup.openProfilePage':
@@ -281,13 +304,17 @@ class NZBUnity {
                   url: profileUrl
                 });
               }
+              sendResponse(undefined);
             });
           break;
 
         // Options Messages
         case 'options.onTab':
           this.optionsTab = val;
-          this.sendOptionsMessage('onTab', true);
+          this.sendOptionsMessage('onTab', true)
+            .then((res) => {
+              sendResponse(res);
+            });
           break;
 
         case 'options.setOptions':
@@ -296,12 +323,16 @@ class NZBUnity {
           } else {
             this.error('items contain invalid option names');
           }
+          sendResponse(undefined);
           break;
 
         case 'options.resetOptions':
           this.resetOptions()
             .then((r) => {
-              this.sendOptionsMessage('resetOptions', true);
+              this.sendOptionsMessage('resetOptions', true)
+                .then((res) => {
+                  sendResponse(res);
+                });
             });
         break;
 
@@ -311,11 +342,13 @@ class NZBUnity {
               if (val.old = opts.ActiveProfile) {
                 this.setActiveProfile(val.new);
               }
+              sendResponse(undefined);
             });
           break;
 
         case 'options.profilesSaved':
           this.setActiveProfile();
+          sendResponse(undefined);
           break;
 
         case 'options.profileTest':
@@ -327,6 +360,7 @@ class NZBUnity {
             .catch((err) => {
               this.sendOptionsMessage('profileTestEnd', { success: false, error: err });
             });
+          sendResponse(undefined);
           break;
       }
     }
@@ -375,9 +409,16 @@ class NZBUnity {
   }
 
   initOptions():Promise<void> {
-    return Util.storage.get('Initialized')
-      .then((items) => {
-        if (!items.Initialized) {
+    return Util.storage.get(null)
+      .then((opts) => {
+        if (opts.Initialized) {
+          // Storage has existing options, check for anything new in the default
+          for (let k in DefaultOptions) {
+            if (opts[k] === undefined) {
+              Util.storage.set({ [k]: DefaultOptions[k] });
+            }
+          }
+        } else {
           // Storage is fresh. Add in defaults
           return this.setOptionDefaults()
             .then(() => {
@@ -633,19 +674,16 @@ class NZBUnity {
     if (this._debug) console.debug.apply(this, args);
   }
 
-  debugOpts() {
-    Util.storage.get(null).then((items) => {
+  debugOpts(opts:any = null) {
+    Util.storage.get(opts).then((items) => {
       this.debug('[NZBUnity.debugOpts]', items);
     });
   }
 
   debugMessage(message:MessageEvent) {
-    let msg = '';
     for (let k in message) {
-      msg += `${k}: ${message[k]}`;
+      console.debug('[NZBUnity.debugMessage]', k, message[k]);
     }
-
-    console.debug('[NZBUnity.debugMessage]', msg);
   }
 }
 

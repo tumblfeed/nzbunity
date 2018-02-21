@@ -2,10 +2,12 @@ class NZBUnityOmgwtfnzbs {
   public username:string;
   public apikey:string;
   public apiurl:string;
+  public replace:boolean = false;
 
   constructor() {
-    Util.storage.get('Providers')
+    Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
+        this.replace = opts.ReplaceLinks;
         let provider = opts.Providers && opts.Providers.omgwtfnzbs;
         let enabled:boolean = provider ? provider.Enabled : true;
 
@@ -81,12 +83,18 @@ class NZBUnityOmgwtfnzbs {
       let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
         url: this.getNzbUrl(id),
         category: category
-      }, el)
-        .css({ margin: '0 .2em 0 .5em' })
+      })
+        .css({ margin: '0 5px' })
         .on('nzb.success', (e) => {
           link.closest('tr').find('a[href*="details"]').first()
             .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
         });
+
+      if (this.replace) {
+        a.replaceWith(link);
+      } else {
+        link.insertAfter(a);
+      }
     });
 
     // Create download all buttons

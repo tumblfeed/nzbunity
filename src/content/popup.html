@@ -8,7 +8,7 @@
     <title>NZB Unity</title>
 
     <link href="css/bootstrap.css" rel="stylesheet">
-		<link href="css/styles.css" rel="stylesheet">
+		<link href="css/popup.css" rel="stylesheet">
   </head>
   <body id="popup">
 
@@ -23,19 +23,22 @@
 
     <div id="summary">
       <span id="QueuePause">
-        <i class="icon fa fa-lg fa-play-circle"></i>
+        <span class="icon fa-stack">
+          <i class="fa fa-circle fa-stack-2x"></i>
+          <i class="icon-glyph fa fa-play fa-stack-1x fa-inverse"></i>
+        </span>
+
         <span id="statusVal"></span>
       </span>
 
       <span>
         <span id="speedVal"></span>
-        <span>(<span id="maxSpeedVal"></span>)</span>
+        <span id="maxSpeedVal"></span>
       </span>
 
       <span>
         <span id="sizeleftVal"></span>
-        <span>Left</span>
-        <span>(<span id="timeleftVal"></span>)</span>
+        <span id="timeleftVal"></span>
       </span>
     </div>
 

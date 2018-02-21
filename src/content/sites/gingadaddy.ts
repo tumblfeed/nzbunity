@@ -1,7 +1,21 @@
 class NZBUnityGingadaddy {
+  public replace:boolean = false;
+
   constructor() {
-    console.info(`[NZB Unity] Initializing Gingadaddy 1-click functionality...`);
-    // this.initializeLinks();
+    Util.storage.get(['Providers', 'ReplaceLinks'])
+      .then((opts) => {
+        this.replace = opts.ReplaceLinks;
+        let provider = opts.Providers && opts.Providers.gingadaddy;
+        let enabled:boolean = provider ? provider.Enabled : true;
+        enabled = false;
+
+        if (enabled) {
+          console.info(`[NZB Unity] Initializing 1-click functionality...`);
+          this.initializeLinks();
+        } else {
+          console.info(`[NZB Unity] 1-click functionality disabled for this site`);
+        }
+      });
   }
 
   getNzbUrl(id:string):string {

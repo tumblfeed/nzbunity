@@ -1,7 +1,10 @@
 class NZBUnityNzbgeek {
+  public replace:boolean = false;
+
   constructor() {
-    Util.storage.get('Providers')
+    Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
+        this.replace = opts.ReplaceLinks;
         let provider = opts.Providers && opts.Providers.nzbgeek;
         let enabled:boolean = provider ? provider.Enabled : true;
 
@@ -43,15 +46,18 @@ class NZBUnityNzbgeek {
         }
       }
 
-      let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
-        url: a.attr('href'),
-        category: category
-      }, el)
-        .css({  })
-        .on('nzb.success', (e) => {
-          link.closest('tr').find('a[href*="details"]').first()
-            .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
-        });
+      let opts:CreateAddLinkOptions = { url: a.attr('href'), category: category };
+
+      if (this.replace) {
+        PageUtil.bindAddUrl(opts, a, true);
+      } else {
+        let link:JQuery<HTMLElement> = PageUtil.createAddUrlButton(opts)
+          .on('nzb.success', (e) => {
+            link.closest('tr').find('a[href*="details"]').first()
+              .prepend('<img src="pics/downloaded.png" class="hastip" title="" style="width:13px;margin-right:.25em;" border="0">');
+          })
+          .insertAfter(a);
+      }
     });
   }
 }

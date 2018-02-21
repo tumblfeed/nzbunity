@@ -1,10 +1,12 @@
 class NZBUnityNzbsu {
   public uid:string;
   public apikey:string;
+  public replace:boolean = false;
 
   constructor() {
-    Util.storage.get('Providers')
+    Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
+        this.replace = opts.ReplaceLinks;
         let provider = opts.Providers && opts.Providers.nzbsu;
         let enabled:boolean = provider ? provider.Enabled : true;
 
@@ -52,16 +54,19 @@ class NZBUnityNzbsu {
       let split:string[] = category.split(/[^\w-]/); // Either "Movies: HD" or "Movies HD"
       category = split.length ? split[0] : category;
 
-      let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
-        url: this.getNzbUrl(id),
-        category: category
-      })
-        .css({ margin: '0 0.5em 0 0' });
+      let opts:CreateAddLinkOptions = { url: this.getNzbUrl(id), category: category };
 
-      if (/^\/(details)/.test(window.location.pathname)) {
-        link.insertBefore(a.closest('.btn-group'));
+      if (this.replace) {
+        PageUtil.bindAddUrl(opts, a, true);
       } else {
-        link.insertBefore(a);
+        let link:JQuery<HTMLElement> = PageUtil.createAddUrlButton(opts)
+          .css({ margin: '0 0.5em 0 0' });
+
+        if (/^\/(details)/.test(window.location.pathname)) {
+          link.insertBefore(a.closest('.btn-group'));
+        } else {
+          link.insertBefore(a);
+        }
       }
     });
 

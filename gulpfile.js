@@ -151,7 +151,7 @@ gulp.task('sass', () => {
         outputStyle: isDev ? 'expanded' : 'compressed',
         includePaths: [ paths.sassPath ]
       })
-      .on('error', sass.logError)
+        .on('error', sass.logError)
     )
     .pipe(isDev ? sourcemaps.write() : gutil.noop())
     .pipe(autoprefixer(autoprefixerOptions))

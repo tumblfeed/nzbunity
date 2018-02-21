@@ -1,4 +1,4 @@
-class NZBUnityNzbfinder {
+class NZBUnityAlthub {
   public uid:string;
   public apikey:string;
   public replace:boolean = false;
@@ -7,14 +7,14 @@ class NZBUnityNzbfinder {
     Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
         this.replace = opts.ReplaceLinks;
-        let provider = opts.Providers && opts.Providers.nzbfinder;
+        let provider = opts.Providers && opts.Providers.althub;
         let enabled:boolean = provider ? provider.Enabled : true;
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
-          let uidMatch = $('script:not([src])').text().match(/Uid = "([0-9]+)"/);
-          let apikeyMatch = $('script:not([src])').text().match(/RSSTOKEN = "([a-z0-9]+)"/);
+          let uidMatch = $('head link[href^="/rss"]').attr('href').match(/i=([0-9]+)/);
+          let apikeyMatch = $('head link[href^="/rss"]').attr('href').match(/r=([a-z0-9]+)/);
 
           this.uid = uidMatch ? uidMatch[1] : null;
           this.apikey = apikeyMatch ? apikeyMatch[1] : null;
@@ -32,7 +32,7 @@ class NZBUnityNzbfinder {
   }
 
   getNzbUrl(id:string):string {
-    return `https://nzbfinder.ws/getnzb/${id}?i=${this.uid}&r=${this.apikey}`;
+    return `https://api.althub.co.za/getnzb/${id}?i=${this.uid}&r=${this.apikey}`;
   }
 
   initializeLinks() {
@@ -62,15 +62,15 @@ class NZBUnityNzbfinder {
         if (this.replace) {
           PageUtil.bindAddUrl(opts, a, true);
         } else {
-          let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink(opts)
+          let link:JQuery<HTMLElement> = PageUtil.createAddUrlButton(opts)
             .text('Download with NZB Unity')
-            .css({ margin: '0 0 10px 0' })
-            .insertBefore(a);
+            .css({ margin: '0' })
+            .appendTo(a.parent());
         }
 
       } else {
-        if (a.closest('tr').find('.label:first-child').length) {
-          category = a.closest('tr').find('.label:first-child').text();
+        if (a.closest('div.row').find('a[href^="/browse"]').length) {
+          category = a.closest('div.row').find('a[href^="/browse"]').text();
           catSrc = 'href';
         }
 
@@ -83,10 +83,12 @@ class NZBUnityNzbfinder {
           PageUtil.bindAddUrl(opts, a, true);
         } else {
           let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink(opts)
-            .css({ margin: '0 0.5em 0 0' })
-            .insertBefore(a);
-
-          a.parent().css({ 'white-space': 'nowrap' });
+            .css({
+              position: 'absolute',
+              right: '-5px',
+              top: '0'
+            })
+            .prependTo(a.parent());
         }
       }
     });
@@ -95,7 +97,6 @@ class NZBUnityNzbfinder {
     $('.nzb_multi_operations_download').each((i, el) => {
       let getNzbUrl = (id:string) => { return this.getNzbUrl(id); };
       let button:JQuery<HTMLElement> = PageUtil.createButton()
-        .css({ 'margin': '0 0.5em 10px 0' })
         .on('click', (e) => {
           e.preventDefault();
 
@@ -113,8 +114,8 @@ class NZBUnityNzbfinder {
                 let category:string = '';
                 let catSrc:string = 'default';
 
-                if (check.closest('tr').find('.label:first-child').length) {
-                  category = check.closest('tr').find('.label:first-child').text();
+                if (check.closest('div.row').find('a[href^="/browse"]').length) {
+                  category = check.closest('div.row').find('a[href^="/browse"]').text();
                   catSrc = 'href';
                 }
 
@@ -142,19 +143,20 @@ class NZBUnityNzbfinder {
                 }, 1000);
               });
           }
-        });
+        })
+        .css({ 'margin': '0 0.5em' });
 
       $('<div></div>')
         .css({ display: 'inline-block', 'vertical-align': 'middle' })
         .append(button)
-        .insertBefore($(el).parent());
+        .prependTo($(el).closest('.nzb_multi_operations'));
     });
   }
 
 }
 
 $(($) => {
-  let nzbIntegration = new NZBUnityNzbfinder();
+  let nzbIntegration = new NZBUnityAlthub();
 });
 
 undefined;

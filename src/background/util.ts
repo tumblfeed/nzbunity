@@ -50,7 +50,9 @@ declare interface NZBUnityOptions extends NestedDictionary {
   EnableNewznab: boolean,
   SimplifyCategories: boolean,
   DefaultCategory: string,
-  OverrideCategory: string
+  OverrideCategory: string,
+  ReplaceLinks: boolean,
+  UITheme: string
 };
 
 const DefaultOptions:NZBUnityOptions = {
@@ -69,7 +71,9 @@ const DefaultOptions:NZBUnityOptions = {
   EnableNewznab: true,
   SimplifyCategories: true,
   DefaultCategory: null,
-  OverrideCategory: null
+  OverrideCategory: null,
+  ReplaceLinks: false,
+  UITheme: ''
 };
 
 declare interface ParsedUrl {
@@ -218,10 +222,11 @@ class Util {
     return new Promise((resolve, reject) => {
       color = color ? color.toLowerCase() : 'green';
       if (/^(active|downloading)/i.test(color)) color = 'green';
-      if (/^(inactive|idle|gray)/i.test(color)) color = 'grey';
+      if (/^(inactive|idle|paused|gray)/i.test(color)) color = 'grey';
 
       if (!/grey|green|orange/.test(color)) {
-        return reject('Ivalid color');
+        console.warn(`[Util.sendTabMessage] Invalid color: ${color}, ${status}`);
+        return resolve();
       }
 
       chrome.browserAction.setTitle({ title: 'NZB Unity' + (status ? ` - ${status}` : '') });
@@ -474,61 +479,26 @@ class PageUtil {
       });
   }
 
-  static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
-    // console.log('createAddUrlLink', url, category);
-    let link = PageUtil.createLink()
-      .attr('href', options.url)
-      .css({
-        height: '16px',
-        width: '16px'
-      })
-      .on('click', (e) => {
-        e.preventDefault();
-        console.info(`[NZB Unity] Adding URL: ${link.attr('href')}`);
-
-        link.trigger('nzb.pending');
-
-        Util.sendMessage({ 'content.addUrl': options })
-          .then((r:boolean) => {
-            // console.log('[3]', r);
-            setTimeout(() => {
-              link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-            }, 1000);
-          });
-      });
-
-    if (adjacent) {
-      link.insertAfter(adjacent);
+  static bindAddUrl(options:CreateAddLinkOptions, el:JQuery<HTMLElement>|HTMLElement, exclusive:boolean = false):JQuery<HTMLElement> {
+    if (exclusive) {
+      $(el).off('click');
     }
 
-    return link;
+    return $(el).on('click', (e) => {
+      e.preventDefault();
+      console.info(`[NZB Unity] Adding URL: ${options.url}`);
+
+      $(e.target).trigger('nzb.pending');
+
+      Util.sendMessage({ 'content.addUrl': options })
+        .then((r:boolean) => {
+          // console.log('[3]', r);
+          setTimeout(() => {
+            $(e.target).trigger(r === false ? 'nzb.failure' : 'nzb.success');
+          }, 1000);
+        });
+    });
   }
-
-  static createAddUrlButton(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
-    // console.log('createAddUrlLink', url, category);
-    let button = PageUtil.createButton()
-      .on('click', (e) => {
-        e.preventDefault();
-        console.info(`[NZB Unity] Adding URL: ${button.attr('href')}`);
-
-        button.trigger('nzb.pending');
-
-        Util.sendMessage({ 'content.addUrl': options })
-          .then((r:boolean) => {
-            // console.log('[3]', r);
-            setTimeout(() => {
-              button.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-            }, 1000);
-          });
-      });
-
-    if (adjacent) {
-      button.insertAfter(adjacent);
-    }
-
-    return button;
-  }
-
 
   static createLink():JQuery<HTMLElement> {
     return $(`
@@ -591,6 +561,33 @@ class PageUtil {
           'background-image': `url(${PageUtil.iconRed})`
         });
       });
+  }
+
+  static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
+    // console.log('createAddUrlLink', url, category);
+    let link = PageUtil.bindAddUrl(options, PageUtil.createLink())
+      .attr('href', options.url)
+      .css({
+        height: '16px',
+        width: '16px'
+      });
+
+    if (adjacent) {
+      link.insertAfter(adjacent);
+    }
+
+    return link;
+  }
+
+  static createAddUrlButton(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
+    // console.log('createAddUrlLink', url, category);
+    let button = PageUtil.bindAddUrl(options, PageUtil.createButton());
+
+    if (adjacent) {
+      button.insertAfter(adjacent);
+    }
+
+    return button;
   }
 
 }

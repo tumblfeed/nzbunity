@@ -2,7 +2,7 @@ class OptionsPage {
 
   public _debug:boolean = false;
   public form:JQuery<HTMLElement>;
-  public elements:JQuery<HTMLElement>;
+  public elements:JQuery<HTMLElement>[];
 
   public providers:NZBUnityProviderDictionary;
   public profiles:NZBUnityProfileDictionary;
@@ -19,7 +19,7 @@ class OptionsPage {
   constructor() {
     this.providers = {};
     this.form = $('#FormSettings');
-    this.elements = $();
+    this.elements = [];
     this.profileCurrent = $('#ProfileCurrent');
     this.profileButtons = $('#profile-controls button, #profileTest');
     this.profileInputs = $('#profile-container').find('input, select');
@@ -41,11 +41,10 @@ class OptionsPage {
         this.profiles = opts.Profiles;
 
         // Init field contents
-        let elements:JQuery<HTMLElement>[] = [];
         for (let k in opts) {
           let el = $(`#${k}`);
           if (el.length) {
-            elements.push(el);
+            this.elements.push(el);
             if (el.attr('type') === 'checkbox') {
               el.prop('checked', <boolean> opts[k]);
             } else {
@@ -53,22 +52,24 @@ class OptionsPage {
             }
           }
         }
-        this.elements = $(elements.map((el) => { return el.get(0); }));
+
+        console.log(this.elements);
 
         // Set up form -> storage binding
-        this.elements.on('input', (e) => {
-          let el = $(e.currentTarget);
-          let val = el.attr('type') === 'checkbox'
-            ? el.prop('checked')
-            : el.val();
-
-          Util.storage.set({ [el.attr('id')]: val });
+        this.elements.forEach((el) => {
+          if (el.attr('type') === 'checkbox') {
+            el.on('change', (e) => {
+              Util.storage.set({ [el.attr('id')]: el.prop('checked') });
+            });
+          } else {
+            el.on('input', (e) => {
+              Util.storage.set({ [el.attr('id')]: el.val() });
+            });
+          }
         });
 
         this.debug('[OptionsPage.constructor] Bound form elements: ',
-          this.elements.toArray()
-            .map((el) => { return el.id; })
-            .join(', ')
+          this.elements.map(el => el.attr('id')).join(', ')
         );
 
         // Set up profile listeners
@@ -130,7 +131,7 @@ class OptionsPage {
     return Util.sendMessage({ [`options.${name}`]: data });
   }
 
-  handleMessage(message:MessageEvent) {
+  handleMessage(message:MessageEvent, sender:any, sendResponse:(response:any) => void) {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
@@ -155,6 +156,8 @@ class OptionsPage {
 
       }
     }
+
+    sendResponse(undefined);
   }
 
   /* HANDLERS */
@@ -466,12 +469,10 @@ class OptionsPage {
   }
 
   debugMessage(message:MessageEvent) {
-    let msg = '';
     for (let k in message) {
-      msg += `${k}: ${message[k]}`;
+      console.debug('[OptionsPage.debugMessage]', k, message[k]);
     }
 
-    console.debug('[OptionsPage.debugMessage]', msg);
   }
 }
 

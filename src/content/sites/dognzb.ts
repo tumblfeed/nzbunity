@@ -1,10 +1,12 @@
 class NZBUnityDognzb {
   public username:string;
   public observer:MutationObserver;
+  public replace:boolean = false;
 
   constructor() {
-    Util.storage.get('Providers')
+    Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
+        this.replace = opts.ReplaceLinks;
         let provider = opts.Providers && opts.Providers.dognzb;
         let enabled:boolean = provider ? provider.Enabled : true;
 
@@ -32,7 +34,7 @@ class NZBUnityDognzb {
 
   getNzbUrl(id:string):string {
     let rsstoken:string = <string> $('input[name="rsstoken"]').val();
-    return `${window.location.protocol}//${window.location.host}/fetch/${id}/${rsstoken}`;
+    return `${window.location.origin}/fetch/${id}/${rsstoken}`;
   }
 
   initializeLinks() {
@@ -49,17 +51,25 @@ class NZBUnityDognzb {
         let category:string = catLabel.text();
         let catSrc:string = 'default';
 
-        a.closest('td').attr('width', '36');
-        a.css({ float: 'left' })
-
         let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
           url: this.getNzbUrl(id),
           category: category
-        }, el)
+        })
           .on('nzb.success', (e) => {
             catLabel.closest('tr')
               .prepend('<td width="19"><div class="dog-icon-tick"></div></td>');
           });
+
+        console.warn(this.replace);
+
+        if (this.replace) {
+          a.closest('td').attr('width', '20');
+          a.replaceWith(link);
+        } else {
+          a.closest('td').attr('width', '36');
+          a.css({ float: 'left' });
+          link.insertAfter(a);
+        }
       });
 
       // Create download all buttons
@@ -113,8 +123,6 @@ class NZBUnityDognzb {
           .insertBefore($(el));
       });
 
-
-
     } else if (window.location.pathname.startsWith('/details')) {
       let id:string = window.location.pathname.match(/\/details\/(\w+)/i)[1];
 
@@ -127,15 +135,19 @@ class NZBUnityDognzb {
         category = catLabel.text().split(/\s*->\s*/)[0];
       }
 
-      // a.closest('td').attr('width', '36');
-      // a.css({ float: 'left' })
-
       let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink({
         url: this.getNzbUrl(id),
         category: category
-      })
-        .appendTo($('#preview .btn-group').closest('tr').find('td:first-child'));
+      });
+
+      if (this.replace) {
+        $('[onclick^="doOneDownload"]').replaceWith(link);
+        link.css({ padding: '0 0 0 5px' });
+        link.append('download');
+      } else {
+        link.appendTo($('#preview .btn-group').closest('tr').find('td:first-child'));
       }
+    }
   }
 }
 

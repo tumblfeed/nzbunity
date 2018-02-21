@@ -179,3 +179,11 @@ Initial public release
 * Toolbar icon will change color and title depending on download status (grey for idle, green for activity)
 * New 1-Click site profile for gingadaddy.com, currently non-functional due to API restrictions (fix planned for 1.6.1)
 * Fixes filtering error on dognzb.cr
+
+### 1.7.0
+
+* New option for UI theme (currently light or dark)
+* New option to replace native download links instead of creating a new NZB Unity download link for 1-Click sites
+* New 1-Click site profile for althub.co.za
+* Fixes for console messaging errors
+* Some small theme tweaks to clean up and standardize the UI look and feel
