@@ -5,19 +5,19 @@
 // Includes
 
 const autoprefixer = require('gulp-autoprefixer');
-const clean = require('gulp-clean');
+const del = require('del');
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const path = require('path');
 const ts = require('gulp-typescript');
 const sass = require('gulp-sass');
+const sequence = require('run-sequence');
 const sourcemaps = require('gulp-sourcemaps');
 const zip = require('gulp-zip');
 
 // Options
 
-var debug = gutil.noop;
-var argv = require('yargs')
+const argv = require('yargs')
   .option('hostname', {
     alias: 'h',
     describe: 'Hostname',
@@ -36,13 +36,9 @@ var argv = require('yargs')
   .help('help')
   .argv;
 
-if (argv.verbose) {
-  debug = require('gulp-debug');
-}
+const debug = argv.debug ? require('gulp-debug') : gutil.noop;
 
 // Config & Helpers
-
-var isDev = !(argv.production || /^prod/i.test(process.env.NODE_ENV));
 
 var paths = {
   tsPath: path.resolve('./src/**/*.ts'),
@@ -67,9 +63,6 @@ var autoprefixerOptions = {
   browsers: ['last 2 versions', '> 5%', 'Firefox ESR']
 };
 
-// Helper to output current environment string.
-var envStr = () => { return gutil.colors.magenta('(') + gutil.colors.blue(isDev ? 'dev' : 'prod') + gutil.colors.magenta(')'); };
-
 /* TASKS */
 
 /**
@@ -88,8 +81,10 @@ gulp.task('paths', () => {
  * Deletes all files in the build and dist directories
  */
 gulp.task('clean', () => {
-  return gulp.src([paths.buildPath + '/*', paths.distPath + '/*.zip'], {read: false})
-    .pipe(clean());
+  return del([
+    paths.buildPath + '/*',
+    paths.distPath + '/*.zip'
+  ]);
 });
 
 /**
@@ -98,7 +93,7 @@ gulp.task('clean', () => {
  */
 gulp.task('copy', () => {
   gutil.log(
-    gutil.colors.magenta('Copying files ') + envStr(),
+    gutil.colors.magenta('Copying files '),
     '\n\tFrom -> ./src : ', copyFiles.join(', '),
     '\n\tTo   -> ', paths.buildPath
   );
@@ -118,7 +113,7 @@ gulp.task('typescript', () => {
   var tsProject = ts.createProject(path.resolve('./tsconfig.json'));
 
   gutil.log(
-    gutil.colors.magenta('Compiling TypeScript ') + envStr(),
+    gutil.colors.magenta('Compiling TypeScript '),
     '\n\tFrom -> ', paths.tsPath,
     '\n\tTo   -> ', paths.buildPath
   );
@@ -137,23 +132,23 @@ gulp.task('typescript', () => {
  */
 gulp.task('sass', () => {
   gutil.log(
-    gutil.colors.magenta('Compiling SASS ') + envStr(),
+    gutil.colors.magenta('Compiling SASS '),
     '\n\tFrom -> ', paths.sassPath,
     '\n\tTo   -> ', paths.buildPath
   );
   return gulp
     .src(paths.sassPath)
     .pipe(debug({ title: 'sass.src' }))
-    .pipe(isDev ? sourcemaps.init() : gutil.noop())
+    .pipe(sourcemaps.init())
     .pipe(
       sass({
         errLogToConsole: true,
-        outputStyle: isDev ? 'expanded' : 'compressed',
+        outputStyle: 'compressed',
         includePaths: [ paths.sassPath ]
       })
         .on('error', sass.logError)
     )
-    .pipe(isDev ? sourcemaps.write() : gutil.noop())
+    .pipe(sourcemaps.write())
     .pipe(autoprefixer(autoprefixerOptions))
     .pipe(gulp.dest(paths.buildPath + '/content/css'));
 });
@@ -167,7 +162,7 @@ gulp.task('build', ['copy', 'typescript', 'sass']);
 /**
  * Zips up the build directory into the dist directory (webextensions are just zips)
  */
-gulp.task('dist', ['build'], () => {
+gulp.task('dist', ['clean', 'build'], () => {
   gulp.src(paths.buildPath + '/**/*')
     .pipe(zip('nzbunity.zip'))
     .pipe(gulp.dest(paths.distPath));
