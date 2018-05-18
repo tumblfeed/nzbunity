@@ -84,8 +84,8 @@ gulp.task('paths', () => {
 });
 
 /**
- * gulp copy
- * Copies all static files that do not require pre-processing / compilation
+ * gulp clean
+ * Deletes all files in the build and dist directories
  */
 gulp.task('clean', () => {
   return gulp.src([paths.buildPath + '/*', paths.distPath + '/*.zip'], {read: false})
@@ -93,8 +93,8 @@ gulp.task('clean', () => {
 });
 
 /**
- * gulp clean
- * Deletes all files in the build and dist directories
+ * gulp copy
+ * Copies all static files that do not require pre-processing / compilation
  */
 gulp.task('copy', () => {
   gutil.log(

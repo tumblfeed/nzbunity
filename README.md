@@ -189,3 +189,7 @@ Initial public release
 * New 1-Click site profile for althub.co.za
 * Fixes for console messaging errors
 * Some small theme tweaks to clean up and standardize the UI look and feel
+
+### 1.7.5
+
+* Upgraded dependencies (Bootstrap) to pass AMO packaged library rules.
