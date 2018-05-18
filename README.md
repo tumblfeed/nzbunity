@@ -190,6 +190,6 @@ Initial public release
 * Fixes for console messaging errors
 * Some small theme tweaks to clean up and standardize the UI look and feel
 
-### 1.7.5
+### 1.7.6
 
 * Upgraded dependencies (Bootstrap) to pass AMO packaged library rules.
