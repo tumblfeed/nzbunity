@@ -157,15 +157,21 @@ gulp.task('sass', () => {
  * gulp build
  * Runs frontend build tasks and then Maven package.
  */
-gulp.task('build', ['copy', 'typescript', 'sass']);
+gulp.task('build', [], (done) => {
+  return sequence('copy', 'typescript', 'sass', done);
+});
 
 /**
  * Zips up the build directory into the dist directory (webextensions are just zips)
  */
-gulp.task('dist', ['clean', 'build'], () => {
+gulp.task('zip', () => {
   gulp.src(paths.buildPath + '/**/*')
     .pipe(zip('nzbunity.zip'))
     .pipe(gulp.dest(paths.distPath));
+});
+
+gulp.task('dist', [], (done) => {
+  return sequence('clean', 'build', 'zip', done);
 });
 
 // Watchers
