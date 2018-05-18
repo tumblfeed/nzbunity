@@ -24,7 +24,7 @@ class NZBUnityNzbgeek {
   initializeLinks() {
     // Create direct download links
     // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.
-    $('img[src$="download.png"]').closest('a[href*="getnzb"]').each((i, el) => {
+    $('img[src$="download.png"]').closest('a').each((i, el) => {
       let a:JQuery<HTMLElement> = $(el);
       let row:JQuery<HTMLElement> = a.closest('tr[id^="guid"]');
 
