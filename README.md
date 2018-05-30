@@ -193,3 +193,7 @@ Initial public release
 ### 1.7.6
 
 * Upgraded dependencies (Bootstrap) to pass AMO packaged library rules.
+
+### 1.7.8
+
+* Fixed a small error preventing the general Newznab profile from working.

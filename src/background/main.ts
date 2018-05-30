@@ -580,7 +580,7 @@ class NZBUnity {
     if (tab.status === 'complete' && /^https?:/.test(tab.url)) {
       if (this.isNewznabProvider(tab.url)) {
         // Check if URL matches known newznab sites, as this is less intrusive
-        chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.2.1.slim.js' }, () => {
+        chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.3.1.slim.min.js' }, () => {
           chrome.tabs.executeScript(tabId, { file: 'background/util.js' }, () => {
             chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab.js' });
           });
