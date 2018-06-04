@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.7.8",
+  "version": "1.8.0",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -59,6 +59,7 @@
         "*://*.nzbindex.com/*",
         "*://*.nzbindex.nl/*",
         "*://*.nzbking.com/*",
+        "*://*.nzbserver.com/*",
         "*://*.nzb.su/*",
         "*://*.omgwtfnzbs.me/*"
       ],
@@ -98,6 +99,10 @@
     {
       "matches": ["*://*.nzbking.com/*"],
       "js": ["content/sites/nzbking.js"]
+    },
+    {
+      "matches": ["*://*.nzbserver.com/*"],
+      "js": ["content/sites/nzbserver.js"]
     },
     {
       "matches": ["*://*.nzb.su/*"],

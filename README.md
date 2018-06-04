@@ -43,13 +43,13 @@ In order to use NZB Unity, at least one server profile must be defined. To get s
 
 * 1-Click Download Providers -- Enable 1-Click features for the given site. This feature modifies most list and detail pages on those sites and presents a direct download button. If the site you use is not listed, NZB download interception will work on any site that does not require an API key or authentication to download NZB files directly.
 * Automatically Intercept NZB Downloads -- Detects whenever an NZB file is being downloaded by the browser and sends the URL of the NZB to the server instead. Note that this does not intercept the *contents* of the NZB, just the URL, so this will not work for sites that require an active login or do not provide API enabled download links for logged in users. URL interception does work for a great many sites currently, so it is enabled by default.
-* Intercept Exclude -- Will exclude the sites listed in this option from NZB download interception. Sites should be listed by hostname only, comma separated, and regular expression syntax is allowed (eg. "myzhbhost.com").
+* Intercept Exclude -- Will exclude the sites listed in this option from NZB download interception. Sites should be listed by hostname only, comma separated, and regular expression syntax is allowed (eg. "mynzbhost.com").
 * Simplify Category Names --  Converts category names that contain group and subgroup into just the group name (eg, "Movies > HD" becomes "movies").
 * Replace Links -- Will replace native download links on most 1-Click supported sites instead of adding a separate button.
 * Default Category -- If no category name can be ascertained for a particular NZB (either by the site, in the NZB itself, DNZB headers, or by category override), this category will be used.
 * Refresh Rate -- The toolbar popup is refreshed by polling the server at this specified interval. Default is 15 seconds.
 * UI Theme -- Select the UI color theme for the toolbar popup.
-* Enable Notifications -- Shows a browser notification when an NZB was successfully sent to the server (but not necessarily successfully started downloading). Currently defaults to false, as it's of limited use at the moment.
+* Enable Notifications -- Shows a browser notification when an NZB was successfully sent to the server (but not necessarily successfully started downloading). Currently off by default, as it's of limited use at the moment.
 
 * Reset -- Deletes all profiles and sets all options to their defaults.
 
@@ -197,3 +197,7 @@ Initial public release
 ### 1.7.8
 
 * Fixed a small error preventing the general Newznab profile from working.
+
+### 1.8.0
+
+* New 1-Click site profile for nzbserver.com

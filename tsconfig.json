@@ -15,6 +15,7 @@
     "src/content/sites/nzbgeek.ts",
     "src/content/sites/nzbindex.ts",
     "src/content/sites/nzbking.ts",
+    "src/content/sites/nzbserver.ts",
     "src/content/sites/nzbsu.ts",
     "src/content/sites/omgwtfnzbs.ts"
   ],
