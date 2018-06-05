@@ -1,5 +1,4 @@
 class OptionsPage {
-
   public _debug:boolean = false;
   public form:JQuery<HTMLElement>;
   public elements:JQuery<HTMLElement>[];
@@ -52,8 +51,6 @@ class OptionsPage {
             }
           }
         }
-
-        console.log(this.elements);
 
         // Set up form -> storage binding
         this.elements.forEach((el) => {
@@ -158,6 +155,7 @@ class OptionsPage {
     }
 
     sendResponse(undefined);
+    return true;
   }
 
   /* HANDLERS */
@@ -204,10 +202,15 @@ class OptionsPage {
     this.debug('[OptionsPage.handleProfileInput] ', el.attr('id'), el.val());
 
     if (el.attr('id') === 'ProfileType') {
-      this.disableProfileFieldsByType(<string> el.val());
+      this.disableProfileFieldsByType(el.val() as string);
     }
 
-    this.profileData[el.attr('id')] = el.val();
+    if (el.attr('type') === 'checkbox') {
+      this.profileData[el.attr('id')] = el.prop('checked');
+    } else {
+      this.profileData[el.attr('id')] = el.val();
+    }
+
     this.profileSave();
   }
 
@@ -265,7 +268,13 @@ class OptionsPage {
 
       for (let k in this.profiles[name]) {
         let el = $(`#${k}`);
-        el.val(<string> this.profiles[name][k]);
+
+        if (el.attr('type') === 'checkbox') {
+          el.prop('checked', this.profiles[name][k] as boolean);
+        } else {
+          el.val(this.profiles[name][k] as string);
+        }
+
         el.prop('disabled', false);
       }
 
@@ -297,7 +306,7 @@ class OptionsPage {
     });
     profile['ProfileName'] = name;
 
-    this.profiles[name] = <NZBUnityProfileOptions> profile;
+    this.profiles[name] = profile as NZBUnityProfileOptions;
 
     return this.profileSave()
       .then(() => {
@@ -314,7 +323,7 @@ class OptionsPage {
     });
     profile['ProfileName'] = name;
 
-    this.profiles[name] = <NZBUnityProfileOptions> profile;
+    this.profiles[name] = profile as NZBUnityProfileOptions;
 
     return this.profileSave()
       .then(() => {
@@ -325,7 +334,7 @@ class OptionsPage {
 
   profileDelete() {
     if (Object.keys(this.profiles).length) {
-      let name:string = <string> this.profileCurrent.val();
+      let name:string = this.profileCurrent.val() as string;
       delete this.profiles[name];
 
       return this.profileSave()

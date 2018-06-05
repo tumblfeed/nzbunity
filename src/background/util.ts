@@ -18,7 +18,8 @@ declare interface NZBUnityProfileOptions extends Dictionary {
   ProfileApiKey: string,
   ProfileUsername: string,
   ProfilePassword: string,
-  ProfileServerUrl: string
+  ProfileServerUrl: string,
+  ProfileHostAsEntered: boolean
 }
 
 declare interface NZBUnityProviderOptions extends Dictionary {
@@ -303,7 +304,7 @@ class Util {
         if (method === 'GET') {
           search = search || {};
           for (let k in options.params) {
-            search[k] = <string> options.params[k];
+            search[k] = options.params[k] as string;
           }
 
         // Other types of requests, figure out content type if not specified
@@ -327,7 +328,7 @@ class Util {
               delete headers['Content-Type'];
               options.body = new FormData();
               for (let k in options.params) {
-                options.body.append(k, <string> options.params[k]);
+                options.body.append(k, options.params[k] as string);
               }
               for (let k in options.files) {
                 options.body.append(k, new Blob([options.files[k].content], { type: options.files[k].type }), options.files[k].filename);
@@ -338,7 +339,7 @@ class Util {
             case 'application/x-www-form-urlencoded':
             default:
               headers['Content-Type'] = 'application/x-www-form-urlencoded';
-              options.body = Util.uriEncodeQuery(<Dictionary> options.params);
+              options.body = Util.uriEncodeQuery(options.params as Dictionary);
           }
         }
       }

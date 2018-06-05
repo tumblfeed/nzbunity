@@ -82,15 +82,18 @@ abstract class NZBHost {
 
   host:string;
   hostParsed:ParsedUrl;
+  hostAsEntered:boolean = false;
+
   apiUrl:string;
 
   infinityString:string = '∞';
   // infinityString:string = '&#8734;';
 
-  constructor(options:StringDictionary = {}) {
-    this.displayName = options.displayName || this.name;
-    this.host = options.host || 'localhost';
+  constructor(options:Dictionary = {}) {
+    this.displayName = (options.displayName || this.name) as string;
+    this.host = (options.host || 'localhost') as string;
     this.hostParsed = Util.parseUrl(this.host);
+    this.hostAsEntered = Boolean(options.hostAsEntered);
   }
 
   abstract call(operation:string, params:Dictionary|Array<any>):Promise<NZBResult>;
@@ -109,15 +112,21 @@ class SABnzbdHost extends NZBHost {
   name:string = 'SABnzbd';
   apikey:string;
 
-  constructor(options:StringDictionary = {}) {
+  constructor(options:Dictionary = {}) {
     super(options);
-    this.apikey = options.apikey || '';
+    this.apikey = (options.apikey || '') as string;
 
-    // If path is empty, default to /sabnzbd
-    let apiPath:string = /^\/*$/i.test(this.hostParsed.pathname) ? 'sabnzbd/api' : 'api';
+    if (this.hostAsEntered) {
+      this.apiUrl = this.host;
+    } else {
+      // If path is empty and root is not allowed, default to /sabnzbd
+      let apiPath:string = '';
+      if (/^\/*$/i.test(this.hostParsed.pathname)) apiPath += 'sabnzbd';
+      if (!/api$/i.test(this.hostParsed.pathname)) apiPath += '/api';
 
-    let pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
-    this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+      let pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
+      this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+    }
   }
 
   call(operation:string, params:Dictionary = {}):Promise<NZBResult> {
@@ -137,7 +146,11 @@ class SABnzbdHost extends NZBHost {
 
     return Util.request(request)
       .then((r) => {
-        // check for error condition
+        // check for error conditions
+        if (typeof r === 'string') {
+          return { success: false, operation: operation, error: 'Invalid result from host' };
+        }
+
         if (r.status === false && r.error) {
           return { success: false, operation: operation, error: r.error };
         }
@@ -371,13 +384,17 @@ class NZBGetHost extends NZBHost {
   username:string;
   password:string;
 
-  constructor(options:StringDictionary = {}) {
+  constructor(options:Dictionary = {}) {
     super(options);
-    this.username = options.username || '';
-    this.password = options.password || '';
+    this.username = (options.username || '') as string;
+    this.password = (options.password || '') as string;
 
-    let pathname = `${this.hostParsed.pathname}/jsonrpc`.replace(/\/+/g, '/');
-    this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+    if (this.hostAsEntered) {
+      this.apiUrl = this.host;
+    } else {
+      let pathname = `${this.hostParsed.pathname}/jsonrpc`.replace(/\/+/g, '/');
+      this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+    }
   }
 
   call(operation:string, params:Array<any> = []):Promise<NZBResult> {
@@ -399,7 +416,11 @@ class NZBGetHost extends NZBHost {
 
     return Util.request(request)
       .then((r) => {
-        // check for error condition
+        // check for error conditions
+        if (typeof r === 'string') {
+          return { success: false, operation: operation, error: 'Invalid result from host' };
+        }
+
         if (r.error) {
           return { success: false, operation: operation, error: `${r.error.name}: ${r.error.message}` };
         }

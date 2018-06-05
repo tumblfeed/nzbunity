@@ -42,6 +42,12 @@ h3 {
   width: 100%;
 }
 
+.tooltip {
+  .tooltip-inner {
+    max-width: 350px;
+  }
+}
+
 #FormSettings {
   .explanation {
     font-size: .85em;
@@ -85,6 +91,10 @@ h3 {
 
   #provider-enabled-container {
     margin-bottom: .7em;
+
+    .form-check-label {
+      margin-left: 1.24em;
+    }
   }
 }
 

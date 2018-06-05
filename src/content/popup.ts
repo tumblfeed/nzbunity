@@ -1,5 +1,4 @@
 class Popup {
-
   public _debug:boolean = false;
   public profiles:NZBUnityProfileDictionary;
   public profileCurrent:JQuery<HTMLElement>;
@@ -210,6 +209,7 @@ class Popup {
     }
 
     sendResponse(undefined);
+    return true;
   }
 
   /* HANDLERS */

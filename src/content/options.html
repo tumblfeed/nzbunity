@@ -86,6 +86,27 @@
                 </div>
               </div>
 
+              <div class="form-row" style="margin-top: -0.5rem;">
+                <div class="col-form-label col-12 col-sm-4">
+                  &nbsp;
+                </div>
+                <div class="col-12 col-sm-8">
+                  <label class="form-check-label" style="margin-left: 1.25rem;"
+                    data-toggle="tooltip" title="If checked, disables smart defaults for the host URL.
+                      <br>Host must be the <em>full URL</em> of your API endpoint,
+                      <br>including protocol, port, and path.
+                      <br>You may want to set 'Open server' URL as well.
+                      <br>
+                      <br>For example:
+                      <br>SABnzbd - http://localhost:1234/sabnzbd/api
+                      <br>NZBGet - http://localhost:1234/jsonrpc"
+                  >
+                    <input id="ProfileHostAsEntered" name="ProfileHostAsEntered" class="form-check-input" type="checkbox" value="" disabled>
+                    Use host URL exactly as entered
+                  </label>
+                </div>
+              </div>
+
               <div class="form-row">
                 <div class="col-form-label col-12 col-sm-4">
                   <label for="ProfileApiKey">API Key:</label>
@@ -268,7 +289,7 @@
             </label>
           </div>
 
-          <div class="form-row">
+          <div class="form-row" style="margin-top: 2rem;">
             <div class="col-form-label col-12 col-sm-6 col-md-4 col-lg-3">
               Click to reset all settings to default
             </div>

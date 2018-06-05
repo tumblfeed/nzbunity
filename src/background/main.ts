@@ -293,7 +293,18 @@ class NZBUnity {
           this.getActiveProfile()
             .then((profile) => {
               if (profile) {
-                let profileUrl:string = profile.ProfileServerUrl || profile.ProfileHost;
+                let profileUrl:string;
+
+                if (profile.ProfileServerUrl) {
+                  // Profile server url present, just use that
+                  profileUrl = profile.ProfileServerUrl;
+                } else if (profile.ProfileHostAsEntered) {
+                  // No Profile server url, and host url is api, try to make it nice.
+                  profileUrl = profile.ProfileHost.replace(/\/?(api|jsonrpc)$/ig, '');
+                } else {
+                  // Default to host
+                  profileUrl = profile.ProfileHost;
+                }
 
                 // Ensure protocol so the browser doesn't prefix the addon url
                 if (!/^[a-z]+:\/\//i.test(profileUrl)) {
@@ -364,6 +375,8 @@ class NZBUnity {
           break;
       }
     }
+
+    return true;
   }
 
   handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
@@ -630,18 +643,20 @@ class NZBUnity {
 
         if (profile) {
           if (profile.ProfileType === 'NZBGet') {
-            this.nzbHost = new NZBGetHost(<StringDictionary> {
+            this.nzbHost = new NZBGetHost({
               displayName: name,
               host: profile.ProfileHost,
               username: profile.ProfileUsername,
-              password: profile.ProfilePassword
-            });
+              password: profile.ProfilePassword,
+              hostAsEntered: profile.ProfileHostAsEntered
+            } as Dictionary);
           } else {
-            this.nzbHost = new SABnzbdHost(<StringDictionary> {
+            this.nzbHost = new SABnzbdHost({
               displayName: name,
               host: profile.ProfileHost,
-              apikey: profile.ProfileApiKey
-            });
+              apikey: profile.ProfileApiKey,
+              hostAsEntered: profile.ProfileHostAsEntered
+            } as Dictionary);
           }
 
           return { success: true, result: name };
