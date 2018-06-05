@@ -201,3 +201,11 @@ Initial public release
 ### 1.8.0
 
 * New 1-Click site profile for nzbserver.com
+* New profile option "Use host URL exactly as entered".
+  * Defaults to disabled, which preserves addon URL handling as before. Addon adds common default parts of the host URL to find the API endpoint.
+    * For example, SABnzbd host of "localhost:1234" will be interpreted as "http://localhost:1234/sabnzbd/api".
+    * NZBGet host of "localhost:1234" will be interpreted as "http://localhost:1234/jsonrpc".
+  * If enabled, the addon will make no effort to modify the Host URL, and the entire API endpoint for the host must be entered for the addon to work. This allows the use of root path URLs. If enabled, the user should also put in an "Open server" URL so that the open server button works as expected.
+* As part of the above change, improved URL handling in general.
+  * If an API endpoint URL is entered and "Use host exactly as entered" is not checked, the addon will be able to connect.
+  * If an API endpoing URL is entered and no "Open server" URL is specified, the addon will try to remove the API portion of the URL in order to get the normal server URL.
