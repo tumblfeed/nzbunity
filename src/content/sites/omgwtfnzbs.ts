@@ -148,7 +148,21 @@ class NZBUnityOmgwtfnzbs {
         .insertBefore($(el));
     });
 
+    // Add dates to rows
+    $('.nzbt_row > [data-sort]:last-child').each((i, el) => {
+      let date = $(el).data('sort');
+      if (date) {
+        date = new Date(date * 1000);
 
+        const [dName, mm, dd, yy] = date.toDateString().split(' ')
+        const isCurYear = String((new Date()).getFullYear()) === yy;
+        const container = $(el).find('span');
+
+        container
+          .css({ 'font-size': '0.9em' })
+          .text(`${mm} ${dd} ${isCurYear ? '' : yy} (${container.text()})`);
+      }
+    })
   }
 }
 
