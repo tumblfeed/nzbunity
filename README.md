@@ -213,4 +213,6 @@ Initial public release
 ### 1.9.0
 
 * Adds a debug option that when enabled will show a debug messages panel in the popup UI.
-  * Debug messages will show options for added NZBs before being sent to the downloader, including original site category name and simplified category if any.
+  * Shows extension startup information (probably not useful).
+  * Shows options for added NZBs before being sent to the downloader, including original site category name and simplified category if any.
+  * More message types may be added in the future.

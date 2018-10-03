@@ -9,7 +9,7 @@ class NZBUnity {
   ];
 
   public _debugMessages:string[] = [];
-  public _debugMessagesMax:number = 3000;
+  public _debugMessagesMax:number = 1000;
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
   private refreshTimer:number;
