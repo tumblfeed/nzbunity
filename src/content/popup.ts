@@ -13,6 +13,7 @@ class Popup {
   public sizeVal:JQuery<HTMLElement>;
   public timeVal:JQuery<HTMLElement>;
   public queue:JQuery<HTMLElement>;
+  public debugContainer:JQuery<HTMLElement>;
 
   public queuePause:JQuery<HTMLElement>;
   public overrideCategory:JQuery<HTMLElement>;
@@ -36,6 +37,7 @@ class Popup {
     this.sizeVal = $('#sizeleftVal');
     this.timeVal = $('#timeleftVal');
     this.queue = $('#queue');
+    this.debugContainer = $('#debug');
 
     this.queuePause = $('#QueuePause');
     this.overrideCategory = $('#OverrideCategory');
@@ -45,6 +47,13 @@ class Popup {
     Util.storage.get(null)
       .then((opts) => {
         this._debug = opts.Debug;
+        if (this._debug) {
+          this.debugContainer.show();
+          this.sendMessage('debug');
+        } else {
+          this.debugContainer.hide();
+        }
+
         this.debug('[Popup.constructor] Got data!', opts);
 
         this.profiles = opts.Profiles;
@@ -189,9 +198,21 @@ class Popup {
 
       switch (k) {
         case 'main.refresh':
-          this.update(<NZBQueueResult> val);
+          this.update(val as NZBQueueResult);
           if (val) {
             $('#btn-refresh, #btn-server').removeClass('disabled').prop('disabled', false);
+          }
+          break;
+
+        case 'main.debug':
+          if (this._debug) {
+            this.debugContainer.empty();
+            (val as string[]).forEach((msg) => {
+              this.debugContainer.append(`<div class="debug-msg">
+                ${msg.replace(/\n/g, '<br>')/*.replace(/\s/g, '&nbsp;')*/}
+              </div>`);
+            });
+            this.debugContainer.get(0).scrollTop = this.debugContainer.get(0).scrollHeight;
           }
           break;
 

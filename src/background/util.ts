@@ -485,20 +485,20 @@ class PageUtil {
       $(el).off('click');
     }
 
-    return $(el).on('click', (e) => {
-      e.preventDefault();
-      console.info(`[NZB Unity] Adding URL: ${options.url}`);
+    return $(el)
+      .on('click', (e) => {
+        e.preventDefault();
+        console.info(`[NZB Unity] Adding URL: ${options.url}`);
 
-      $(e.target).trigger('nzb.pending');
+        $(e.target).trigger('nzb.pending');
 
-      Util.sendMessage({ 'content.addUrl': options })
-        .then((r:boolean) => {
-          // console.log('[3]', r);
-          setTimeout(() => {
-            $(e.target).trigger(r === false ? 'nzb.failure' : 'nzb.success');
-          }, 1000);
-        });
-    });
+        Util.sendMessage({ 'content.addUrl': options })
+          .then((r:boolean) => {
+            setTimeout(() => {
+              $(e.target).trigger(r === false ? 'nzb.failure' : 'nzb.success');
+            }, 1000);
+          });
+      }) as JQuery<HTMLElement>;
   }
 
   static createLink():JQuery<HTMLElement> {

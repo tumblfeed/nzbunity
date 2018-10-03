@@ -209,3 +209,8 @@ Initial public release
 * As part of the above change, improved URL handling in general.
   * If an API endpoint URL is entered and "Use host exactly as entered" is not checked, the addon will be able to connect.
   * If an API endpoing URL is entered and no "Open server" URL is specified, the addon will try to remove the API portion of the URL in order to get the normal server URL.
+
+### 1.9.0
+
+* Adds a debug option that when enabled will show a debug messages panel in the popup UI.
+  * Debug messages will show options for added NZBs before being sent to the downloader, including original site category name and simplified category if any.

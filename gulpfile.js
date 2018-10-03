@@ -1,8 +1,4 @@
-'use strict';
-
-/* VALUES */
-
-// Includes
+/* eslint prefer-destructuring: off */
 
 const autoprefixer = require('gulp-autoprefixer');
 const del = require('del');
@@ -21,17 +17,17 @@ const argv = require('yargs')
   .option('hostname', {
     alias: 'h',
     describe: 'Hostname',
-    default: 'localhost'
+    default: 'localhost',
   })
   .option('verbose', {
     alias: 'v',
     describe: 'Verbose output',
-    default: false
+    default: false,
   })
   .option('production', {
     alias: 'p',
     describe: 'Production; no sourcemaps or debug files',
-    default: false
+    default: false,
   })
   .help('help')
   .argv;
@@ -40,27 +36,27 @@ const debug = argv.debug ? require('gulp-debug') : gutil.noop;
 
 // Config & Helpers
 
-var paths = {
+const paths = {
   tsPath: path.resolve('./src/**/*.ts'),
   sassPath: path.resolve('./src/content/css/*.scss'),
   buildPath: path.resolve('./build'),
-  distPath: path.resolve('./dist')
+  distPath: path.resolve('./dist'),
 };
 
-var copyFiles = [
+const copyFiles = [
   'html', 'js', 'json', 'css', 'png', 'jpg',
-  'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2'
+  'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2',
 ];
 
-var watchPath = [
-  path.resolve('./src/**/*')
+const watchPath = [
+  path.resolve('./src/**/*'),
   // paths.htmlPath,
   // paths.jsPath,
   // paths.sassPath
 ];
 
-var autoprefixerOptions = {
-  browsers: ['last 2 versions', '> 5%', 'Firefox ESR']
+const autoprefixerOptions = {
+  browsers: ['last 2 versions', '> 5%', 'Firefox ESR'],
 };
 
 /* TASKS */
@@ -80,12 +76,10 @@ gulp.task('paths', () => {
  * gulp clean
  * Deletes all files in the build and dist directories
  */
-gulp.task('clean', () => {
-  return del([
-    paths.buildPath + '/*',
-    paths.distPath + '/*.zip'
-  ]);
-});
+gulp.task('clean', () => del([
+  `${paths.buildPath}/*`,
+  `${paths.distPath}/*.zip`,
+]));
 
 /**
  * gulp copy
@@ -95,13 +89,11 @@ gulp.task('copy', () => {
   gutil.log(
     gutil.colors.magenta('Copying files '),
     '\n\tFrom -> ./src : ', copyFiles.join(', '),
-    '\n\tTo   -> ', paths.buildPath
+    '\n\tTo   -> ', paths.buildPath,
   );
 
   return gulp
-    .src(copyFiles.map(
-      (ext) => { return path.resolve('./src/**/*.' + ext); }
-    ))
+    .src(copyFiles.map(ext => path.resolve(`./src/**/*.${ext}`)))
     .pipe(gulp.dest(paths.buildPath));
 });
 
@@ -110,12 +102,12 @@ gulp.task('copy', () => {
  * Compiles all TypesScript code to the build directory.
  */
 gulp.task('typescript', () => {
-  var tsProject = ts.createProject(path.resolve('./tsconfig.json'));
+  const tsProject = ts.createProject(path.resolve('./tsconfig.json'));
 
   gutil.log(
     gutil.colors.magenta('Compiling TypeScript '),
     '\n\tFrom -> ', paths.tsPath,
-    '\n\tTo   -> ', paths.buildPath
+    '\n\tTo   -> ', paths.buildPath,
   );
 
   return tsProject.src()
@@ -134,8 +126,9 @@ gulp.task('sass', () => {
   gutil.log(
     gutil.colors.magenta('Compiling SASS '),
     '\n\tFrom -> ', paths.sassPath,
-    '\n\tTo   -> ', paths.buildPath
+    '\n\tTo   -> ', paths.buildPath,
   );
+
   return gulp
     .src(paths.sassPath)
     .pipe(debug({ title: 'sass.src' }))
@@ -144,35 +137,30 @@ gulp.task('sass', () => {
       sass({
         errLogToConsole: true,
         outputStyle: 'compressed',
-        includePaths: [ paths.sassPath ]
-      })
-        .on('error', sass.logError)
+        includePaths: [paths.sassPath],
+      }).on('error', sass.logError),
     )
     .pipe(sourcemaps.write())
     .pipe(autoprefixer(autoprefixerOptions))
-    .pipe(gulp.dest(paths.buildPath + '/content/css'));
+    .pipe(gulp.dest(`${paths.buildPath}/content/css`));
 });
 
 /**
  * gulp build
  * Runs frontend build tasks and then Maven package.
  */
-gulp.task('build', [], (done) => {
-  return sequence('copy', 'typescript', 'sass', done);
-});
+gulp.task('build', [], done => sequence('copy', 'typescript', 'sass', done));
 
 /**
  * Zips up the build directory into the dist directory (webextensions are just zips)
  */
 gulp.task('zip', () => {
-  gulp.src(paths.buildPath + '/**/*')
+  gulp.src(`${paths.buildPath}/**/*`)
     .pipe(zip('nzbunity.zip'))
     .pipe(gulp.dest(paths.distPath));
 });
 
-gulp.task('dist', [], (done) => {
-  return sequence('clean', 'build', 'zip', done);
-});
+gulp.task('dist', [], done => sequence('clean', 'build', 'zip', done));
 
 // Watchers
 
@@ -181,9 +169,7 @@ gulp.task('watch', ['build'], () => {
 });
 
 gulp.task('watch:copy', () => {
-  gulp.watch(copyFiles.map(
-    (ext) => { return path.resolve('./src/**/*.' + ext); }
-  ), ['copy']);
+  gulp.watch(copyFiles.map(ext => path.resolve(`./src/**/*.${ext}`)), ['copy']);
 });
 
 gulp.task('watch:sass', () => {

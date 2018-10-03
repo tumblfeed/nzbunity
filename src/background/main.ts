@@ -8,7 +8,8 @@ class NZBUnity {
     'omgwtfnzbs.me'
   ];
 
-  public _debug:boolean;
+  public _debugMessages:string[] = [];
+  public _debugMessagesMax:number = 3000;
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
   private refreshTimer:number;
@@ -18,11 +19,7 @@ class NZBUnity {
 
   constructor() {
     // Initialize default options
-    Util.storage.get('Debug')
-      .then((opts) => {
-        this._debug = opts.Debug;
-        return this.initOptions()
-      })
+    this.initOptions()
       .then(() => {
         this.debug('[NZBUnity.constructor] Options Ok');
         // Initialize server connection
@@ -154,12 +151,12 @@ class NZBUnity {
   }
 
   addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
-    if (!this.nzbHost) {
-      return null;
-    }
+    if (!this.nzbHost) return null;
 
     return this.normalizeCategory(options.category)
       .then((category:string) => {
+        this.debug('[NZBUnity.addUrl]', Object.assign({}, options, { category: `${options.category} &rarr; ${category}` }));
+
         options.category = category;
         return this.nzbHost.addUrl(url, options)
       })
@@ -175,12 +172,12 @@ class NZBUnity {
   }
 
   addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
-    if (!this.nzbHost) {
-      return null;
-    }
+    if (!this.nzbHost) return null;
 
     return this.normalizeCategory(options.category)
       .then((category:string) => {
+        this.debug('[NZBUnity.addFile]', Object.assign({ filename, content }, options, { originalCategory: options.category, category }));
+
         options.category = category;
         return this.nzbHost.addFile(filename, content, options);
       })
@@ -198,12 +195,12 @@ class NZBUnity {
   /* HANDLERS */
 
   handleMessage(message:MessageEvent, sender:any, sendResponse:(response:any) => void) {
-    if (this._debug) this.debugMessage(message);
+    this.debugMessage(message);
 
     // Handle message
     for (let k in message) {
       let val:any = message[k];
-      this.debug(k, val);
+      // this.debug(k, val);
 
       switch (k) {
         case 'util.request':
@@ -235,7 +232,6 @@ class NZBUnity {
         case 'content.addUrl':
           this.addUrl(val.url, val)
             .then((r) => {
-              // console.info('[1]', r);
               sendResponse(r && r.success);
             });
           break;
@@ -243,7 +239,6 @@ class NZBUnity {
         case 'content.addFile':
           this.addFile(val.filename, val.content, val)
             .then((r) => {
-              // console.info('[1]', r);
               sendResponse(r && r.success);
             });
           break;
@@ -286,6 +281,11 @@ class NZBUnity {
 
         case 'popup.refresh':
           this.refresh();
+          sendResponse(undefined);
+          break;
+
+        case 'popup.debug':
+          this.sendMessage('debug', this._debugMessages);
           sendResponse(undefined);
           break;
 
@@ -380,11 +380,11 @@ class NZBUnity {
   }
 
   handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
-    // this.debug('[OptionsPage.handleStorageChanged] ',
-    //   Object.keys(changes)
-    //     .map((k) => { return `${k} -> ${changes[k].newValue}`; })
-    //     .join(', ')
-    // );
+    this.debug('[OptionsPage.handleStorageChanged] ',
+      Object.keys(changes)
+        .map((k) => { return `${k} -> ${changes[k].newValue}`; })
+        .join(', ')
+    );
 
     // If Intercept download has changed, we need to enable/disable
     if (changes['InterceptDownloads']) {
@@ -405,6 +405,13 @@ class NZBUnity {
 
     if (changes['ProviderNewznab']) {
       this.newznabProviders = changes['ProviderNewznab'].newValue;
+    }
+
+    if (changes['Debug']) {
+      if (!changes['Debug'].newValue) {
+        this._debugMessages.splice(0);
+
+      }
     }
   }
 
@@ -686,7 +693,30 @@ class NZBUnity {
   }
 
   debug(...args:any[]) {
-    if (this._debug) console.debug.apply(this, args);
+    Util.storage.get('Debug')
+      .then((opts) => {
+        if (opts.Debug) {
+          const msg = args.map((a) => {
+            switch (typeof a) {
+              case 'object':
+                return Object.keys(a)
+                  .map(k => `&nbsp;&nbsp;&nbsp;<span class="green">${k}</span>: ${a[k]}`)
+                  .join('\n');
+              default:
+                return `${a}`.replace(/^\[(.*)\]/, '<span class="green">[$1]</span>');
+            }
+          }).join('\n');
+
+          this._debugMessages.push(msg);
+          while (this._debugMessages.length > this._debugMessagesMax) {
+            this._debugMessages.shift();
+          }
+
+          this.sendMessage('debug', this._debugMessages);
+
+          console.debug.apply(this, args);
+        }
+      });
   }
 
   debugOpts(opts:any = null) {
@@ -696,9 +726,14 @@ class NZBUnity {
   }
 
   debugMessage(message:MessageEvent) {
-    for (let k in message) {
-      console.debug('[NZBUnity.debugMessage]', k, message[k]);
-    }
+    Util.storage.get('Debug')
+      .then((opts) => {
+        if (opts.Debug) {
+          for (let k in message) {
+            console.debug('[NZBUnity.debugMessage]', k, message[k]);
+          }
+        }
+      });
   }
 }
 

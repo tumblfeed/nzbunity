@@ -160,6 +160,26 @@ input {
   }
 }
 
+#debug {
+  display: none;
+
+  background: #333;
+  color: #eee;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 13px;
+  margin: 10px 0;
+  max-height: 220px;
+  min-height: 120px;
+  overflow: scroll;
+  padding: 5px;
+  white-space: nowrap;
+
+  .green {
+    color: #6e6;
+  }
+}
+
 #menu {
   @extend .flex-row;
   margin: 10px 0;
