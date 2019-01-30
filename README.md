@@ -216,3 +216,7 @@ Initial public release
   * Shows extension startup information (probably not useful).
   * Shows options for added NZBs before being sent to the downloader, including original site category name and simplified category if any.
   * More message types may be added in the future.
+
+### 1.9.1
+
+* Bugfixes for a couple site profiles.
