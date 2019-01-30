@@ -157,8 +157,8 @@ class Popup {
           this.queue.append(`
             <div class="nzb">
               <span class="name" title="${i.name}">${Util.trunc(i.name, 30)}</span>
-              <span class="category">${i.category}</span>
-              <span class="size">${i.size}</span>
+              <span class="category">${i.category || ''}</span>
+              <span class="size">${i.size || ''}</span>
               <span class="bar" style="width:${i.percentage}%;"></span>
             </div>
           `);

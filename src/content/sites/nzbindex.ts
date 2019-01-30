@@ -1,5 +1,7 @@
 class NZBUnityNzbindex {
-  public form:JQuery<HTMLElement>;
+  public readonly checkboxSelector:string = 'input[id^="release_"][type="checkbox"]';
+
+  public results:JQuery<HTMLElement>;
   public isList:boolean;
   public isDetail:boolean;
 
@@ -11,11 +13,11 @@ class NZBUnityNzbindex {
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
-          this.form = $('#results > form');
-          this.isList = /^\/(groups|search)/.test(window.location.pathname);
-          this.isDetail = /^\/(release)/.test(window.location.pathname);
+          this.results = $('#results-table .result');
+          this.isDetail = /^\/(collection)/.test(window.location.pathname);
+          this.isList = this.results.length > 0 && !this.isDetail;
 
-          if (this.form) {
+          if (this.results.length) {
             this.initializeLinks();
           } else {
             console.error(`[NZB Unity] Could not locate form, 1-click disabled`);
@@ -31,15 +33,14 @@ class NZBUnityNzbindex {
   }
 
   getNzbIds():string[] {
-    return this.form.serializeArray()
-      .filter((i) => { return i.name === 'r[]' })
-      .map((i) => { return i.value });
+    return this.results.find(`${this.checkboxSelector}:checked`).toArray()
+      .map(el => el.id.replace('release_', ''))
   }
 
   initializeLinks() {
     // Direct download links
     if (this.isList) {
-      this.form.find('input[name="r[]"][type="checkbox"]').each((i, el) => {
+      this.results.find(this.checkboxSelector).each((i, el) => {
         let checkbox = $(el);
         let link = PageUtil.createLink()
           .css({ 'display': 'block' })
@@ -47,7 +48,7 @@ class NZBUnityNzbindex {
             e.preventDefault();
 
             let nzbUrl = checkbox.closest('tr').find('a[href*="/download/"]').attr('href')
-            let nzbId = <string> checkbox.val();
+            let nzbId = el.id.replace('release_', '');
 
             console.info(`[NZB Unity] Adding NZB ${nzbId}`);
             link.trigger('nzb.pending');
@@ -100,36 +101,38 @@ class NZBUnityNzbindex {
               });
           }
         })
-        .insertBefore(this.form.find('[type="submit"]:first'));
-    }
+        .prependTo($('#actions'));
+      }
 
-    if (this.isDetail && this.form.find('[name="r[]"]')) {
+    if (this.isDetail) {
       let button:JQuery<HTMLElement> = PageUtil.createButton()
-        .text('Download All')
+        .text('Download NZB')
         .attr('title', 'Download with NZB Unity')
         .on('click', (e) => {
           e.preventDefault();
 
-          let nzbId = <string> this.form.find('[name="r[]"]').val();
+          let match = window.location.pathname.match(/^\/\w+\/(\d+)/);
+          if (match) {
+            let nzbId = match[1];
 
-          console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-          button.trigger('nzb.pending');
+            console.info(`[NZB Unity] Adding NZB ${nzbId}`);
+            button.trigger('nzb.pending');
 
-          Util.sendMessage({ 'content.addUrl': {
-            category: '',
-            url: this.getNzbUrl(nzbId)
-          }})
-            .then((r) => {
-              setTimeout(() => {
-                button.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-              }, 1000);
-            })
-            .catch((e) => {
-              console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-            });
+            Util.sendMessage({ 'content.addUrl': {
+              category: '',
+              url: this.getNzbUrl(nzbId)
+            }})
+              .then((r) => {
+                setTimeout(() => {
+                  button.trigger(r === false ? 'nzb.failure' : 'nzb.success');
+                }, 1000);
+              })
+              .catch((e) => {
+                console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
+              });
+          }
         })
-        .prependTo(this.form);
-
+        .prependTo($('#actions'));
     }
   }
 }
