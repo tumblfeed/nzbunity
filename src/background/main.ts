@@ -1,10 +1,16 @@
 class NZBUnity {
   static readonly interceptExcludeAlways:string[] = [
+    'althub.co.za',
     'binsearch.info',
     'dognzb.cr',
+    'drunkenslug.com',
+    'gingadaddy.com',
+    'nzbfinder.ws',
     'nzbgeek.info',
     'nzbindex.(com|nl)',
     'nzbking.com',
+    'nzbserver.com',
+    'nzb.su',
     'omgwtfnzbs.me'
   ];
 

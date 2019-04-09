@@ -220,3 +220,7 @@ Initial public release
 ### 1.9.1
 
 * Bugfixes for a couple site profiles.
+
+### 1.10.0
+
+* New 1-Click site profile for drunkenslug.com
