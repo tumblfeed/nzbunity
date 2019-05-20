@@ -591,4 +591,18 @@ class PageUtil {
     return button;
   }
 
+  static getQuery():StringDictionary {
+    return window.location.search
+      .replace(/^\?/, '')
+      .split('&')
+      .reduce((q, i) => {
+        const [k, v] = i.split('=');
+        q[k] = v;
+        return q;
+      }, {});
+  }
+
+  static getQueryParam(k:string, def:string = null):string {
+    return this.getQuery()[k] || def;
+  }
 }

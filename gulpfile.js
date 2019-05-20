@@ -1,58 +1,35 @@
 /* eslint prefer-destructuring: off */
 
 const autoprefixer = require('gulp-autoprefixer');
+const colors = require('colors/safe');
+const consola = require('consola');
 const del = require('del');
-const gulp = require('gulp');
-const gutil = require('gulp-util');
 const path = require('path');
-const ts = require('gulp-typescript');
-const sass = require('gulp-sass');
-const sequence = require('run-sequence');
-const sourcemaps = require('gulp-sourcemaps');
-const zip = require('gulp-zip');
 
-// Options
-
-const argv = require('yargs')
-  .option('hostname', {
-    alias: 'h',
-    describe: 'Hostname',
-    default: 'localhost',
-  })
-  .option('verbose', {
-    alias: 'v',
-    describe: 'Verbose output',
-    default: false,
-  })
-  .option('production', {
-    alias: 'p',
-    describe: 'Production; no sourcemaps or debug files',
-    default: false,
-  })
-  .help('help')
-  .argv;
-
-const debug = argv.debug ? require('gulp-debug') : gutil.noop;
+const {
+  dest,
+  parallel, // eslint-disable-line
+  series,
+  src,
+  watch,
+} = require('gulp');
+const gTypescript = require('gulp-typescript');
+const gSass = require('gulp-sass');
+const gSourcemaps = require('gulp-sourcemaps');
+const gZip = require('gulp-zip');
 
 // Config & Helpers
 
 const paths = {
-  tsPath: path.resolve('./src/**/*.ts'),
-  sassPath: path.resolve('./src/content/css/*.scss'),
-  buildPath: path.resolve('./build'),
-  distPath: path.resolve('./dist'),
+  build: path.resolve('./build'),
+  dist: path.resolve('./dist'),
+  sass: ['./src/content/css/*.scss'],
+  ts: ['./src/**/*.ts'],
 };
 
-const copyFiles = [
+const staticExtensions = [
   'html', 'js', 'json', 'css', 'png', 'jpg',
   'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2',
-];
-
-const watchPath = [
-  path.resolve('./src/**/*'),
-  // paths.htmlPath,
-  // paths.jsPath,
-  // paths.sassPath
 ];
 
 const autoprefixerOptions = {
@@ -65,56 +42,45 @@ const autoprefixerOptions = {
  * gulp paths
  * Print the currently used paths (as resolved) and exit.
  */
-gulp.task('paths', () => {
-  gutil.log(gutil.colors.magenta('Currently using paths:'));
+function showPaths(done) {
+  consola.log(colors.magenta('Currently using paths:'));
   Object.keys(paths).forEach((k) => {
-    gutil.log(gutil.colors.white(k), '->', gutil.colors.green(paths[k]));
+    consola.log(colors.white(k), '->', colors.green(paths[k]));
   });
-});
+  done();
+}
 
 /**
  * gulp clean
  * Deletes all files in the build and dist directories
  */
-gulp.task('clean', () => del([
-  `${paths.buildPath}/*`,
-  `${paths.distPath}/*.zip`,
-]));
+function clean() {
+  return del([
+    `${paths.build}/*`,
+    `${paths.dist}/*.zip`,
+  ]);
+}
 
 /**
  * gulp copy
  * Copies all static files that do not require pre-processing / compilation
  */
-gulp.task('copy', () => {
-  gutil.log(
-    gutil.colors.magenta('Copying files '),
-    '\n\tFrom -> ./src : ', copyFiles.join(', '),
-    '\n\tTo   -> ', paths.buildPath,
-  );
-
-  return gulp
-    .src(copyFiles.map(ext => path.resolve(`./src/**/*.${ext}`)))
-    .pipe(gulp.dest(paths.buildPath));
-});
+function copy() {
+  const resolvedFiles = staticExtensions.map(ext => path.resolve(`./src/**/*.${ext}`));
+  return src(resolvedFiles).pipe(dest(paths.build));
+}
 
 /**
  * gulp typescript
  * Compiles all TypesScript code to the build directory.
  */
-gulp.task('typescript', () => {
-  const tsProject = ts.createProject(path.resolve('./tsconfig.json'));
-
-  gutil.log(
-    gutil.colors.magenta('Compiling TypeScript '),
-    '\n\tFrom -> ', paths.tsPath,
-    '\n\tTo   -> ', paths.buildPath,
-  );
-
+function typescript() {
+  const tsProject = gTypescript.createProject(path.resolve('./tsconfig.json'));
   return tsProject.src()
     .pipe(tsProject())
     .js
-    .pipe(gulp.dest(paths.buildPath));
-});
+    .pipe(dest(paths.build));
+}
 
 /**
  * gulp sass
@@ -122,62 +88,63 @@ gulp.task('typescript', () => {
  * - In development, output is expanded and sourcemaps are produced
  * - In production, output is compressed with no sourcemaps
  */
-gulp.task('sass', () => {
-  gutil.log(
-    gutil.colors.magenta('Compiling SASS '),
-    '\n\tFrom -> ', paths.sassPath,
-    '\n\tTo   -> ', paths.buildPath,
-  );
-
-  return gulp
-    .src(paths.sassPath)
-    .pipe(debug({ title: 'sass.src' }))
-    .pipe(sourcemaps.init())
+function sass() {
+  return src(paths.sass)
+    .pipe(gSourcemaps.init())
     .pipe(
-      sass({
+      gSass({
         errLogToConsole: true,
         outputStyle: 'compressed',
-        includePaths: [paths.sassPath],
-      }).on('error', sass.logError),
+        includePaths: [paths.sass],
+      }).on('error', gSass.logError),
     )
-    .pipe(sourcemaps.write())
     .pipe(autoprefixer(autoprefixerOptions))
-    .pipe(gulp.dest(`${paths.buildPath}/content/css`));
-});
-
-/**
- * gulp build
- * Runs frontend build tasks and then Maven package.
- */
-gulp.task('build', [], done => sequence('copy', 'typescript', 'sass', done));
+    .pipe(gSourcemaps.write())
+    .pipe(dest(`${paths.build}/content/css`));
+}
 
 /**
  * Zips up the build directory into the dist directory (webextensions are just zips)
  */
-gulp.task('zip', () => {
-  gulp.src(`${paths.buildPath}/**/*`)
-    .pipe(zip('nzbunity.zip'))
-    .pipe(gulp.dest(paths.distPath));
-});
+function zip() {
+  return src(`${paths.build}/**/*`)
+    .pipe(gZip('nzbunity.zip'))
+    .pipe(dest(paths.dist));
+}
 
-gulp.task('dist', [], done => sequence('clean', 'build', 'zip', done));
+// Export tasks
+
+exports.paths = showPaths;
+exports.clean = clean;
+exports.copy = copy;
+exports.typescript = typescript;
+exports.sass = sass;
+
+/**
+ * gulp build
+ * Runs frontend build tasks package.
+ */
+exports.build = series(copy, typescript, sass);
+
+/**
+ * gulp dist
+ * Cleans output directories, builds the project, and packages it for distribution
+ */
+exports.dist = series(clean, exports.build, zip);
 
 // Watchers
 
-gulp.task('watch', ['build'], () => {
-  gulp.watch(watchPath, ['build']);
-});
+exports.watchCopy = function watchCopy() { watch(staticExtensions.map(ext => `./src/**/*.${ext}`), copy); };
+exports.watchSass = function watchSass() { watch(paths.sass, sass); };
+exports.watchTs = function watchTs() { watch(paths.ts, typescript); };
 
-gulp.task('watch:copy', () => {
-  gulp.watch(copyFiles.map(ext => path.resolve(`./src/**/*.${ext}`)), ['copy']);
-});
+exports.watchAll = function watchAll(done) {
+  exports.watchCopy();
+  exports.watchSass();
+  exports.watchTs();
+  done();
+};
 
-gulp.task('watch:sass', () => {
-  gulp.watch(paths.sassPath, ['sass']);
-});
+exports.watch = series(exports.build, exports.watchAll);
 
-gulp.task('watch:ts', () => {
-  gulp.watch(paths.tsPath, ['typescript']);
-});
-
-gulp.task('default', ['build']);
+exports.default = exports.build;

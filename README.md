@@ -224,3 +224,8 @@ Initial public release
 ### 1.10.0
 
 * New 1-Click site profile for drunkenslug.com
+
+### 1.11.0
+
+* Updated dependencies and updated gulpfile to gulp 4. This helps absolutely nobody.
+* Fixes a bug in omgwtfnzbs.me profile that caused lots of repeated text.

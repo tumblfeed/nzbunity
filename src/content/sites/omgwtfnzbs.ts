@@ -52,6 +52,8 @@ class NZBUnityOmgwtfnzbs {
   }
 
   initializeLinks() {
+    const view = PageUtil.getQueryParam('view', 'list');
+
     // Create direct download links
     // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.
     $('img[src*="pics/dload"]').closest('a[href*="send?"]').each((i, el) => {
@@ -149,20 +151,24 @@ class NZBUnityOmgwtfnzbs {
     });
 
     // Add dates to rows
-    $('.nzbt_row > [data-sort]:last-child').each((i, el) => {
-      let date = $(el).data('sort');
-      if (date) {
-        date = new Date(date * 1000);
+    console.debug(view);
 
-        const [dName, mm, dd, yy] = date.toDateString().split(' ')
-        const isCurYear = String((new Date()).getFullYear()) === yy;
-        const container = $(el).find('span');
+    if (view === 'list') {
+      $('.nzbt_row > [data-sort]:last-child').each((i, el) => {
+        let date = $(el).data('sort');
+        if (date) {
+          date = new Date(date * 1000);
 
-        container
-          .css({ 'font-size': '0.9em' })
-          .text(`${mm} ${dd} ${isCurYear ? '' : yy} (${container.text()})`);
-      }
-    })
+          const [dName, mm, dd, yy] = date.toDateString().split(' ')
+          const isCurYear = String((new Date()).getFullYear()) === yy;
+          const container = $(el).find('span').first();
+
+          container
+            .css({ 'font-size': '0.9em' })
+            .text(`${mm} ${dd} ${isCurYear ? '' : yy} (${container.text()})`);
+        }
+      });
+    }
   }
 }
 

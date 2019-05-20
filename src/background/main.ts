@@ -18,7 +18,7 @@ class NZBUnity {
   public _debugMessagesMax:number = 1000;
   public optionsTab:chrome.tabs.Tab;
   public nzbHost:NZBHost;
-  private refreshTimer:number;
+  private refreshTimer:any;
   private interceptExclude:string;
   private newznabDetect:boolean;
   private newznabProviders:string;
