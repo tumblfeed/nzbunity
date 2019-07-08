@@ -19,6 +19,9 @@ class NZBUnityNewznab {
         if (/usenet-crawler\.com/i.test(window.location.host)) {
           this.apiurl = `${window.location.protocol}//api.usenet-crawler.com`;
         }
+        if (/oznzb\.com/i.test(window.location.host)) {
+          this.apiurl = `${window.location.protocol}//api.oznzb.com/api`;
+        }
 
         console.info(`[NZB Unity] Initializing Newznab 1-click functionality...`);
         console.info(this.apiurl, this.uid, this.apikey);
