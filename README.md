@@ -229,3 +229,7 @@ Initial public release
 
 * Updated dependencies and updated gulpfile to gulp 4. This helps absolutely nobody.
 * Fixes a bug in omgwtfnzbs.me profile that caused lots of repeated text.
+
+### 1.11.1
+
+* Merged URL fix for ozznb
