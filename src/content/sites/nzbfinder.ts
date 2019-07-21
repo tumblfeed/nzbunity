@@ -48,7 +48,7 @@ class NZBUnityNzbfinder {
       let catSrc:string = 'default';
 
 
-      if (/^\/(details)/.test(window.location.pathname)) {
+      if (window.location.pathname.startsWith('/details')) {
         if ($('a[href^="/browse?t="]').length) {
           category = $('a[href^="/browse?t="]').text();
           catSrc = 'href';
@@ -62,9 +62,11 @@ class NZBUnityNzbfinder {
         if (this.replace) {
           PageUtil.bindAddUrl(opts, a, true);
         } else {
-          let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink(opts)
-            .text('Download with NZB Unity')
-            .css({ margin: '0 0 10px 0' })
+          let link:JQuery<HTMLElement> = PageUtil.createAddUrlLink(opts);
+          link
+            .html(`${link.html()} NZB Unity`)
+            .addClass('btn btn-default btn-transparent')
+            .css({ display: '', height: '', width: '' })
             .insertBefore(a);
         }
 

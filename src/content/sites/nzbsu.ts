@@ -62,7 +62,7 @@ class NZBUnityNzbsu {
         let link:JQuery<HTMLElement> = PageUtil.createAddUrlButton(opts)
           .css({ margin: '0 0.5em 0 0' });
 
-        if (/^\/(details)/.test(window.location.pathname)) {
+        if (window.location.pathname.startsWith('/details')) {
           link.insertBefore(a.closest('.btn-group'));
         } else {
           link.insertBefore(a);

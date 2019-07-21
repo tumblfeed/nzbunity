@@ -233,3 +233,7 @@ Initial public release
 ### 1.11.1
 
 * Merged URL fix for ozznb
+
+### 1.12.0
+
+* Fixed detail download link for NZB Finder

@@ -48,7 +48,7 @@ class NZBUnityAlthub {
       let catSrc:string = 'default';
 
 
-      if (/^\/(details)/.test(window.location.pathname)) {
+      if (window.location.pathname.startsWith('/details')) {
         if ($('a[href^="/browse?t="]').length) {
           category = $('a[href^="/browse?t="]').text();
           catSrc = 'href';

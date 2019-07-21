@@ -32,10 +32,6 @@ const staticExtensions = [
   'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2',
 ];
 
-const autoprefixerOptions = {
-  browsers: ['last 2 versions', '> 5%', 'Firefox ESR'],
-};
-
 /* TASKS */
 
 /**
@@ -98,7 +94,7 @@ function sass() {
         includePaths: [paths.sass],
       }).on('error', gSass.logError),
     )
-    .pipe(autoprefixer(autoprefixerOptions))
+    .pipe(autoprefixer())
     .pipe(gSourcemaps.write())
     .pipe(dest(`${paths.build}/content/css`));
 }
