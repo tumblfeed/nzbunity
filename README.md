@@ -237,3 +237,8 @@ Initial public release
 ### 1.12.0
 
 * Fixed detail download link for NZB Finder
+
+### 1.13.0
+
+* Fixed and improved UID and token detection for some sites (case insensitive)
+* Added keyboard shortcut hooks

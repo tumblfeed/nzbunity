@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -117,5 +117,16 @@
       "matches": ["*://*.omgwtfnzbs.me/*"],
       "js": ["content/sites/omgwtfnzbs.js"]
     }
-  ]
+  ],
+  "commands": {
+    "_execute_browser_action": {
+      "description": "Toggle toolbar popup"
+    },
+    "toggle-queue": {
+      "description": "Toggle queue"
+    },
+    "open-profile-page": {
+      "description": "Open server URL"
+    }
+  }
 }

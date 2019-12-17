@@ -97,7 +97,7 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
     static isNewznab():boolean {
       return <boolean> (
         (
-          document.querySelectorAll('[name=RSSTOKEN]').length > 0
+          document.querySelectorAll('[name="RSSTOKEN" i]').length > 0
           && document.querySelectorAll('input.nzb_multi_operations_cart').length > 0
         )
         || document.querySelectorAll('#browsetable tr td.item label').length > 0

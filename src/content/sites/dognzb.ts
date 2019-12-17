@@ -33,7 +33,7 @@ class NZBUnityDognzb {
   }
 
   getNzbUrl(id:string):string {
-    let rsstoken:string = <string> $('input[name="rsstoken"]').val();
+    let rsstoken:string = <string> $('input[name="rsstoken" i]').val();
     return `${window.location.origin}/fetch/${id}/${rsstoken}`;
   }
 

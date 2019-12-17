@@ -13,8 +13,8 @@ class NZBUnityDrunkenslug {
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
-          let uidMatch = $('script:not([src])').text().match(/UID = "([0-9]+)"/);
-          let apikeyMatch = $('script:not([src])').text().match(/RSSTOKEN = "([a-z0-9]+)"/);
+          let uidMatch = $('script:not([src])').text().match(/uid\s*=\s*["']([0-9]+)["']/i);
+          let apikeyMatch = $('script:not([src])').text().match(/rsstoken\s*=\s*["']([a-z0-9]+)["']/i);
 
           this.uid = uidMatch ? uidMatch[1] : null;
           this.apikey = apikeyMatch ? apikeyMatch[1] : null;

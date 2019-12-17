@@ -8,8 +8,8 @@ class NZBUnityNewznab {
     Util.storage.get(['ReplaceLinks'])
       .then((opts) => {
         this.replace = opts.ReplaceLinks;
-        this.uid = $('[name="UID"]').attr('value');
-        this.apikey = $('[name="RSSTOKEN"]').attr('value');
+        this.uid = $('[name="UID" i]').attr('value');
+        this.apikey = $('[name="RSSTOKEN" i]').attr('value');
         this.apiurl = `${window.location.origin}/api`;
 
         // Site specific api urls

@@ -38,6 +38,10 @@ class NZBUnity {
         chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
         this.debug('[NZBUnity.constructor] Message handler initialized');
 
+        // Handle messages from commands
+        chrome.commands.onCommand.addListener(this.handleCommand.bind(this));
+        this.debug('[NZBUnity.constructor] Command handler initialized');        
+        
         // Init storage on change watcher
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
@@ -296,33 +300,7 @@ class NZBUnity {
           break;
 
         case 'popup.openProfilePage':
-          this.getActiveProfile()
-            .then((profile) => {
-              if (profile) {
-                let profileUrl:string;
-
-                if (profile.ProfileServerUrl) {
-                  // Profile server url present, just use that
-                  profileUrl = profile.ProfileServerUrl;
-                } else if (profile.ProfileHostAsEntered) {
-                  // No Profile server url, and host url is api, try to make it nice.
-                  profileUrl = profile.ProfileHost.replace(/\/?(api|jsonrpc)$/ig, '');
-                } else {
-                  // Default to host
-                  profileUrl = profile.ProfileHost;
-                }
-
-                // Ensure protocol so the browser doesn't prefix the addon url
-                if (!/^[a-z]+:\/\//i.test(profileUrl)) {
-                  profileUrl = `http://${profileUrl}`;
-                }
-
-                chrome.tabs.create({
-                  url: profileUrl
-                });
-              }
-              sendResponse(undefined);
-            });
+          this.openProfilePage();
           break;
 
         // Options Messages
@@ -385,6 +363,64 @@ class NZBUnity {
     return true;
   }
 
+  handleCommand(command:chrome.commands.CommandEvent) {
+    this.debugCommand(command);
+
+    // Handle command
+    switch (String(command)) {
+      case 'resume-queue':
+        if (this.nzbHost) {
+          this.nzbHost.resumeQueue()
+            .then((r) => {
+              this.refresh();
+            });
+        }
+        break;
+
+      case 'pause-queue':
+        if (this.nzbHost) {
+          this.nzbHost.pauseQueue()
+            .then((r) => {
+              this.refresh();
+            });
+        }
+        break;
+
+      case 'toggle-queue':
+        if (this.nzbHost) {
+          this.nzbHost.getQueue()
+            .then((queue:NZBQueueResult) => {
+              return queue.status.toLowerCase() === 'paused'
+                ? this.nzbHost.resumeQueue()
+                : this.nzbHost.pauseQueue()
+            })
+            .then((r) => {
+              this.refresh();
+            });
+        }
+        break;
+
+      // TODO: Needs preset restricted speed
+      // case 'set-max-speed':
+      //   if (this.nzbHost) {
+      //     this.nzbHost.setMaxSpeed(val)
+      //       .then((r) => {
+      //         this.refresh();
+      //         sendResponse(undefined);
+      //       });
+      //   }
+      //   break;
+
+      case 'refresh':
+        this.refresh();
+        break;
+
+      case 'open-profile-page':
+        this.openProfilePage();
+        break;
+    }
+  }
+
   handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
     this.debug('[OptionsPage.handleStorageChanged] ',
       Object.keys(changes)
@@ -422,6 +458,14 @@ class NZBUnity {
   }
 
   /* OPTIONS */
+
+  isValidOpt(opt:string | string[]):boolean {
+    opt = Array.isArray(opt) ? opt : [opt];
+
+    return opt.every((k:string) => {
+      return Object.keys(DefaultOptions).indexOf(k) >= 0;
+    });
+  }
 
   resetOptions():Promise<void> {
     return Util.storage.clear()
@@ -488,12 +532,31 @@ class NZBUnity {
       });
   }
 
-  isValidOpt(opt:string | string[]):boolean {
-    opt = Array.isArray(opt) ? opt : [opt];
+  openProfilePage():Promise<any> {
+    return this.getActiveProfile()
+      .then((profile) => {
+        if (profile) {
+          let url:string;
 
-    return opt.every((k:string) => {
-      return Object.keys(DefaultOptions).indexOf(k) >= 0;
-    });
+          if (profile.ProfileServerUrl) {
+            // Profile server url present, just use that
+            url = profile.ProfileServerUrl;
+          } else if (profile.ProfileHostAsEntered) {
+            // No Profile server url, and host url is api, try to make it nice.
+            url = profile.ProfileHost.replace(/\/?(api|jsonrpc)$/ig, '');
+          } else {
+            // Default to host
+            url = profile.ProfileHost;
+          }
+
+          // Ensure protocol so the browser doesn't prefix the addon url
+          if (!/^[a-z]+:\/\//i.test(url)) {
+            url = `http://${url}`;
+          }
+
+          chrome.tabs.create({ url });
+        }
+      });
   }
 
   /* INTERCEPT */
@@ -738,6 +801,15 @@ class NZBUnity {
           for (let k in message) {
             console.debug('[NZBUnity.debugMessage]', k, message[k]);
           }
+        }
+      });
+  }
+
+  debugCommand(command:chrome.commands.CommandEvent) {
+    Util.storage.get('Debug')
+      .then((opts) => {
+        if (opts.Debug) {
+          console.debug('[NZBUnity.debugCommand]', command);
         }
       });
   }

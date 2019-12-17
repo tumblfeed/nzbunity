@@ -100,14 +100,14 @@ input {
   background: $darker;
   padding: 0;
   max-height: 300px;
-  min-height: 30px;
+  min-height: 25px;
   overflow-y: auto;
   overflow-x: hidden;
 
   .empty {
     font-size: 12px;
     font-style: italic;
-    margin-top: 5px;
+    margin-top: 3px;
     text-align: center;
   }
 
