@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -26,7 +26,6 @@
     "content/images/nzb-64-green.png"
   ],
   "browser_action": {
-    "browser_style": true,
     "default_icon": {
       "40": "content/images/icon-40.png"
     },
