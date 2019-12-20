@@ -168,14 +168,15 @@ class Popup {
       }
 
       // Viddles
-      let currentOverride:string = <string> this.overrideCategory.val();
-
       this.overrideCategory.empty().append(`<option val=""></option>`);
       queue.categories.forEach((k:string) => {
         this.overrideCategory.append(`<option value="${k}">${k}</option>`);
       });
 
-      this.overrideCategory.val(queue.categories.includes(currentOverride) ? currentOverride : '');
+      Util.storage.get('OverrideCategory')
+        .then((opts) => {
+          this.overrideCategory.val(queue.categories.includes(opts.OverrideCategory) ? opts.OverrideCategory : '');
+        });
     }
 
     if (error) {
