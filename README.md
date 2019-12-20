@@ -242,3 +242,8 @@ Initial public release
 
 * Fixed and improved UID and token detection for some sites (case insensitive)
 * Added keyboard shortcut hooks
+
+### 1.13.1
+
+* Update nzbfinder.ws integration for upcoming site redesign
+* Fixes long-standing bug where override category selector does not show current override on popup open

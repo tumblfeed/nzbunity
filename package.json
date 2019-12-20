@@ -43,7 +43,8 @@
   "devDependencies": {},
   "scripts": {
     "gulp": "gulp",
-    "watch": "gulp watch"
+    "watch": "gulp watch",
+    "dist": "gulp dist"
   },
   "browserslist": ["last 2 versions", "> 5%", "Firefox ESR"]
 }
