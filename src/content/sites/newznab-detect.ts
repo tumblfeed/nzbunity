@@ -5,8 +5,8 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
         console.log('[NewznabDetect] Newznab page detected');
 
         // Newznab usually has jQuery already, if so use it to notify the user
-        let iconUrl:string = chrome.extension.getURL('content/images/nzb-64-green.png');
-        let div:HTMLElement = document.createElement('div');
+        const iconUrl:string = chrome.extension.getURL('content/images/nzb-64-green.png');
+        const div:HTMLElement = document.createElement('div');
         div.id = 'NZBUnityAlert';
         div.innerHTML = `
           <h3>NZB Unity - Newznab site detected!</h3>
@@ -15,9 +15,9 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
           <a id="NZBUnityAlertClose">×</a>
         `;
 
-        let enableBtn:HTMLElement = <HTMLElement> div.querySelector('#NZBUnityAlertEnable');
-        let ignoreBtn:HTMLElement = <HTMLElement> div.querySelector('#NZBUnityAlertIgnore');
-        let closeBtn:HTMLElement = <HTMLElement> div.querySelector('#NZBUnityAlertClose');
+        const enableBtn:HTMLElement = div.querySelector('#NZBUnityAlertEnable') as HTMLElement;
+        const ignoreBtn:HTMLElement = div.querySelector('#NZBUnityAlertIgnore') as HTMLElement;
+        const closeBtn:HTMLElement = div.querySelector('#NZBUnityAlertClose') as HTMLElement;
 
         // Styles
         div.style.cssText = `
@@ -75,8 +75,8 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
 
         // Button events
         enableBtn.addEventListener('click', () => {
-          let hostname = (window.location.hostname.match(/([^.]+)\.\w{2,3}(?:\.\w{2})?$/) || [])[0];
-          chrome.runtime.sendMessage({ 'newznab.enable': hostname }, (response:any) => {
+          const hostname = (window.location.hostname.match(/([^.]+)\.\w{2,3}(?:\.\w{2})?$/) || [])[0];
+          chrome.runtime.sendMessage({ 'newznab.enable': hostname }, () => {
             document.body.removeChild(div);
             window.location.reload();
           })
@@ -95,7 +95,7 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
     }
 
     static isNewznab():boolean {
-      return <boolean> (
+      return (
         (
           document.querySelectorAll('[name="RSSTOKEN" i]').length > 0
           && document.querySelectorAll('input.nzb_multi_operations_cart').length > 0

@@ -11,7 +11,8 @@ class NZBUnity {
     'nzbking.com',
     'nzbserver.com',
     'nzb.su',
-    'omgwtfnzbs.me'
+    'omgwtfnzbs.me',
+    'tabula-rasa.pw'
   ];
 
   public _debugMessages:string[] = [];
@@ -72,7 +73,7 @@ class NZBUnity {
             'type': 'basic',
             'iconUrl': chrome.extension.getURL('content/images/icon-32.png'),
             'title': `NZB Unity - ${title}`,
-            'message': message
+            'message': message,
           });
         }
       });
@@ -84,12 +85,10 @@ class NZBUnity {
   }
 
   sendTabMessage(tab:chrome.tabs.Tab, name:string, data:any):Promise<any> {
-    if (tab) {
-      return Util.sendTabMessage(tab.id, { [`main.${name}`]: data })
-        .catch((err) => {});
-    } else {
-      return Promise.reject('Tab is required');
-    }
+    return tab
+      ? Util.sendTabMessage(tab.id, { [`main.${name}`]: data })
+        .catch((err) => {})
+      : Promise.reject('Tab is required');
   }
 
   sendOptionsMessage(name:string, data:any) {
@@ -115,8 +114,11 @@ class NZBUnity {
   }
 
   refresh():Promise<NZBQueueResult> {
-    this.startTimer();
-    return this.getQueue();
+    return this.getQueue()
+      .then((res) => {
+        this.startTimer();
+        return res;
+      });
   }
 
   getQueue():Promise<NZBQueueResult> {
@@ -156,6 +158,8 @@ class NZBUnity {
           return Util.simplifyCategory(category);
         } else if (!category && opts.DefaultCategory) {
           return opts.DefaultCategory;
+        } else {
+          return category;
         }
       });
   }
@@ -175,7 +179,7 @@ class NZBUnity {
         this.showNotification(
           'addUrl',
           `${options.name || url} Added`,
-          `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`
+          `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
         );
         return result;
       });
@@ -196,7 +200,7 @@ class NZBUnity {
         this.showNotification(
           'addUrl',
           `${filename} Added`,
-          `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`
+          `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
         );
         return result;
       });
@@ -208,13 +212,13 @@ class NZBUnity {
     this.debugMessage(message);
 
     // Handle message
-    for (let k in message) {
-      let val:any = message[k];
+    for (const k in message) {
+      const val:any = message[k];
       // this.debug(k, val);
 
       switch (k) {
         case 'util.request':
-          console.log('util.request', val);
+          this.debug(`[NZBUnity.handleMessage] util.request: ${val}`);
           sendResponse(undefined);
           break;
 
@@ -229,7 +233,7 @@ class NZBUnity {
               providers.push(val);
 
               return Util.storage.set({
-                ProviderNewznab: providers.join(',')
+                ProviderNewznab: providers.join(','),
               });
             })
             .then(() => {
@@ -241,16 +245,12 @@ class NZBUnity {
         // Content Scripts
         case 'content.addUrl':
           this.addUrl(val.url, val)
-            .then((r) => {
-              sendResponse(r && r.success);
-            });
+            .then(res => sendResponse(res && res.success));
           break;
 
         case 'content.addFile':
           this.addFile(val.filename, val.content, val)
-            .then((r) => {
-              sendResponse(r && r.success);
-            });
+            .then(res => sendResponse(res && res.success));
           break;
 
         // Popup Messages
@@ -262,7 +262,7 @@ class NZBUnity {
         case 'popup.resumeQueue':
           if (this.nzbHost) {
             this.nzbHost.resumeQueue()
-              .then((r) => {
+              .then(() => {
                 this.refresh();
                 sendResponse(undefined);
               });
@@ -272,7 +272,7 @@ class NZBUnity {
         case 'popup.pauseQueue':
           if (this.nzbHost) {
             this.nzbHost.pauseQueue()
-              .then((r) => {
+              .then(() => {
                 this.refresh();
                 sendResponse(undefined);
               });
@@ -282,7 +282,7 @@ class NZBUnity {
         case 'popup.setMaxSpeed':
           if (this.nzbHost) {
             this.nzbHost.setMaxSpeed(val)
-              .then((r) => {
+              .then(() => {
                 this.refresh();
                 sendResponse(undefined);
               });
@@ -307,9 +307,7 @@ class NZBUnity {
         case 'options.onTab':
           this.optionsTab = val;
           this.sendOptionsMessage('onTab', true)
-            .then((res) => {
-              sendResponse(res);
-            });
+            .then(res => sendResponse(res && res.success));
           break;
 
         case 'options.setOptions':
@@ -323,13 +321,11 @@ class NZBUnity {
 
         case 'options.resetOptions':
           this.resetOptions()
-            .then((r) => {
+            .then(() => {
               this.sendOptionsMessage('resetOptions', true)
-                .then((res) => {
-                  sendResponse(res);
-                });
+                .then(res => sendResponse(res && res.success));
             });
-        break;
+          break;
 
         case 'options.profileNameChanged':
           Util.storage.get('ActiveProfile')
@@ -349,12 +345,8 @@ class NZBUnity {
         case 'options.profileTest':
           this.sendOptionsMessage('profileTestStart', true);
           this.profileTest(val)
-            .then((r) => {
-              this.sendOptionsMessage('profileTestEnd', r);
-            })
-            .catch((err) => {
-              this.sendOptionsMessage('profileTestEnd', { success: false, error: err });
-            });
+            .then(r => this.sendOptionsMessage('profileTestEnd', r))
+            .catch(error => this.sendOptionsMessage('profileTestEnd', { success: false, error }));
           sendResponse(undefined);
           break;
       }
@@ -371,18 +363,14 @@ class NZBUnity {
       case 'resume-queue':
         if (this.nzbHost) {
           this.nzbHost.resumeQueue()
-            .then((r) => {
-              this.refresh();
-            });
+            .then(() => this.refresh());
         }
         break;
 
       case 'pause-queue':
         if (this.nzbHost) {
           this.nzbHost.pauseQueue()
-            .then((r) => {
-              this.refresh();
-            });
+            .then(() => this.refresh());
         }
         break;
 
@@ -394,9 +382,7 @@ class NZBUnity {
                 ? this.nzbHost.resumeQueue()
                 : this.nzbHost.pauseQueue()
             })
-            .then((r) => {
-              this.refresh();
-            });
+            .then(r => this.refresh());
         }
         break;
 
@@ -424,7 +410,7 @@ class NZBUnity {
   handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
     this.debug('[OptionsPage.handleStorageChanged] ',
       Object.keys(changes)
-        .map((k) => { return `${k} -> ${changes[k].newValue}`; })
+        .map(k => `${k} -> ${changes[k].newValue}`)
         .join(', ')
     );
 
@@ -452,7 +438,6 @@ class NZBUnity {
     if (changes['Debug']) {
       if (!changes['Debug'].newValue) {
         this._debugMessages.splice(0);
-
       }
     }
   }
@@ -461,17 +446,12 @@ class NZBUnity {
 
   isValidOpt(opt:string | string[]):boolean {
     opt = Array.isArray(opt) ? opt : [opt];
-
-    return opt.every((k:string) => {
-      return Object.keys(DefaultOptions).indexOf(k) >= 0;
-    });
+    return opt.every(k => Object.keys(DefaultOptions).indexOf(k) >= 0);
   }
 
   resetOptions():Promise<void> {
     return Util.storage.clear()
-      .then(() => {
-        return this.initOptions();
-      });
+      .then(() => this.initOptions());
   }
 
   setOptionDefaults():Promise<void> {
@@ -491,9 +471,7 @@ class NZBUnity {
         } else {
           // Storage is fresh. Add in defaults
           return this.setOptionDefaults()
-            .then(() => {
-              return Util.storage.set({ Initialized: true });
-            });
+            .then(() => Util.storage.set({ Initialized: true }));
         }
       })
       .then(() => {
@@ -508,9 +486,8 @@ class NZBUnity {
 
         // get names from the manifest
         chrome.runtime.getManifest().content_scripts.forEach((i) => {
-          let js:string = i.js && i.js.pop();
-          let match = js && js.match(/(\w+)\.js$/);
-          let name = match ? match[1] : null;
+          const js:string = i.js && i.js.pop();
+          const [match, name] = js && js.match(/(\w+)\.js$/);
 
           if (name && name !== 'util') {
             providers[name] = {
@@ -526,9 +503,7 @@ class NZBUnity {
         });
 
         return Util.storage.set({ Providers: providers })
-          .then(() => {
-            return providers;
-          });
+          .then(() => providers);
       });
   }
 
@@ -568,14 +543,14 @@ class NZBUnity {
         urls: ["<all_urls>"],
         types: ["main_frame", "sub_frame"]
       },
-      ["responseHeaders", "blocking"]
+      ["responseHeaders", "blocking"],
     );
     this.debug('[NZBUnity] NZB download intercept enabled');
   }
 
   disableIntercept() {
     chrome.webRequest.onHeadersReceived.removeListener(
-      this.handleHeadersReceived.bind(this)
+      this.handleHeadersReceived.bind(this),
     );
     this.debug('[NZBUnity] NZB download intercept disabled');
   }
@@ -585,12 +560,12 @@ class NZBUnity {
 
     return this.interceptExclude.split(/\s*,\s*/)
       .concat(NZBUnity.interceptExcludeAlways)
-      .map((v:string) => { return new RegExp(v); })
-      .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
+      .map(host => new RegExp(host))
+      .some(hostRe => hostRe.test(Util.parseUrl(url).host));
   }
 
   handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
-    let url:string = details.url;
+    const url:string = details.url;
     let type:string;
     let disposition:string;
     let dnzb:DirectNZB = {};
@@ -623,7 +598,7 @@ class NZBUnity {
       // }
       // console.log('===================HEADERS=================');
 
-      let options:NZBAddOptions = {};
+      const options:NZBAddOptions = {};
 
       if (dnzb.name) options.name = dnzb.name;
       else if (dispositionMatch) options.name = dispositionMatch[1];
@@ -661,8 +636,8 @@ class NZBUnity {
     if (!this.newznabProviders || !url) return false;
 
     return this.newznabProviders.split(/\s*,\s*/)
-      .map((v:string) => { return new RegExp(v); })
-      .some((v:RegExp) => { return v.test(Util.parseUrl(url).host); });
+      .map(host => new RegExp(host))
+      .some(hostRe => hostRe.test(Util.parseUrl(url).host));
   }
 
   handleNewznabTabUpdated(tabId:number, changes:chrome.tabs.TabChangeInfo, tab:chrome.tabs.Tab) {
@@ -684,10 +659,9 @@ class NZBUnity {
   /* PROFILE */
 
   profileTest(name:string):Promise<NZBResult> {
-    if (!this.nzbHost) {
-      return Promise.reject({ success: false, error: 'No connection to host' });
-    }
-    return this.nzbHost.test();
+    return this.nzbHost
+      ? this.nzbHost.test()
+      : Promise.reject({ success: false, error: 'No connection to host' });
   }
 
   setActiveProfile(name:string = null):Promise<NZBResult> {
@@ -715,7 +689,7 @@ class NZBUnity {
       })
       .then(() => {
         // Ready to initizlize
-        let profile:NZBUnityProfileOptions = profiles[name];
+        const profile:NZBUnityProfileOptions = profiles[name];
 
         if (profile) {
           if (profile.ProfileType === 'NZBGet') {
@@ -744,9 +718,7 @@ class NZBUnity {
 
   getActiveProfile():Promise<NZBUnityProfileOptions> {
     return Util.storage.get(['ActiveProfile', 'Profiles'])
-      .then((opts) => {
-        return opts.Profiles[opts.ActiveProfile];
-      });
+      .then(opts => opts.Profiles[opts.ActiveProfile]);
   }
 
   /* DEBUGGING */
@@ -765,14 +737,14 @@ class NZBUnity {
     Util.storage.get('Debug')
       .then((opts) => {
         if (opts.Debug) {
-          const msg = args.map((a) => {
-            switch (typeof a) {
+          const msg = args.map((arg) => {
+            switch (typeof arg) {
               case 'object':
-                return Object.keys(a)
-                  .map(k => `&nbsp;&nbsp;&nbsp;<span class="green">${k}</span>: ${a[k]}`)
+                return Object.keys(arg)
+                  .map(k => `&nbsp;&nbsp;&nbsp;<span class="green">${k}</span>: ${arg[k]}`)
                   .join('\n');
               default:
-                return `${a}`.replace(/^\[(.*)\]/, '<span class="green">[$1]</span>');
+                return `${arg}`.replace(/^\[(.*)\]/, '<span class="green">[$1]</span>');
             }
           }).join('\n');
 

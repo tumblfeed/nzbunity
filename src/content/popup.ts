@@ -43,6 +43,9 @@ class Popup {
     this.overrideCategory = $('#OverrideCategory');
     this.maxSpeed = $('#MaxSpeed');
 
+    // Show version
+    $('#Version').text(`v${chrome.runtime.getManifest().version}`);
+
     // Init options
     Util.storage.get(null)
       .then((opts) => {
@@ -77,15 +80,15 @@ class Popup {
           Util.storage.set({ OverrideCategory: this.overrideCategory.val() });
         });
 
-        this.maxSpeed.on('change', (e) => {
-          let val:string = <string> this.maxSpeed.val();
+        this.maxSpeed.on('change', () => {
+          const val:string = this.maxSpeed.val() as string;
           let n:number = parseFloat(val);
 
           if (n && n <= 0) {
             n = 0;
           }
 
-          this.maxSpeed.val(n ? n : '');
+          this.maxSpeed.val(n || '');
           this.sendMessage('setMaxSpeed', n ? n * Util.Megabyte : null);
         });
 
@@ -131,7 +134,7 @@ class Popup {
       this.queue.empty().append(this.messages.noProfiles);
 
     } else if (queue) {
-      console.log(queue);
+      this.debug(queue);
 
       this.maxSpeed.val(Number(queue.maxSpeedBytes / Util.Megabyte).toFixed(1));
 
@@ -152,14 +155,14 @@ class Popup {
       this.queue.empty();
 
       if (queue.queue.length) {
-        queue.queue.forEach((i) => {
+        queue.queue.forEach((item) => {
           // console.log(i);
           this.queue.append(`
             <div class="nzb">
-              <span class="name" title="${i.name}">${Util.trunc(i.name, 30)}</span>
-              <span class="category">${i.category || ''}</span>
-              <span class="size">${i.size || ''}</span>
-              <span class="bar" style="width:${i.percentage}%;"></span>
+              <span class="name" title="${item.name}">${Util.trunc(item.name, 30)}</span>
+              <span class="category">${item.category || ''}</span>
+              <span class="size">${item.size || ''}</span>
+              <span class="bar" style="width:${item.percentage}%;"></span>
             </div>
           `);
         });
@@ -194,8 +197,8 @@ class Popup {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
-    for (let k in message) {
-      let val:any = message[k];
+    for (const k in message) {
+      const val:any = message[k];
 
       switch (k) {
         case 'main.refresh':
@@ -240,10 +243,9 @@ class Popup {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       this.profiles = changes['Profiles'].newValue;
-      let profilesCount:number = Object.keys(this.profiles).length;
-
-      let oldProfiles:Object = changes['Profiles'].oldValue;
-      let oldProfilesCount:number = Object.keys(oldProfiles).length;
+      const profilesCount:number = Object.keys(this.profiles).length;
+      const oldProfiles:Object = changes['Profiles'].oldValue;
+      const oldProfilesCount:number = Object.keys(oldProfiles).length;
 
       if (profilesCount !== oldProfilesCount) {
         // Profile added or removed
@@ -255,7 +257,7 @@ class Popup {
         }
       }
 
-      for (let k in this.profiles) {
+      for (const k in this.profiles) {
         if (this.profiles[k].ProfileName !== k) {
           this.profileNameChanged(k, this.profiles[k].ProfileName);
         }
@@ -268,7 +270,7 @@ class Popup {
   }
 
   handleProfileSelect(e:Event) {
-    let el = $(e.currentTarget);
+    const el = $(e.currentTarget);
     this.setActiveProfile(<string> el.val());
   }
 
@@ -283,7 +285,7 @@ class Popup {
 
   profileSelectUpdate() {
     this.profileCurrent.empty();
-    for (let k in this.profiles) {
+    for (const k in this.profiles) {
       this.profileCurrent.append(`<option value="${k}">${k}</option>`);
     }
   }
@@ -332,7 +334,7 @@ class Popup {
   }
 
   debugMessage(message:MessageEvent) {
-    for (let k in message) {
+    for (const k in message) {
       console.debug('[Popup.debugMessage]', k, message[k]);
     }
   }

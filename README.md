@@ -83,8 +83,8 @@ NZB Unity is built primarily in TypeScript and SASS, using a Gulp build process.
 ### Extension
 
 1. Clone the repository
-1. `npm install`
-1. `gulp watch`
+1. `npm ci`
+1. `gulp build` or `gulp dist` or `gulp watch`
 1. The built extension will be in the build directory and can be loaded into browsers using the manifest.json file there.
 1. Make changes only to files in the src/ directory. JS files can be written in either JavaScript or Typescript. New TypeScript files should be added to the tsconfig.json file in the root.
 
@@ -105,7 +105,7 @@ Directories:
 Gulp commands:
 
 * `gulp build` -- Builds the extension into build/.
-* `gulp dist` -- After building, zips the build into dist/, recommend using `gulp clean; gulp dist`.
+* `gulp dist` -- After building, zips the build into dist/.
 * `gulp clean` -- Deletes build files from build/ and dist/.
 * `gulp copy` -- Copies any files that do not need pre-process to build/.
 * `gulp typescript` -- Compiles TypeScript files.
@@ -247,3 +247,9 @@ Initial public release
 
 * Update nzbfinder.ws integration for upcoming site redesign
 * Fixes long-standing bug where override category selector does not show current override on popup open
+
+### 1.14.0
+
+* Updates popup layout a smidge for better readability
+* Adds version number to top right corner of popup and options
+* New 1-Click site profile for tabula-rasa.pw

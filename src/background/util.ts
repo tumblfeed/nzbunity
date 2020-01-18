@@ -179,7 +179,7 @@ class Util {
   }
 
   static getLastError():string {
-    let error:chrome.runtime.LastError = chrome.runtime.lastError;
+    const error:chrome.runtime.LastError = chrome.runtime.lastError;
     if (error
       // Receiving end not existing isn't really concerning, ignore.
       && !/Receiving end does not exist/i.test(error.message)
@@ -194,7 +194,7 @@ class Util {
   static sendMessage(message:any):Promise<any> {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response:any) => {
-        let error = Util.getLastError();
+        const error = Util.getLastError();
         if (error) {
           reject(error);
         } else {
@@ -208,7 +208,7 @@ class Util {
   static sendTabMessage(tabId:number, message:any):Promise<any> {
     return new Promise((resolve, reject) => {
       chrome.tabs.sendMessage(tabId, message, (response:any) => {
-        let error = Util.getLastError();
+        const error = Util.getLastError();
         if (error) {
           reject(error);
         } else {
@@ -219,9 +219,9 @@ class Util {
     });
   }
 
-  static setMenuIcon(color:string = null, status:string = null):Promise<void> {
+  static setMenuIcon(color:string = 'green', status:string = null):Promise<void> {
     return new Promise((resolve, reject) => {
-      color = color ? color.toLowerCase() : 'green';
+      color = color.toLowerCase();
       if (/^(active|downloading)/i.test(color)) color = 'green';
       if (/^(inactive|idle|paused|gray)/i.test(color)) color = 'grey';
 
@@ -232,7 +232,7 @@ class Util {
 
       chrome.browserAction.setTitle({ title: 'NZB Unity' + (status ? ` - ${status}` : '') });
 
-      let icons:chrome.browserAction.TabIconDetails = {
+      const icons:chrome.browserAction.TabIconDetails = {
         path: {}
       };
       [16, 32, 64].forEach((size) => {
@@ -240,7 +240,7 @@ class Util {
       });
 
       return chrome.browserAction.setIcon(icons, () => {
-        let error = Util.getLastError();
+        const error = Util.getLastError();
         if (error) {
           reject(error);
         } else {
@@ -250,9 +250,24 @@ class Util {
     });
   }
 
+  static getQuery(query:string = window.location.search):StringDictionary {
+    return query
+      .replace(/^\?/, '')
+      .split('&')
+      .reduce((q, i) => {
+        const [k, v] = i.split('=');
+        q[k] = v;
+        return q;
+      }, {});
+  }
+
+  static getQueryParam(k:string, def:string = null):string {
+    return Util.getQuery()[k] || def;
+  }
+
   // Adapted from https://www.abeautifulsite.net/parsing-urls-in-javascript
   static parseUrl(url:string):ParsedUrl {
-    let parser:HTMLAnchorElement = document.createElement('a');
+    const parser:HTMLAnchorElement = document.createElement('a');
     let search:StringDictionary = null;
 
     if (!/^https?:\/\//i.test(url)) {
@@ -264,11 +279,7 @@ class Util {
 
     // Convert query string to object
     if (parser.search) {
-      search = {};
-      parser.search.replace(/^\?/, '').split('&').forEach((q:string) => {
-        let split:string[] = q.split('=');
-        search[split[0]] = split[1];
-      });
+      search = Util.getQuery(parser.search);
     }
 
     return {
@@ -277,14 +288,14 @@ class Util {
       hostname: parser.hostname,
       port: parser.port,
       pathname: parser.pathname,
-      search: search,
-      hash: parser.hash
+      hash: parser.hash,
+      search
     };
   }
 
   // Adapted from https://gist.github.com/dineshsprabu/0405a1fbebde2c02a9401caee47fa3f5
   static request(options:RequestOptions):Promise<any> {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       // Options wrangling
       if (!options.url) {
         reject({
@@ -293,24 +304,23 @@ class Util {
         });
       }
 
-      let method:string = String(options.method || 'GET').toUpperCase();
-      let parsed:ParsedUrl = Util.parseUrl(options.url);
+      const method:string = String(options.method || 'GET').toUpperCase();
+      const parsed:ParsedUrl = Util.parseUrl(options.url);
+      const headers:StringDictionary = options.headers || {};
       let url:string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
       let search:StringDictionary = parsed.search;
-      let headers:StringDictionary = options.headers || {};
 
       if (options.params || options.files || options.multipart) {
-        // GET requests, pack everything in the URL
         if (method === 'GET') {
+          // GET requests, pack everything in the URL
           search = search || {};
-          for (let k in options.params) {
+          for (const k in options.params) {
             search[k] = options.params[k] as string;
           }
-
-        // Other types of requests, figure out content type if not specified
-        // and build the request body if not provided.
         } else if (!options.body) {
-          let type = headers['Content-Type']
+          // Other types of requests, figure out content type if not specified
+          // and build the request body if not provided.
+          const type = headers['Content-Type']
             || (options.json && 'json')
             || (options.files && 'multipart')
             || (options.multipart && 'multipart')
@@ -331,7 +341,11 @@ class Util {
                 options.body.append(k, options.params[k] as string);
               }
               for (let k in options.files) {
-                options.body.append(k, new Blob([options.files[k].content], { type: options.files[k].type }), options.files[k].filename);
+                options.body.append(
+                  k, 
+                  new Blob([options.files[k].content], { type: options.files[k].type }), 
+                  options.files[k].filename,
+                );
               }
               break;
 
@@ -345,49 +359,49 @@ class Util {
       }
 
       if (search) {
-        url += '?' + Util.uriEncodeQuery(search);
+        url = `${url}?${Util.uriEncodeQuery(search)}`;
       }
 
       // Make the request
       // console.debug({ 'util.request': `${method} ${url}` });
 
-      let xhr = new XMLHttpRequest();
-
-      xhr.open(method, url, true, options.username || null, options.password || null);
+      const xhr = new XMLHttpRequest();
+      xhr.open(
+        method, 
+        url, 
+        true, // async
+        options.username || null, 
+        options.password || null,
+      );
 
       if (options.username && options.password) {
         xhr.withCredentials = true;
-        xhr.setRequestHeader('Authorization', 'Basic ' + btoa(`${options.username}:${options.password}`));
+        xhr.setRequestHeader('Authorization', `Basic ${btoa(`${options.username}:${options.password}`)}`);
       }
 
-      for (let k in headers || {}) {
+      for (const k in headers || {}) {
         xhr.setRequestHeader(k, headers[k]);
       }
 
       xhr.onload = () => {
         // console.debug({ 'util.request.onload': [xhr.status, xhr.response] });
         if (xhr.status >= 200 && xhr.status < 300) {
-          if (!xhr.responseType) {
-            try {
-              let response:Object = JSON.parse(xhr.response);
-              resolve(response);
-            } catch (e) {
-              resolve(xhr.response);
-            }
-          } else {
-            resolve(xhr.response);
+          try {
+            return resolve(JSON.parse(xhr.response));
+          } catch (e) {
+            return resolve(xhr.response);
           }
-        } else {
-          reject({
-            status: xhr.status,
-            statusText: xhr.statusText
-          });
         }
+
+        return reject({
+          status: xhr.status,
+          statusText: xhr.statusText
+        });
       };
 
       xhr.ontimeout = () => {
         // console.debug({ 'util.request.ontimeout': [xhr.status] });
-        reject({
+        return reject({
           status: xhr.status,
           statusText: 'Request timed out'
         });
@@ -395,7 +409,7 @@ class Util {
 
       xhr.onerror = () => {
         // console.debug({ 'util.request.onerror': [xhr.status, xhr.statusText] });
-        reject({
+        return reject({
           status: xhr.status,
           statusText: xhr.statusText
         });
@@ -406,22 +420,21 @@ class Util {
   }
 
   static uriEncodeQuery(query:Dictionary):string {
-    return Object.keys(query).map((k) => {
-      let v = String(query[k]);
-      return encodeURIComponent(k) + '=' + encodeURIComponent(v);
-    }).join('&')
+    return Object.keys(query)
+      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(query[k] as string)}`)
+      .join('&');
   }
 
   static humanSize(bytes:number) {
-    let i:number = bytes ? Math.floor(Math.log(bytes) / Math.log(Util.byteMultiplier)) : 0;
-    let n:string = (bytes / Math.pow(Util.byteMultiplier, i)).toFixed(2).replace(/\.?0+$/, '');
+    const i:number = bytes ? Math.floor(Math.log(bytes) / Math.log(Util.byteMultiplier)) : 0;
+    const n:string = (bytes / Math.pow(Util.byteMultiplier, i)).toFixed(2).replace(/\.?0+$/, '');
 
     return n + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
   }
 
   static humanSeconds(seconds:number) {
-    let hours:number = Math.floor(((seconds % 31536000) % 86400) / 3600);
-    let minutes:number = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+    const hours:number = Math.floor(((seconds % 31536000) % 86400) / 3600);
+    const minutes:number = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
     seconds = (((seconds % 31536000) % 86400) % 3600) % 60;
 
     return `${hours}:${minutes}:${seconds}`.replace(/^0+:/, '');
@@ -432,12 +445,14 @@ class Util {
   }
 
   static trunc(s:string, n:number):string {
-    return (s.length > n) ? s.substr(0, n - 1) + '&hellip;' : s;
+    return (s.length > n) ? `${s.substr(0, n - 1)}&hellip;` : s;
   }
 
   static simplifyCategory(s:string):string {
+    // If category name contains any non-word characters (eg "Lol > Wut")
+    // just return the first word (eg "Lol")
     if (/[^\w\s]/.test(s)) {
-      s = s.split(/\s*[^\w\s]+\s*/i)[0];
+      [s] = s.split(/\s*[^\w\s]+\s*/i);
     }
     return s.toLowerCase();
   }
@@ -451,36 +466,30 @@ class PageUtil {
   static readonly backgroundNormal:string = 'rgb(23, 162, 184)';
   static readonly backgroundPending:string = 'rgb(156, 166, 168)';
 
-  static getBaseUrl():string {
-    let l:Location = window.location;
-    return `${l.protocol}//${l.host}`;
-  }
-
   static request(options:RequestOptions):Promise<any> {
-    options.url = PageUtil.getBaseUrl() + (options.url || '');
+    options.url = `${window.location.origin}${options.url || ''}`;
     return Util.request(options);
   }
 
-  static requestAndAddFile(filename:string, category:string = '', url:string = '', params:StringDictionary = {}):Promise<any> {
+  static requestAndAddFile(
+    filename:string, 
+    category:string = '', 
+    url:string = window.location.origin, 
+    params:StringDictionary = {},
+  ):Promise<any> {
     // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
     // Fetches a single NZB from a POST request and adds it to the server as a file upload
-    return Util.request({
-      method: 'POST',
-      url: url || PageUtil.getBaseUrl(),
-      params: params
-    })
-      .then((nzbContent) => {
-        return Util.sendMessage({
-          'content.addFile': {
-            filename: filename,
-            content: nzbContent,
-            category: category
-          }
-        });
-      });
+    return Util.request({ method: 'POST', url, params })
+      .then(content => Util.sendMessage({
+        'content.addFile': { filename, content, category }
+      }));
   }
 
-  static bindAddUrl(options:CreateAddLinkOptions, el:JQuery<HTMLElement>|HTMLElement, exclusive:boolean = false):JQuery<HTMLElement> {
+  static bindAddUrl(
+    options:CreateAddLinkOptions, 
+    el:JQuery<HTMLElement>|HTMLElement, 
+    exclusive:boolean = false,
+  ):JQuery<HTMLElement> {
     if (exclusive) {
       $(el).off('click');
     }
@@ -508,17 +517,17 @@ class PageUtil {
       </a>
     `)
       .css({
-        'cursor': 'pointer',
-        'display': 'inline-block'
+        cursor: 'pointer',
+        display: 'inline-block',
       })
       .on('nzb.pending', (e) => {
-        $(e.currentTarget).find('img').attr('src', PageUtil.iconGrey);
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconGrey)
       })
       .on('nzb.success', (e) => {
-        $(e.currentTarget).find('img').attr('src', PageUtil.iconGreen);
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconGreen)
       })
       .on('nzb.failure', (e) => {
-        $(e.currentTarget).find('img').attr('src', PageUtil.iconRed);
+        $(e.currentTarget).find('img').attr('src', PageUtil.iconRed)
       });
   }
 
@@ -531,46 +540,46 @@ class PageUtil {
       </button>
     `)
       .css({
-        'background': `${PageUtil.backgroundNormal} url(${PageUtil.iconGreen}) no-repeat scroll 4px center`,
-        'border': '1px solid rgb(19, 132, 150)',
+        background: `${PageUtil.backgroundNormal} url(${PageUtil.iconGreen}) no-repeat scroll 4px center`,
+        border: '1px solid rgb(19, 132, 150)',
         'border-radius': '4px',
-        'color': '#fff',
-        'cursor': 'pointer',
-        'display': 'inline-block',
+        color: '#fff',
+        cursor: 'pointer',
+        display: 'inline-block',
         'font-size': '11px',
         'font-weight': 'normal',
-        'margin': '0 0.5em 0 0',
-        'padding': '3px 8px 3px 25px',
+        margin: '0 0.5em 0 0',
+        padding: '3px 8px 3px 25px',
         'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
-        'white-space': 'nowrap'
+        'white-space': 'nowrap',
       })
       .on('nzb.pending', (e) => {
         $(e.currentTarget).css({
           'background-color': PageUtil.backgroundPending,
-          'background-image': `url(${PageUtil.iconGrey})`
+          'background-image': `url(${PageUtil.iconGrey})`,
         });
       })
       .on('nzb.success', (e) => {
         $(e.currentTarget).css({
           'background-color': PageUtil.backgroundNormal,
-          'background-image': `url(${PageUtil.iconGreen})`
+          'background-image': `url(${PageUtil.iconGreen})`,
         });
       })
       .on('nzb.failure', (e) => {
         $(e.currentTarget).css({
           'background-color': PageUtil.backgroundNormal,
-          'background-image': `url(${PageUtil.iconRed})`
+          'background-image': `url(${PageUtil.iconRed})`,
         });
       });
   }
 
   static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
     // console.log('createAddUrlLink', url, category);
-    let link = PageUtil.bindAddUrl(options, PageUtil.createLink())
+    const link = PageUtil.bindAddUrl(options, PageUtil.createLink())
       .attr('href', options.url)
       .css({
         height: '16px',
-        width: '16px'
+        width: '16px',
       });
 
     if (adjacent) {
@@ -582,27 +591,12 @@ class PageUtil {
 
   static createAddUrlButton(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
     // console.log('createAddUrlLink', url, category);
-    let button = PageUtil.bindAddUrl(options, PageUtil.createButton());
+    const button = PageUtil.bindAddUrl(options, PageUtil.createButton());
 
     if (adjacent) {
       button.insertAfter(adjacent);
     }
 
     return button;
-  }
-
-  static getQuery():StringDictionary {
-    return window.location.search
-      .replace(/^\?/, '')
-      .split('&')
-      .reduce((q, i) => {
-        const [k, v] = i.split('=');
-        q[k] = v;
-        return q;
-      }, {});
-  }
-
-  static getQueryParam(k:string, def:string = null):string {
-    return this.getQuery()[k] || def;
   }
 }

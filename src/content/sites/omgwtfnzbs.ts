@@ -52,7 +52,7 @@ class NZBUnityOmgwtfnzbs {
   }
 
   initializeLinks() {
-    const view = PageUtil.getQueryParam('view', 'list');
+    const view = Util.getQueryParam('view', 'list');
 
     // Create direct download links
     // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.

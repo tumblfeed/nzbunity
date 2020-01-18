@@ -1,9 +1,20 @@
 $fa-font-path: "../fonts";
 @import "./font-awesome/font-awesome.scss";
 
+$middle-dark: #3a3a3a;
+$dark: #222;
+$darker: darken($dark, 15%);
+$light: #ddd;
+$lighter: #eee;
+$blue: #17a2b8;
+$dark-blue: darken($blue, 15%);
+$light-blue: lighten($blue, 15%);
+
+
 .custom-select-dark {
   background: #000 url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23ddd' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E") no-repeat right 2px center;
   background-size: 8px 10px;
+  border-color: $dark-blue;
   color: #ddd;
   height: 20px;
   padding: 0px 22px 0px 3px;
@@ -12,7 +23,8 @@ $fa-font-path: "../fonts";
 .custom-select-light {
   background: #fff url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23333' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E") no-repeat right 2px center;
   background-size: 8px 10px;
-  color: #333;
+  border-color: $dark-blue;
+  color: #3a3a3a;
   height: 20px;
   padding: 0px 22px 0px 3px;
 }

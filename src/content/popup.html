@@ -13,6 +13,7 @@
   <body id="popup">
 
     <div id="head">
+      <div id="Version"></div>
       <div id="errors"></div>
 
       <div id="profile">
@@ -44,11 +45,16 @@
 
     <div id="controls">
       <div id="override">
-        Override Category: <select id="OverrideCategory" class="custom-select"></select>
+        <span>Override Category</span>
+        <select id="OverrideCategory" class="custom-select"></select>
       </div>
 
       <div id="max-speed">
-        Max Speed: <input id="MaxSpeed" type="number" step="0.1" min="0"> MB/s
+        <span>Max Speed</span>
+        <span>
+          <input id="MaxSpeed" type="number" step="0.1" min="0">
+          MB/s
+        </span>
       </div>
     </div>
 

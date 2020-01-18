@@ -7,7 +7,7 @@ class NZBUnityDrunkenslug {
     Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
         this.replace = opts.ReplaceLinks;
-        let provider = opts.Providers && opts.Providers.nzbfinder;
+        let provider = opts.Providers && opts.Providers.drunkenslug;
         let enabled:boolean = provider ? provider.Enabled : true;
 
         if (enabled) {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.13.1",
+  "version": "1.14.0",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -12,9 +12,11 @@
     ]
   },
   "icons": {
+    "16": "content/images/nzb-16-green.png",
     "32": "content/images/icon-32.png",
     "40": "content/images/icon-40.png",
     "48": "content/images/icon-48.png",
+    "64": "content/images/nzb-64-green.png",
     "128": "content/images/icon-128.png"
   },
   "web_accessible_resources": [
@@ -27,7 +29,9 @@
   ],
   "browser_action": {
     "default_icon": {
-      "40": "content/images/icon-40.png"
+      "16": "content/images/nzb-16-green.png",
+      "32": "content/images/icon-32.png",
+      "128": "content/images/icon-128.png"
     },
     "default_title": "NZB Unity",
     "default_popup": "content/popup.html"
@@ -61,7 +65,8 @@
         "*://*.nzbking.com/*",
         "*://*.nzbserver.com/*",
         "*://*.nzb.su/*",
-        "*://*.omgwtfnzbs.me/*"
+        "*://*.omgwtfnzbs.me/*",
+        "*://*.tabula-rasa.pw/*"
       ],
       "js": [
         "vendor/jquery-3.3.1.slim.min.js",
@@ -115,6 +120,10 @@
     {
       "matches": ["*://*.omgwtfnzbs.me/*"],
       "js": ["content/sites/omgwtfnzbs.js"]
+    },
+    {
+      "matches": ["*://*.tabula-rasa.pw/*"],
+      "js": ["content/sites/tabularasa.js"]
     }
   ],
   "commands": {

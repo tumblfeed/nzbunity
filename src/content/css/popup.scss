@@ -1,22 +1,14 @@
 @import "common";
 
 // Popup Styles
-$middle-dark: #3a3a3a;
-$dark: #222;
-$darker: darken($dark, 15%);
-$light: #ddd;
-$lighter: #eee;
-$blue: #17a2b8;
-$dark-blue: darken($blue, 15%);
-$light-blue: lighten($blue, 15%);
 
 body {
   background: $dark;
   color: $light;
   font-size: 13px;
   overflow-x: hidden;
-  width: 360px;
-  max-height: 360px;
+  width: 380px;
+  max-height: 380px;
 }
 
 select, input, .btn {
@@ -28,13 +20,13 @@ select, input, .btn {
 
 input {
   background: $darker;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid $dark-blue;
   border-radius: 3px;
   color: $light;
 
   &[type="number"] {
-    height: 18px;
-    padding: 0 0 0 6px;
+    height: 20px;
+    padding: 0 1px 0 6px;
     width: 40px;
   }
 }
@@ -47,6 +39,13 @@ input {
 #head {
   border-bottom: 1px solid $dark-blue;
   padding: 10px 15px 10px;
+
+  #Version {
+    color: $dark-blue;
+    float: right;
+    font-size: 10px;
+    margin-top: -5px;    
+  }
 
   #profile {
     text-align: center;
@@ -61,7 +60,7 @@ input {
 
 #summary {
   @extend .flex-row;
-  padding: 7px 0 5px;
+  padding: 5px 0 5px;
 
   #QueuePause {
     cursor: pointer;
@@ -88,11 +87,25 @@ input {
 #controls {
   @extend .flex-row;
   flex-wrap: wrap;
-  justify-content: space-between;
-  padding: 5px 10px 10px;
+  padding: 3px 0 10px;
+
+  & > div {
+    @extend .flex-row;
+    align-items: flex-start;
+    flex-direction: column;
+
+    & > :first-child {
+      margin-bottom: 3px;
+    }
+  }
 
   #OverrideCategory {
-    max-width: 78px;
+    width: 125px;
+  }
+
+  #MaxSpeed {
+    text-align: right;
+    width: 65px;
   }
 }
 

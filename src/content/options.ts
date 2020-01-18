@@ -25,6 +25,9 @@ class OptionsPage {
     this.interceptDownloads = $('#InterceptDownloads');
     this.interceptExclude = $('#InterceptExclude');
 
+    // Show version
+    $('#Version').text(`v${chrome.runtime.getManifest().version}`);
+
     // Init tab stuff
     chrome.tabs.getCurrent((tab:chrome.tabs.Tab) => {
       this.sendMessage('onTab', tab);
@@ -40,14 +43,14 @@ class OptionsPage {
         this.profiles = opts.Profiles;
 
         // Init field contents
-        for (let k in opts) {
+        for (const k in opts) {
           let el = $(`#${k}`);
           if (el.length) {
             this.elements.push(el);
             if (el.attr('type') === 'checkbox') {
-              el.prop('checked', <boolean> opts[k]);
+              el.prop('checked', opts[k] as boolean);
             } else {
-              el.val(<string> opts[k]);
+              el.val(opts[k] as string);
             }
           }
         }
@@ -55,11 +58,11 @@ class OptionsPage {
         // Set up form -> storage binding
         this.elements.forEach((el) => {
           if (el.attr('type') === 'checkbox') {
-            el.on('change', (e) => {
+            el.on('change', () => {
               Util.storage.set({ [el.attr('id')]: el.prop('checked') });
             });
           } else {
-            el.on('input', (e) => {
+            el.on('input', () => {
               Util.storage.set({ [el.attr('id')]: el.val() });
             });
           }
@@ -77,16 +80,10 @@ class OptionsPage {
         this.profileSelectFirst();
 
         // Set up provider checkboxes and listeners
-        for (let k in this.providers) {
-          let el = this.getProviderElement(k, this.providers[k]);
+        for (const k in this.providers) {
+          const el = this.getProviderElement(k, this.providers[k]);
           el.find('input').prop('checked', this.providers[k].Enabled);
           el.appendTo('#provider-enabled-container');
-
-          // if (this.providers[k].displayAvailable) {
-          //   el = this.getProviderElement(k, true);
-          //   el.find('input').prop('checked', this.providers[k].Display);
-          //   el.appendTo('#provider-display-container');
-          // }
         }
 
         this.providerInputs = $('input[type="checkbox"][id^="Provider"]');
@@ -116,7 +113,7 @@ class OptionsPage {
       animation: true,
       container: 'body',
       html: true,
-      placement: 'bottom'
+      placement: 'bottom',
     });
 
     this.sendMessage('onInit', 'Options initialized.');
@@ -132,8 +129,8 @@ class OptionsPage {
     if (this._debug) this.debugMessage(message);
 
     // Handle message
-    for (let k in message) {
-      let val:any = message[k];
+    for (const k in message) {
+      const val = message[k];
 
       switch (k) {
         case 'main.resetOptions':
@@ -150,7 +147,6 @@ class OptionsPage {
         case 'main.profileTestEnd':
           this.profileTestEnd(val);
           break;
-
       }
     }
 
@@ -169,8 +165,8 @@ class OptionsPage {
 
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
-      let profiles:Object = changes['Profiles'].newValue;
-      for (let k in profiles) {
+      const profiles:Object = changes['Profiles'].newValue;
+      for (const k in profiles) {
         if (profiles[k].ProfileName !== k) {
           this.profileNameChanged(k, profiles[k].ProfileName);
         }
@@ -181,12 +177,12 @@ class OptionsPage {
   }
 
   handleProfileSelect(e:Event) {
-    let el = $(e.currentTarget);
+    const el = $(e.currentTarget);
     this.profileSelect(<string> el.val());
   }
 
   handleProfileButton(e:Event) {
-    let el = $(e.currentTarget);
+    const el = $(e.currentTarget);
     e.preventDefault();
 
     // this.debug('[OptionsPage.handleProfileButton] ', el.attr('id'));
@@ -197,7 +193,7 @@ class OptionsPage {
   }
 
   handleProfileInput(e:Event) {
-    let el = $(e.currentTarget);
+    const el = $(e.currentTarget);
 
     this.debug('[OptionsPage.handleProfileInput] ', el.attr('id'), el.val());
 
@@ -215,8 +211,8 @@ class OptionsPage {
   }
 
   handleProviderInput(e:Event) {
-    let el = $(e.currentTarget);
-    let match = el.attr('id').match(/^Provider(Enabled|Display)-(.*)$/);
+    const el = $(e.currentTarget);
+    const match = el.attr('id').match(/^Provider(Enabled|Display)-(.*)$/);
 
     // this.debug('[OptionsPage.handleProviderInput] ', el.attr('id'), el.prop('checked'), match);
 
@@ -230,7 +226,7 @@ class OptionsPage {
 
   profileNameChanged(oldName:string, newName:string):Promise<void> {
     if (newName) {
-      let profile = this.profiles[oldName];
+      const profile = this.profiles[oldName];
       delete this.profiles[oldName];
       this.profiles[newName] = profile;
 
@@ -240,22 +236,18 @@ class OptionsPage {
       }
 
       return this.profileSave()
-        .then(() => {
-          return this.sendMessage('profileNameChanged', { old: oldName, new: newName });
-        });
+        .then(() => this.sendMessage('profileNameChanged', { old: oldName, new: newName }));
     }
   }
 
   profileSave() {
     return Util.storage.set({ Profiles: this.profiles })
-      .then(() => {
-        return this.sendMessage('profilesSaved', this.profiles);
-      });
+      .then(() => this.sendMessage('profilesSaved', this.profiles));
   }
 
   profileSelectUpdate() {
     this.profileCurrent.empty();
-    for (let k in this.profiles) {
+    for (const k in this.profiles) {
       this.profileCurrent.append(`<option value="${k}">${k}</option>`);
     }
   }
@@ -266,8 +258,8 @@ class OptionsPage {
       this.profileCurrent.val(name);
       this.profileData = this.profiles[name];
 
-      for (let k in this.profiles[name]) {
-        let el = $(`#${k}`);
+      for (const k in this.profiles[name]) {
+        const el = $(`#${k}`);
 
         if (el.attr('type') === 'checkbox') {
           el.prop('checked', this.profiles[name][k] as boolean);
@@ -299,8 +291,8 @@ class OptionsPage {
   }
 
   profileCreate() {
-    let name:string = this.profileCreateName();
-    let profile:Object = {};
+    const name:string = this.profileCreateName();
+    const profile:Object = {};
     this.profileInputs.toArray().forEach((el:HTMLElement) => {
       profile[el.id] = '';
     });
@@ -316,8 +308,8 @@ class OptionsPage {
   }
 
   profileDuplicate() {
-    let name:string = this.profileCreateName();
-    let profile:Object = {};
+    const name:string = this.profileCreateName();
+    const profile:Object = {};
     this.profileInputs.toArray().forEach((el:HTMLElement) => {
       profile[el.id] = $(el).val();
     });
@@ -334,7 +326,7 @@ class OptionsPage {
 
   profileDelete() {
     if (Object.keys(this.profiles).length) {
-      let name:string = this.profileCurrent.val() as string;
+      const name:string = this.profileCurrent.val() as string;
       delete this.profiles[name];
 
       return this.profileSave()
@@ -345,7 +337,7 @@ class OptionsPage {
             this.profileSelectFirst();
           } else {
             this.profileInputs.toArray().forEach((el:HTMLElement) => {
-              let e = $(el);
+              const e = $(el);
               e.val('');
               e.prop('disabled', true);
             });
@@ -367,22 +359,22 @@ class OptionsPage {
   }
 
   profileTest() {
-    let name:string = this.profileData.ProfileName;
+    const name:string = this.profileData.ProfileName;
     this.debug('[OptionsPage.profileTest] ', name);
     this.sendMessage('profileTest', name);
   }
 
-  profileTestEnd(r:any) {
-    if (r) {
-      if (r.success) {
+  profileTestEnd(res:any) {
+    if (res) {
+      if (res.success) {
         this.profileTestSuccess();
       } else {
         let error:string;
 
-        if (typeof r.error === 'string') {
-          error = r.error;
-        } if (r.error && r.error['statusText']) {
-          error = r.error['statusText'];
+        if (typeof res.error === 'string') {
+          error = res.error;
+        } if (res.error && res.error['statusText']) {
+          error = res.error['statusText'];
         } else {
           error = 'Could not connect to host';
         }
@@ -444,9 +436,8 @@ class OptionsPage {
   /* PROVIDERS */
 
   getProviderElement(name:string, provider:NZBUnityProviderOptions, display:boolean = false) {
-    let matches:string[] = provider.Matches.map((m) => {
-      return m.replace('*://', '').replace('*.', '').replace('/*', '');
-    });
+    const matches:string[] = provider.Matches
+      .map(m => m.replace('*://', '').replace('*.', '').replace('/*', ''));
 
     return $(
       `<div class="row">
@@ -481,7 +472,6 @@ class OptionsPage {
     for (let k in message) {
       console.debug('[OptionsPage.debugMessage]', k, message[k]);
     }
-
   }
 }
 

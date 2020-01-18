@@ -18,7 +18,8 @@
     "src/content/sites/nzbking.ts",
     "src/content/sites/nzbserver.ts",
     "src/content/sites/nzbsu.ts",
-    "src/content/sites/omgwtfnzbs.ts"
+    "src/content/sites/omgwtfnzbs.ts",
+    "src/content/sites/tabularasa.ts"
   ],
   "compileOnSave": false,
   "compilerOptions": {

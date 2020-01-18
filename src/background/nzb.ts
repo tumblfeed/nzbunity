@@ -13,7 +13,7 @@ enum NZBPriority {
   low,
   normal,
   high,
-  force
+  force,
 }
 
 enum NZBPostProcessing {
@@ -21,7 +21,7 @@ enum NZBPostProcessing {
   none,
   repair,
   repair_unpack,
-  repair_unpack_delete
+  repair_unpack_delete,
 }
 
 declare interface DirectNZB {
@@ -79,15 +79,10 @@ declare interface NZBAddUrlResult {
 abstract class NZBHost {
   name:string;
   displayName:string;
-
   host:string;
   hostParsed:ParsedUrl;
   hostAsEntered:boolean = false;
-
   apiUrl:string;
-
-  infinityString:string = '∞';
-  // infinityString:string = '&#8734;';
 
   constructor(options:Dictionary = {}) {
     this.displayName = (options.displayName || this.name) as string;
@@ -124,7 +119,7 @@ class SABnzbdHost extends NZBHost {
       if (/^\/*$/i.test(this.hostParsed.pathname)) apiPath += 'sabnzbd';
       if (!/api$/i.test(this.hostParsed.pathname)) apiPath += '/api';
 
-      let pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
+      const pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
       this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
     }
   }
@@ -145,37 +140,43 @@ class SABnzbdHost extends NZBHost {
     }
 
     return Util.request(request)
-      .then((r) => {
+      .then((result) => {
         // check for error conditions
-        if (typeof r === 'string') {
-          return { success: false, operation: operation, error: 'Invalid result from host' };
+        if (typeof result === 'string') {
+          return { success: false, operation, error: 'Invalid result from host' };
         }
 
-        if (r.status === false && r.error) {
-          return { success: false, operation: operation, error: r.error };
+        if (result.status === false && result.error) {
+          return { success: false, operation, error: result.error };
         }
 
         // Collapse single key result
-        if (Object.keys(r).length === 1) {
-          r = r[Object.keys(r)[0]];
+        if (Object.values(result).length === 1) {
+          result = Object.values(result)[0];
         }
 
-        return { success: true, operation: operation, result: r };
+        return { success: true, operation, result };
       })
-      .catch((err) => {
-        return { success: false, operation: operation, error: err };
-      });
+      .catch(error => ({ success: false, operation, error }));
+  }
+
+  getCategories():Promise<string[]> {
+    return this.call('get_cats')
+      .then(res => res.success
+        ? (res.result as string[]).filter(i => i !== '*')
+        : null
+      );
   }
 
   getQueue():Promise<NZBQueueResult> {
     let queue:NZBQueueResult;
 
     return this.call('queue')
-      .then((r) => {
-        if (!r.success) return null;
+      .then((res) => {
+        if (!res.success) return null;
 
         let speedBytes:number = null;
-        let speedMatch:string[] = r.result['speed'].match(/(\d+)\s+(\w+)/i);
+        let speedMatch:string[] = res.result['speed'].match(/(\d+)\s+(\w+)/i);
         if (speedMatch) {
           speedBytes = parseInt(speedMatch[1]);
 
@@ -192,189 +193,172 @@ class SABnzbdHost extends NZBHost {
           }
         }
 
-        let maxSpeedBytes:number = parseInt(r.result['speedlimit_abs']);
+        let maxSpeedBytes:number = parseInt(res.result['speedlimit_abs']);
 
         queue = {
-          status: Util.ucFirst(r.result['status']),
+          status: Util.ucFirst(res.result['status']),
           speed: Util.humanSize(speedBytes) + '/s',
-          speedBytes: speedBytes,
+          speedBytes,
           maxSpeed: maxSpeedBytes ? Util.humanSize(maxSpeedBytes) : '',
-          maxSpeedBytes: maxSpeedBytes,
-          sizeRemaining: r.result['sizeleft'],
-          timeRemaining: speedBytes > 0 ? r.result['timeleft'] : this.infinityString,
+          maxSpeedBytes,
+          sizeRemaining: res.result['sizeleft'],
+          timeRemaining: speedBytes > 0 ? res.result['timeleft'] : '∞',
           categories: null,
           queue: []
         };
 
-        r.result['slots'].forEach((s:StringDictionary) => {
-          let size:number = Math.floor(parseFloat(s['mb']) * Util.Megabyte); // MB convert to Bytes
-          let sizeRemaining:number = Math.floor(parseFloat(s['mbleft']) * Util.Megabyte); // MB convert to Bytes
+        queue.queue = res.result['slots']
+          .map((slot:StringDictionary) => {
+            let sizeBytes:number = Math.floor(parseFloat(slot['mb']) * Util.Megabyte); // MB convert to Bytes
+            let sizeRemainingBytes:number = Math.floor(parseFloat(slot['mbleft']) * Util.Megabyte); // MB convert to Bytes
 
-          let item:NZBQueueItem = {
-            id: s['nzo_id'],
-            status: Util.ucFirst(s['status']),
-            name: s['filename'],
-            category: s['cat'],
-            size: Util.humanSize(size),
-            sizeBytes: size,
-            sizeRemaining: Util.humanSize(sizeRemaining),
-            sizeRemainingBytes: sizeRemaining,
-            timeRemaining: speedBytes > 0 ? s['timeleft'] : this.infinityString,
-            percentage: Math.floor(((size - sizeRemaining) / size) * 100)
-          };
-
-          queue.queue.push(item);
-        });
-
-        return this.getCategories()
-          .then((categories) => {
-            queue.categories = categories;
-            return queue;
+            return {
+              id: slot['nzo_id'],
+              status: Util.ucFirst(slot['status']),
+              name: slot['filename'],
+              category: slot['cat'],
+              size: Util.humanSize(sizeBytes),
+              sizeBytes,
+              sizeRemaining: Util.humanSize(sizeRemainingBytes),
+              sizeRemainingBytes,
+              timeRemaining: speedBytes > 0 ? slot['timeleft'] : '∞',
+              percentage: Math.floor(((sizeBytes - sizeRemainingBytes) / sizeBytes) * 100)
+            } as NZBQueueItem;
           });
-      });
-  }
 
-  getCategories():Promise<string[]> {
-    return this.call('get_cats')
-      .then((r) => {
-        let categories:string[];
-
-        if (r.success) {
-          categories = (<string[]> r.result).filter((i) => {
-            return i !== '*';
-          });
-        }
-
-        return categories;
+        return this.getCategories();
+      })
+      .then((categories) => {
+        queue.categories = categories;
+        return queue;
       });
   }
 
   addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
-    let params:StringDictionary = { name: url };
+    const params:StringDictionary = { name: url };
 
-    for (let k in options) {
-      let val = String(options[k]);
-
-      if (k === 'name') {
-        params.nzbname = val;
-      } else if (k === 'category') {
-        params.cat = val;
-      } else {
-        params[k] = val;
+    for (const k in options) {
+      const val = String(options[k]);
+      switch (k) {
+        case 'name':
+          params.nzbname = val;
+          break;
+        case 'category':
+          params.cat = val;
+          break;
+        default:
+          params[k] = val;
       }
     }
 
     return this.call('addurl', params)
-      .then((r) => {
-        let nzbResult:NZBAddUrlResult = <NZBAddUrlResult> r;
-        if (nzbResult.success) {
-          let ids:string[] = nzbResult.result['nzo_ids'];
-          nzbResult.result = ids.length ? ids[0] : null;
+      .then((res) => {
+        if (res.success) {
+          const ids:string[] = res.result['nzo_ids'];
+          res.result = ids.length ? ids[0] : null;
         }
-        return nzbResult;
+        return res as NZBAddUrlResult;
       });
   }
 
   addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
-    let operation = 'addfile';
-    let params:StringDictionary = {
+    const operation = 'addfile';
+    const params:StringDictionary = {
       apikey: this.apikey,
       mode: operation,
       output: 'json',
       nzbname: filename
     };
 
-    for (let k in options) {
-      let val = String(options[k]);
-
-      if (k === 'category') {
-        params.cat = val;
-      } else {
-        params[k] = val;
+    for (const k in options) {
+      const val = String(options[k]);
+      switch (k) {
+        case 'category':
+          params.cat = val;
+          break;
+        default:
+          params[k] = val;
       }
     }
 
     delete params.content;
     delete params.filename;
 
-    let request:RequestOptions = {
+    const request:RequestOptions = {
       method: 'POST',
       multipart: true,
-      url: this.apiUrl + '?' + Util.uriEncodeQuery(params),
+      url: `${this.apiUrl}?${Util.uriEncodeQuery(params)}`,
       files: {
         name: {
           filename: filename,
           type: 'application/nzb',
-          content: content
-        }
-      }
+          content,
+        },
+      },
     };
 
     return Util.request(request)
-      .then((r) => {
+      .then((result) => {
         // check for error condition
-        if (r.status === false && r.error) {
-          return { success: false, operation: operation, error: r.error };
+        if (result.status === false && result.error) {
+          return { success: false, operation, error: result.error };
         }
 
         // Collapse single key result
-        if (Object.keys(r).length === 1) {
-          r = r[Object.keys(r)[0]];
+        if (Object.values(result).length === 1) {
+          result = Object.values(result)[0];
         }
 
-        return { success: true, operation: operation, result: r };
+        return { success: true, operation, result };
       })
-      .then((r) => {
-        let nzbResult:NZBAddUrlResult = <NZBAddUrlResult> r;
-        if (nzbResult.success) {
-          let ids:string[] = nzbResult.result['nzo_ids'];
-          nzbResult.result = ids.length ? ids[0] : null;
+      .then((res) => {
+        if (res.success) {
+          const ids:string[] = res.result['nzo_ids'];
+          res.result = ids.length ? ids[0] : null;
         }
-        return nzbResult;
+        return res as NZBAddUrlResult;
       })
-      .catch((err) => {
-        return { success: false, operation: operation, error: err };
-      });
+      .catch(error => ({ success: false, operation, error }));
   }
 
   setMaxSpeed(bytes:number):Promise<NZBResult> {
-    let speed = bytes ? `${bytes / Util.Kilobyte}K` : '100';
-    return this.call('config', { name: 'speedlimit', value: speed })
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+    const value = bytes ? `${bytes / Util.Kilobyte}K` : '100';
+    return this.call('config', { name: 'speedlimit', value })
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   resumeQueue():Promise<NZBResult> {
     return this.call('resume')
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   pauseQueue():Promise<NZBResult> {
     return this.call('pause')
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   test():Promise<NZBResult> {
     return this.call('fullstatus', { skip_dashboard: 1 })
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 }
@@ -392,13 +376,13 @@ class NZBGetHost extends NZBHost {
     if (this.hostAsEntered) {
       this.apiUrl = this.host;
     } else {
-      let pathname = `${this.hostParsed.pathname}/jsonrpc`.replace(/\/+/g, '/');
+      const pathname = `${this.hostParsed.pathname}/jsonrpc`.replace(/\/+/g, '/');
       this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
     }
   }
 
   call(operation:string, params:Array<any> = []):Promise<NZBResult> {
-    let request:RequestOptions = {
+    const request:RequestOptions = {
       method: 'POST',
       url: this.apiUrl,
       username: this.username,
@@ -406,119 +390,107 @@ class NZBGetHost extends NZBHost {
       json: true,
       params: {
         method: operation,
-        params: params
-      }
+        params: params,
+      },
     };
 
-    for (let k in params) {
+    for (const k in params) {
       request.params[k] = String(params[k]);
     }
 
     return Util.request(request)
-      .then((r) => {
+      .then((result) => {
         // check for error conditions
-        if (typeof r === 'string') {
-          return { success: false, operation: operation, error: 'Invalid result from host' };
+        if (typeof result === 'string') {
+          return { success: false, operation, error: 'Invalid result from host' };
         }
 
-        if (r.error) {
-          return { success: false, operation: operation, error: `${r.error.name}: ${r.error.message}` };
+        if (result.error) {
+          return { success: false, operation, error: `${result.error.name}: ${result.error.message}` };
         }
 
-        return { success: true, operation: operation, result: r.result };
+        return { success: true, operation, result: result.result };
       })
-      .catch((err) => {
-        return { success: false, operation: operation, error: err };
-      });
+      .catch(error => ({ success: false, operation, error }));
+  }
+
+  getCategories():Promise<string[]> {
+    // NZBGet API does not have a method to get categories, but the 
+    // categories are listed in the config, so let's get them there.
+    return this.call('config')
+      .then(res => res.success
+        ? (res.result as StringDictionary[])
+          .filter(i => /Category\d+\.Name/i.test(i.Name))
+          .map(i => i.Value)
+        : null
+      );
   }
 
   getQueue():Promise<NZBQueueResult> {
     let queue:NZBQueueResult;
 
     return this.call('status')
-      .then((r) => {
-        if (!r.success) return null;
+      .then((res) => {
+        if (!res.success) return null;
 
-        let status:string = r.result['ServerStandBy']
+        let status:string = res.result['ServerStandBy']
           ? 'idle'
-          : r.result['DownloadPaused']
+          : res.result['DownloadPaused']
             ? 'paused'
             : 'downloading';
 
-        let speedBytes:number = r.result['DownloadRate']; // in Bytes / Second
-        let maxSpeedBytes:number = parseInt(r.result['DownloadLimit']);
-        let sizeRemaining:number = Math.floor(r.result['RemainingSizeMB'] * Util.Megabyte); // MB convert to Bytes
+        let speedBytes:number = res.result['DownloadRate']; // in Bytes / Second
+        let maxSpeedBytes:number = parseInt(res.result['DownloadLimit']);
+        let sizeRemaining:number = Math.floor(res.result['RemainingSizeMB'] * Util.Megabyte); // MB convert to Bytes
         let timeRemaining:number = Math.floor(sizeRemaining / speedBytes); // Seconds
 
         queue = {
           status: Util.ucFirst(status),
           speed: Util.humanSize(speedBytes) + '/s',
-          speedBytes: speedBytes,
+          speedBytes,
           maxSpeed: maxSpeedBytes ? Util.humanSize(maxSpeedBytes) : '',
-          maxSpeedBytes: maxSpeedBytes,
+          maxSpeedBytes,
           sizeRemaining: Util.humanSize(sizeRemaining),
-          timeRemaining: speedBytes > 0 ? Util.humanSeconds(timeRemaining) : this.infinityString,
+          timeRemaining: speedBytes > 0 ? Util.humanSeconds(timeRemaining) : '∞',
           categories: null,
           queue: []
         };
 
         return this.call('listgroups')
       })
-      .then((r) => {
-        if (!(r && r.success)) return null;
+      .then((res) => {
+        if (!(res && res.success)) return null;
 
-        (<Dictionary[]> r.result).forEach((s) => {
-          let size:number = Math.floor((<number> s['FileSizeMB']) * Util.Megabyte); // MB convert to Bytes
-          let sizeRemaining:number = Math.floor((<number> s['RemainingSizeMB']) * Util.Megabyte); // MB convert to Bytes
-          let timeRemaining:number = Math.floor(sizeRemaining / queue.speedBytes); // Seconds
+        queue.queue = (res.result as Dictionary[])
+          .map((slot) => {
+            const sizeBytes:number = Math.floor((<number> slot['FileSizeMB']) * Util.Megabyte); // MB convert to Bytes
+            const sizeRemainingBytes:number = Math.floor((<number> slot['RemainingSizeMB']) * Util.Megabyte); // MB convert to Bytes
+            const timeRemaining:number = Math.floor(sizeRemainingBytes / queue.speedBytes); // Seconds
 
-          let item:NZBQueueItem = {
-            id: <string> s['NZBID'],
-            status: Util.ucFirst(<string> s['Status']),
-            name: <string> s['NZBNicename'],
-            category: <string> s['Category'],
-            size: Util.humanSize(size),
-            sizeBytes: size,
-            sizeRemaining: Util.humanSize(sizeRemaining),
-            sizeRemainingBytes: sizeRemaining,
-            timeRemaining: queue.speedBytes > 0 ? Util.humanSeconds(timeRemaining) : this.infinityString,
-            percentage: Math.floor(((size - sizeRemaining) / size) * 100)
-          };
-
-          queue.queue.push(item);
-        });
+            return {
+              id: slot['NZBID'] as string,
+              status: Util.ucFirst(slot['Status'] as string),
+              name: slot['NZBNicename'] as string,
+              category: slot['Category'] as string,
+              size: Util.humanSize(sizeBytes),
+              sizeBytes,
+              sizeRemaining: Util.humanSize(sizeRemainingBytes),
+              sizeRemainingBytes,
+              timeRemaining: queue.speedBytes > 0 ? Util.humanSeconds(timeRemaining) : '∞',
+              percentage: Math.floor(((sizeBytes - sizeRemainingBytes) / sizeBytes) * 100)
+            } as NZBQueueItem;
+          });
 
         return this.getCategories()
-          .then((categories) => {
-            queue.categories = categories;
-            return queue;
-          });
-      });
-  }
-
-  getCategories():Promise<string[]> {
-    // Ok, this is weird. NZBGet API does not have a method to get categories, but the categories
-    // are listed in the config, so let's get them there.
-    return this.call('config')
-      .then((r) => {
-        let config:StringDictionary[] = <StringDictionary[]> r.result;
-        let categories:string[];
-
-        if (r.success) {
-          categories = config.filter((i) => {
-              return /Category\d+\.Name/i.test(i.Name);
-            })
-            .map((i) => {
-              return i.Value;
-            });
-        }
-
-        return categories;
+      })
+      .then((categories) => {
+        queue.categories = categories;
+        return queue;
       });
   }
 
   addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
-    let params:Array<any> = [
+    const params:Array<any> = [
       '', // NZBFilename,
       url, // NZBContent,
       options.category || '', // Category,
@@ -528,15 +500,15 @@ class NZBGetHost extends NZBHost {
       '', // DupeKey,
       0, // DupeScore,
       'SCORE', // DupeMode,
-      [] // PPParameters
+      [], // PPParameters
     ];
 
     return this.call('append', params)
-      .then((r) => {
-        if (r.success) {
-          r.result = String(r.result);
+      .then((res) => {
+        if (res.success) {
+          res.result = String(res.result);
         }
-        return <NZBAddUrlResult> r;
+        return res as NZBAddUrlResult;
       });
   }
 
@@ -551,56 +523,56 @@ class NZBGetHost extends NZBHost {
       '', // DupeKey,
       0, // DupeScore,
       'SCORE', // DupeMode,
-      [] // PPParameters
+      [], // PPParameters
     ];
 
     return this.call('append', params)
-      .then((r) => {
-        if (r.success) {
-          r.result = String(r.result);
+      .then((res) => {
+        if (res.success) {
+          res.result = String(res.result);
         }
-        return <NZBAddUrlResult> r;
+        return res as NZBAddUrlResult;
       });
   }
 
   setMaxSpeed(bytes:number):Promise<NZBResult> {
-    let speed = bytes ? bytes / Util.Kilobyte : 0;
+    const speed = bytes ? bytes / Util.Kilobyte : 0;
     return this.call('rate', [speed])
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   resumeQueue():Promise<NZBResult> {
     return this.call('resumedownload')
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   pauseQueue():Promise<NZBResult> {
     return this.call('pausedownload')
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 
   test():Promise<NZBResult> {
     return this.call('status')
-      .then((r) => {
-        if (r.success) {
-          r.result = true;
+      .then((res) => {
+        if (res.success) {
+          res.result = true;
         }
-        return r;
+        return res;
       });
   }
 }
