@@ -83,15 +83,15 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
           })
         });
 
-        ignoreBtn.addEventListener('click', () => {
-          document.body.removeChild(div);
-        });
+        ignoreBtn.addEventListener('click', () => document.body.removeChild(div));
 
-        closeBtn.addEventListener('click', () => {
-          document.body.removeChild(div);
-        });
+        closeBtn.addEventListener('click', () => document.body.removeChild(div));
 
+        // Show the notification
         document.body.insertBefore(div, document.body.firstChild);
+
+        // Remove notification after 15 seconds
+        setTimeout(() => document.body.removeChild(div), 15000);
       }
     }
 
