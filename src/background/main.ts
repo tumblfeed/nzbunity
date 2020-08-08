@@ -160,41 +160,48 @@ class NZBUnity {
       });
   }
 
-  normalizeCategory(category:string | null | undefined):Promise<string> {
-    return Util.storage.get(['OverrideCategory', 'DefaultCategory', 'SimplifyCategories'])
-      .then((opts) => {
-        // Manage category options
-        if (opts.OverrideCategory) {
-          return opts.OverrideCategory;
-        } else if (category && opts.SimplifyCategories) {
-          return Util.simplifyCategory(category);
-        } else if (!category && opts.DefaultCategory) {
-          return opts.DefaultCategory;
-        } else {
-          return category;
-        }
-      });
+  async normalizeCategory(category:string | null | undefined):Promise<string> {
+    const opts = await Util.storage.get(['DefaultCategory', 'IgnoreCategories', 'OverrideCategory', 'SimplifyCategories'])
+
+    // Manage category options
+    if (opts.IgnoreCategories) {
+      return null;
+    } else if (opts.OverrideCategory) {
+      return opts.OverrideCategory;
+    } else if (category && opts.SimplifyCategories) {
+      return Util.simplifyCategory(category);
+    } else if (!category && opts.DefaultCategory) {
+      return opts.DefaultCategory;
+    } else {
+      return category;
+    }
   }
 
-  addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+  async addUrl(url:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
     if (!this.nzbHost) return null;
 
-    return this.normalizeCategory(options.category)
-      .then((category:string) => {
-        this.debug('[NZBUnity.addUrl]', Object.assign({}, options, { category: `${options.category} &rarr; ${category}` }));
+    // Figure out the category
+    const category = await this.normalizeCategory(options.category)
 
-        options.category = category;
-        return this.nzbHost.addUrl(url, options)
-      })
-      .then((result) => {
-        this.sendMessage('addUrl', result);
-        this.showNotification(
-          'addUrl',
-          `${options.name || url} Added`,
-          `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
-        );
-        return result;
-      });
+    this.debug('[NZBUnity.addUrl]', { ...options, category: `${options.category} &rarr; ${category}` });
+
+    if (category) {
+      options.category = category;
+    } else {
+      delete options.category;
+    }
+
+    // Send the URL to the downloader host
+    const result = await this.nzbHost.addUrl(url, options)
+
+    // Notify the user
+    this.sendMessage('addUrl', result);
+    this.showNotification(
+      'addUrl',
+      `${options.name || url} Added`,
+      `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
+    );
+    return result;
   }
 
   addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {

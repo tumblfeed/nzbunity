@@ -49,6 +49,7 @@ declare interface NZBUnityOptions extends NestedDictionary {
   InterceptExclude: string,
   EnableNotifications: boolean,
   EnableNewznab: boolean,
+  IgnoreCategories: boolean,
   SimplifyCategories: boolean,
   DefaultCategory: string,
   OverrideCategory: string,
@@ -70,6 +71,7 @@ const DefaultOptions:NZBUnityOptions = {
   InterceptExclude: '',
   EnableNotifications: false,
   EnableNewznab: true,
+  IgnoreCategories: false,
   SimplifyCategories: true,
   DefaultCategory: null,
   OverrideCategory: null,
@@ -342,8 +344,8 @@ class Util {
               }
               for (let k in options.files) {
                 options.body.append(
-                  k, 
-                  new Blob([options.files[k].content], { type: options.files[k].type }), 
+                  k,
+                  new Blob([options.files[k].content], { type: options.files[k].type }),
                   options.files[k].filename,
                 );
               }
@@ -367,10 +369,10 @@ class Util {
 
       const xhr = new XMLHttpRequest();
       xhr.open(
-        method, 
-        url, 
+        method,
+        url,
         true, // async
-        options.username || null, 
+        options.username || null,
         options.password || null,
       );
 
@@ -472,9 +474,9 @@ class PageUtil {
   }
 
   static requestAndAddFile(
-    filename:string, 
-    category:string = '', 
-    url:string = window.location.origin, 
+    filename:string,
+    category:string = '',
+    url:string = window.location.origin,
     params:StringDictionary = {},
   ):Promise<any> {
     // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
@@ -486,8 +488,8 @@ class PageUtil {
   }
 
   static bindAddUrl(
-    options:CreateAddLinkOptions, 
-    el:JQuery<HTMLElement>|HTMLElement, 
+    options:CreateAddLinkOptions,
+    el:JQuery<HTMLElement>|HTMLElement,
     exclusive:boolean = false,
   ):JQuery<HTMLElement> {
     if (exclusive) {
