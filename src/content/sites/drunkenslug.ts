@@ -7,27 +7,40 @@ class NZBUnityDrunkenslug {
     Util.storage.get(['Providers', 'ReplaceLinks'])
       .then((opts) => {
         this.replace = opts.ReplaceLinks;
-        let provider = opts.Providers && opts.Providers.drunkenslug;
-        let enabled:boolean = provider ? provider.Enabled : true;
+        const provider = opts.Providers && opts.Providers.drunkenslug;
+        const enabled:boolean = provider ? provider.Enabled : true;
 
         if (enabled) {
-          console.info(`[NZB Unity] Initializing 1-click functionality...`);
+          console.info(`[NZB Unity] Initializing 1-click for drunkenslug.com...`);
 
-          let uidMatch = $('script:not([src])').text().match(/uid\s*=\s*["']([0-9]+)["']/i);
-          let apikeyMatch = $('script:not([src])').text().match(/rsstoken\s*=\s*["']([a-z0-9]+)["']/i);
+          this.getApiKey()
+            .then(({ uid, apiKey }) => {
+              this.uid = uid;
+              this.apikey = apiKey;
 
-          this.uid = uidMatch ? uidMatch[1] : null;
-          this.apikey = apikeyMatch ? apikeyMatch[1] : null;
-
-          if (this.uid && this.apikey) {
-            console.info(`Got uid and api key: ${this.uid}, ${this.apikey}`);
-            this.initializeLinks();
-          } else {
-            console.error('[NZB Unity] Could not get UID or API key');
-          }
+              if (this.uid && this.apikey) {
+                console.info(`[NZB Unity] Got uid and api key: ${this.uid}, ${this.apikey}`);
+                this.initializeLinks();
+              } else {
+                console.error('[NZB Unity] Could not get UID or API key');
+              }
+            });
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
         }
+      });
+  }
+
+  getApiKey():Promise<{ uid:string, apiKey:string }> {
+    return PageUtil.request({ url: '/profile' })
+      .then((r) => {
+        const el = $(r).find('a[href*="/rss?"]');
+        const [, uid] = el.prop('href').match(/i=([0-9]+)/i);
+        const [, apiKey] = el.prop('href').match(/r=([a-z0-9]+)/i);
+        return {
+          uid,
+          apiKey,
+        };
       });
   }
 

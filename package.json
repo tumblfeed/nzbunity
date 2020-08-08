@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "clutterskull@gmail.com",
@@ -47,5 +47,9 @@
     "dist": "gulp dist",
     "watch": "gulp watch"
   },
-  "browserslist": ["last 2 versions", "> 5%", "Firefox ESR"]
+  "browserslist": [
+    "last 2 versions",
+    "> 5%",
+    "Firefox ESR"
+  ]
 }
