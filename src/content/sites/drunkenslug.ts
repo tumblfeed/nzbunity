@@ -67,8 +67,8 @@ class NZBUnityDrunkenslug {
           catSrc = 'href';
         }
       } else {
-        if (a.closest('tr').find('.label:first-child').length) {
-          category = a.closest('tr').find('.label:first-child').text();
+        if (a.closest('tr').find('a[href^="/browse?t="]').length) {
+          category = a.closest('tr').find('a[href^="/browse?t="]').text();
           catSrc = 'href';
         }
       }

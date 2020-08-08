@@ -204,25 +204,31 @@ class NZBUnity {
     return result;
   }
 
-  addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
+  async addFile(filename:string, content:string, options:NZBAddOptions = {}):Promise<NZBAddUrlResult> {
     if (!this.nzbHost) return null;
 
-    return this.normalizeCategory(options.category)
-      .then((category:string) => {
-        this.debug('[NZBUnity.addFile]', Object.assign({ filename, content }, options, { originalCategory: options.category, category }));
+    // Figure out the category
+    const category = await this.normalizeCategory(options.category)
 
-        options.category = category;
-        return this.nzbHost.addFile(filename, content, options);
-      })
-      .then((result) => {
-        this.sendMessage('addUrl', result);
-        this.showNotification(
-          'addUrl',
-          `${filename} Added`,
-          `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
-        );
-        return result;
-      });
+    this.debug('[NZBUnity.addFile]', { ...options, filename, category: `${options.category} &rarr; ${category}` });
+
+    if (category) {
+      options.category = category;
+    } else {
+      delete options.category;
+    }
+
+    // Send the file to the downloader host
+    const result = await this.nzbHost.addFile(filename, content, options);
+
+    // Notify the user
+    this.sendMessage('addUrl', result);
+    this.showNotification(
+      'addUrl',
+      `${filename} Added`,
+      `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
+    );
+    return result;
   }
 
   /* HANDLERS */
