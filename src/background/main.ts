@@ -1,20 +1,6 @@
-class NZBUnity {
-  static readonly interceptExcludeAlways:string[] = [
-    'althub.co.za',
-    'binsearch.info',
-    'dognzb.cr',
-    'drunkenslug.com',
-    'gingadaddy.com',
-    'nzbfinder.ws',
-    'nzbgeek.info',
-    'nzbindex.(com|nl)',
-    'nzbking.com',
-    'nzbserver.com',
-    'nzb.su',
-    'omgwtfnzbs.me',
-    'tabula-rasa.pw'
-  ];
+import { isArray } from "jquery";
 
+class NZBUnity {
   public _debugMessages:string[] = [];
   public _debugMessagesMax:number = 1000;
   public optionsTab:chrome.tabs.Tab;
@@ -41,8 +27,8 @@ class NZBUnity {
 
         // Handle messages from commands
         chrome.commands.onCommand.addListener(this.handleCommand.bind(this));
-        this.debug('[NZBUnity.constructor] Command handler initialized');        
-        
+        this.debug('[NZBUnity.constructor] Command handler initialized');
+
         // Init storage on change watcher
         chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
 
@@ -64,6 +50,32 @@ class NZBUnity {
         this.refresh();
       });
   }
+
+  /* HELPERS */
+
+  getProviders():Promise<NZBUnityProviderDictionary> {
+    return Util.storage.get(['Providers']).then(opts => opts.Providers);
+  }
+
+  async getProviderMatches():Promise<Array<string>> {
+    const providers = await this.getProviders();
+    const matches = Object.values(providers).map(p => p.Matches);
+    return [].concat(...matches);
+  }
+
+  async getProviderMatchRegex():Promise<Array<RegExp>> {
+    const matches = await this.getProviderMatches();
+    return matches
+      .map(m => m.replace('//*.', '//*').replace(/\*/g, '.*'))
+      .map(m => new RegExp(`^${m}$`));
+  }
+
+  async isProvider(url:string):Promise<boolean> {
+    const matches = await this.getProviderMatchRegex();
+    return matches.some(re => re.test(url));
+  }
+
+  /* NOTIFICATIONS & MESSAGING */
 
   showNotification(id:string, title:string, message:string) {
     Util.storage.get('EnableNotifications')
@@ -555,16 +567,18 @@ class NZBUnity {
     this.debug('[NZBUnity] NZB download intercept disabled');
   }
 
-  isInterceptExcluded(url:string):boolean {
-    if (!this.interceptExclude || !url) return false;
+  async isInterceptAllowed(url:string):Promise<boolean> {
+    if (!this.interceptExclude || !url) return true;
+
+    const isProvider = await this.isProvider(url);
+    if (isProvider) return false;
 
     return this.interceptExclude.split(/\s*,\s*/)
-      .concat(NZBUnity.interceptExcludeAlways)
       .map(host => new RegExp(host))
-      .some(hostRe => hostRe.test(Util.parseUrl(url).host));
+      .every(hostRe => !hostRe.test(Util.parseUrl(url).host));
   }
 
-  handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
+  async handleHeadersReceived(details:chrome.webRequest.WebResponseHeadersDetails) {
     const url:string = details.url;
     let type:string;
     let disposition:string;
@@ -582,10 +596,12 @@ class NZBUnity {
       }
     });
 
+    const allowed = await this.isInterceptAllowed(url);
+
     // Intercept if NZB and not excluded
     let dispositionMatch = disposition && disposition.match(/^attachment;\s*filename="?(.*(\.nzb))"?$/i);
     if (
-      !this.isInterceptExcluded(url)
+      allowed
       && (details.method == 'GET')
       && (type === 'application/x-nzb' || dispositionMatch)
     ) {
@@ -640,8 +656,13 @@ class NZBUnity {
       .some(hostRe => hostRe.test(Util.parseUrl(url).host));
   }
 
-  handleNewznabTabUpdated(tabId:number, changes:chrome.tabs.TabChangeInfo, tab:chrome.tabs.Tab) {
+  async handleNewznabTabUpdated(tabId:number, changes:chrome.tabs.TabChangeInfo, tab:chrome.tabs.Tab) {
     if (tab.status === 'complete' && /^https?:/.test(tab.url)) {
+      // Only do default newznab stuff if this is not a 1-click provider
+      const isProvider = await this.isProvider(tab.url);
+      if (isProvider) return;
+
+      // Do Newznab detection / loading
       if (this.isNewznabProvider(tab.url)) {
         // Check if URL matches known newznab sites, as this is less intrusive
         chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.3.1.slim.min.js' }, () => {

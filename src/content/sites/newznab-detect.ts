@@ -21,22 +21,23 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
 
         // Styles
         div.style.cssText = `
-          background: #f2eacb url(${iconUrl}) no-repeat scroll 25px center;
+          background: rgba(249, 249, 217, .95) url(${iconUrl}) no-repeat scroll 20px center;
           background-size: 48px;
           border: 1px solid #877234;
           border-radius: 4px;
           bottom: 15px;
           color: #333;
-          font-size: 16px;
-          left: calc(50% - 300px);
-          margin-bottom: 10px;
-          padding: 15px 15px 20px 105px;
+          font-size: 15px;
+          padding: 10px 35px 15px 90px;
           position: fixed;
-          width: 600px;
+          right: 15px;
+          width: 335px;
         `;
 
         div.querySelector('h3').style.cssText = `
           color: #665627;
+          font-size: 18px;
+          line-height: 28px;
           margin: 0;
           padding: 0;
         `;
@@ -50,7 +51,7 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
           color: #17a2b8;
           cursor: pointer;
           display: inline-block;
-          font-size: 18px;
+          font-size: 16px;
           margin: 3px 10px 0 0;
         `;
 
@@ -58,7 +59,7 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
           color: #17a2b8;
           cursor: pointer;
           display: inline-block;
-          font-size: 18px;
+          font-size: 16px;
           margin: 3px 0 0 10px;
         `;
 
