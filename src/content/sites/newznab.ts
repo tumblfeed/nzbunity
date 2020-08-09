@@ -16,9 +16,6 @@ class NZBUnityNewznab {
         if (/newz-complex\.org/i.test(window.location.host)) {
           this.apiurl = `${window.location.origin}/www/api`;
         }
-        if (/usenet-crawler\.com/i.test(window.location.host)) {
-          this.apiurl = `${window.location.protocol}//api.usenet-crawler.com`;
-        }
         if (/oznzb\.com/i.test(window.location.host)) {
           this.apiurl = `${window.location.protocol}//api.oznzb.com/api`;
         }

@@ -16,7 +16,7 @@
     "NZB"
   ],
   "engines": {
-    "node": ">7"
+    "node": ">12"
   },
   "bugs": {
     "url": "https://github.com/clutterskull/nzbunity/issues"

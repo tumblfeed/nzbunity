@@ -253,3 +253,13 @@ Initial public release
 * Updates popup layout a smidge for better readability
 * Adds version number to top right corner of popup and options
 * New 1-Click site profile for tabula-rasa.pw
+
+### 1.15.0
+
+Last major release before rebuild
+
+* No longer causes Newznab notification on known provider sites
+* Newznab notification less obnoxious
+* New option to ignore site categories completely (uses group names in the NZB)
+* Fixes drunkenslug.com integration (apikey and categories)
+* Fixes usenet-crawler.com api url
