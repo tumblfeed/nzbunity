@@ -43,7 +43,6 @@
   },
   "permissions": [
     "<all_urls>",
-    "contextMenus",
     "notifications",
     "storage",
     "tabs",
