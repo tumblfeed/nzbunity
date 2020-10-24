@@ -10,6 +10,25 @@ For feature requests, please consider submitting a pull request (see below for b
 
 Heavily inspired by [SABconnect++](https://github.com/gboudreau/sabconnectplusplus).
 
+## v2 Roadmap
+
+* Update TypeScript and dependencies
+* Remove dependencies on external libraries (jQuery, Bootstrap)
+* Total refactor of classes and compilation
+* Refactor of utility and helper classes, possibly into npm libs
+  * Refactor XHTTP helper to just Fetch API
+  * Refactor promisified storage helpers into class
+  * Extension utils? Does this already exist on npm?
+  * Extension boilerplate?
+* Redesign options page
+* Redesign drop down
+* Make all settings profile-dependent, maybe allow for a "default" profile
+* Color code or badge icons per-profile to show which is selected
+* Add notifications for start and complete items
+* Add per-item pause and start
+* Add start paused
+* Send filename to NZBGet to help duplicate detection
+
 ## Setup
 
 ### Profiles
