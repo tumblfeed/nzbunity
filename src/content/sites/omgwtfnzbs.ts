@@ -151,8 +151,6 @@ class NZBUnityOmgwtfnzbs {
     });
 
     // Add dates to rows
-    console.debug(view);
-
     if (view === 'list') {
       $('.nzbt_row > [data-sort]:last-child').each((i, el) => {
         let date = $(el).data('sort');
