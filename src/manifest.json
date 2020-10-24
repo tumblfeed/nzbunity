@@ -6,6 +6,7 @@
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
     "scripts": [
+      // "vendor/browser-polyfill.min.js",
       "background/util.js",
       "background/nzb.js",
       "background/main.js"
@@ -68,7 +69,7 @@
         "*://*.tabula-rasa.pw/*"
       ],
       "js": [
-        "vendor/jquery-3.3.1.slim.min.js",
+        // "vendor/browser-polyfill.min.js",
         "background/util.js"
       ]
     },

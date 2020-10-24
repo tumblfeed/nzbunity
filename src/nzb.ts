@@ -415,7 +415,7 @@ class NZBGetHost extends NZBHost {
   }
 
   getCategories():Promise<string[]> {
-    // NZBGet API does not have a method to get categories, but the 
+    // NZBGet API does not have a method to get categories, but the
     // categories are listed in the config, so let's get them there.
     return this.call('config')
       .then(res => res.success

@@ -8,7 +8,7 @@ const path = require('path');
 
 const {
   dest,
-  parallel, // eslint-disable-line
+  parallel,
   series,
   src,
   watch,
@@ -32,6 +32,8 @@ const staticExtensions = [
   'svg', 'ttf', 'eot', 'otf', 'woff', 'woff2',
 ];
 
+const vendorFiles = [];
+
 /* TASKS */
 
 /**
@@ -48,7 +50,7 @@ function showPaths(done) {
 
 /**
  * gulp clean
- * Deletes all files in the build and dist directories
+ * Deletes all files in the build and dist directories.
  */
 function clean() {
   return del([
@@ -58,12 +60,20 @@ function clean() {
 }
 
 /**
- * gulp copy
- * Copies all static files that do not require pre-processing / compilation
+ * gulp copyStatic
+ * Copies all static files that do not require pre-processing / compilation.
  */
-function copy() {
+function copyStatic() {
   const resolvedFiles = staticExtensions.map(ext => path.resolve(`./src/**/*.${ext}`));
   return src(resolvedFiles).pipe(dest(paths.build));
+}
+
+/**
+ * gulp copyVendor
+ * Copies vendor files to build.
+ */
+function copyVendor() {
+  return src(vendorFiles.map(f => `./node_modules/${f}`)).pipe(dest(`${paths.build}/vendor`));
 }
 
 /**
@@ -81,8 +91,8 @@ function typescript() {
 /**
  * gulp sass
  * Builds all project SCSS files and copies them to src.
- * - In development, output is expanded and sourcemaps are produced
- * - In production, output is compressed with no sourcemaps
+ * - In development, output is expanded and sourcemaps are produced.
+ * - In production, output is compressed with no sourcemaps.
  */
 function sass() {
   return src(paths.sass)
@@ -100,7 +110,7 @@ function sass() {
 }
 
 /**
- * Zips up the build directory into the dist directory (webextensions are just zips)
+ * Zips up the build directory into the dist directory (webextensions are just zips).
  */
 function zip() {
   return src(`${paths.build}/**/*`)
@@ -112,25 +122,32 @@ function zip() {
 
 exports.paths = showPaths;
 exports.clean = clean;
-exports.copy = copy;
+exports.copyStatic = copyStatic;
+exports.copyVendor = copyVendor;
 exports.typescript = typescript;
 exports.sass = sass;
 
 /**
- * gulp build
- * Runs frontend build tasks package.
+ * gulp copy
+ * Copies static and vendor files to build.
  */
-exports.build = series(copy, typescript, sass);
+exports.copy = parallel(copyStatic, copyVendor);
+
+/**
+ * gulp build
+ * Runs all necessary tasks to build the project.
+ */
+exports.build = series(exports.copy, typescript, sass);
 
 /**
  * gulp dist
- * Cleans output directories, builds the project, and packages it for distribution
+ * Cleans output directories, builds the project, and packages it for distribution.
  */
 exports.dist = series(clean, exports.build, zip);
 
 // Watchers
 
-exports.watchCopy = function watchCopy() { watch(staticExtensions.map(ext => `./src/**/*.${ext}`), copy); };
+exports.watchCopy = function watchCopy() { watch(staticExtensions.map(ext => `./src/**/*.${ext}`), exports.copy); };
 exports.watchSass = function watchSass() { watch(paths.sass, sass); };
 exports.watchTs = function watchTs() { watch(paths.ts, typescript); };
 
