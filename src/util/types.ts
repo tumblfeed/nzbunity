@@ -1,13 +1,17 @@
 export declare interface Dictionary {
-  [key:string]: boolean | number | string | Array<boolean | number | string>;
+  [key:string]: boolean | number | string | null | Array<boolean | number | string>;
 }
 
 export declare interface StringDictionary {
-  [key:string]: string;
+  [key:string]: string | null;
+}
+
+export declare interface FlatDictionary {
+  [key:string]: boolean | number | string | null;
 }
 
 export declare interface NestedDictionary {
-  [key:string]: boolean | number | string | Array<boolean | number | string> | NestedDictionary;
+  [key:string]: boolean | number | string | null | Array<boolean | number | string> | NestedDictionary;
 }
 
 export declare interface NZBUnityProfileOptions extends Dictionary {
@@ -84,13 +88,13 @@ export declare interface ParsedUrl {
   hostname: string;
   port: string;
   pathname: string;
-  search?: StringDictionary;
+  search?: FlatDictionary;
   hash: string;
 }
 
 export declare interface RequestOptions {
-  method?: string;
   url: string;
+  method?: string;
   headers?: StringDictionary;
   params?: NestedDictionary;
   body?: string | FormData;
@@ -105,6 +109,12 @@ export declare interface RequestOptions {
       content: any;
     }
   };
+  mode?: string,
+  cache?: string,
+  credentials?: string,
+  redirect?: string,
+  referrerPolicy?: string,
+  debug?: boolean;
 }
 
 export declare interface CreateAddLinkOptions {

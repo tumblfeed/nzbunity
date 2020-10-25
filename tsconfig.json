@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "outDir": "dist",
-    // "moduleResolution": "node",
+    "moduleResolution": "node",
     // "strict": true,
     // "suppressImplicitAnyIndexErrors": true,
     "pretty": true,

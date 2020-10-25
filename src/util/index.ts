@@ -1,11 +1,5 @@
 import { browser } from "webextension-polyfill-ts";
-import { Dictionary, ParsedUrl, RequestOptions, StringDictionary } from "./types";
-
-const binaryThousand = 1024;
-export const Byte = Math.pow(binaryThousand, 0);
-export const Kilobyte = Math.pow(binaryThousand, 1);
-export const Megabyte = Math.pow(binaryThousand, 2);
-export const Gigabyte = Math.pow(binaryThousand, 3);
+import { FlatDictionary, ParsedUrl, RequestOptions, StringDictionary } from "./types";
 
 export function setMenuIcon(color: string = "green", status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
@@ -32,195 +26,229 @@ export function setMenuIcon(color: string = "green", status: string = null): Pro
 }
 
 export function queryToObject(query: string = window.location.search): StringDictionary {
-  if (!query) return null;
-
   return String(query)
-    .replace(/^\?/, "")
-    .split("&")
+    .replace(/^\?/, '')
+    .split('&')
     .reduce((obj, pair) => {
-      const [key, val] = pair.split("=");
-      obj[key] = val;
+      const [key, val] = pair.split('=');
+      if (key) {
+        obj[decodeURIComponent(key)] = decodeURIComponent(val);
+      }
       return obj;
     }, {});
 }
 
-export function getQueryParam(k: string, def: string = null, query: string = undefined): string|null {
-  const obj = queryToObject(query);
-  return obj ? obj[k] : def;
+export function queryToObjectTyped(query: string = undefined): FlatDictionary {
+    const queryObj = queryToObject(query);
+
+    return Object.keys(queryObj)
+      .map((key) => ({ key, val: queryObj[key] }))
+      .reduce((obj, pair) => {
+        if (pair.key) {
+          // Default string value
+          let newVal: string|boolean|number|null = pair.val;
+
+          // Null, but will also catch flag-style param in "&param=&" and "&param&"
+          if (/^(null|)$/i.test(pair.val)) newVal = null;
+
+          // Boolean
+          if (/^true$/i.test(pair.val)) newVal = true;
+          if (/^false$/i.test(pair.val)) newVal = false;
+
+          // Numbers
+          if (/^\d+$/.test(pair.val)) newVal = parseInt(pair.val, 10);
+          if (/^0x[0-9A-F]+$/i.test(pair.val)) newVal = parseInt(pair.val, 16);
+          if (/^\d+\.\d+$/.test(pair.val)) newVal = parseFloat(pair.val);
+          if (/^(\d+\.)?\d+e\d+$/.test(pair.val)) newVal = parseFloat(pair.val);
+
+          obj[pair.key] = newVal;
+        }
+        return obj;
+      }, {});
 }
 
-export function uriEncodeQuery(query: Dictionary): string {
-  return Object.keys(query)
-    .map((k) => [encodeURIComponent(k), encodeURIComponent(query[k] as string)])
-    .map((pair) => pair.join("="))
+export function getQueryParam(k: string, def: string = null, query: string = undefined): string|null {
+  const obj = queryToObject(query);
+  return typeof obj[k] === 'undefined' ? def : obj[k];
+}
+
+export function getQueryParamTyped(
+  key: string,
+  def: string|boolean|number|null = null,
+  query: string = undefined
+): string|boolean|number|null {
+  const obj: FlatDictionary = queryToObjectTyped(query);
+  return typeof obj[key] === 'undefined' ? def : obj[key];
+}
+
+export function objectToQuery(obj: FlatDictionary): string {
+  return Object.keys(obj)
+    .map((key) => {
+      const k = encodeURIComponent(key);
+      const v = encodeURIComponent(obj[key] as string);
+
+      return (obj[key] === null) ? k : `${k}=${v}`;
+    })
     .join("&");
 }
 
-// Adapted from https://www.abeautifulsite.net/parsing-urls-in-javascript
+/**
+ * Parse a given URL into parts
+ * @param url
+ */
 export function parseUrl(url: string): ParsedUrl {
-  const parser: HTMLAnchorElement = document.createElement("a");
-  let search: StringDictionary = null;
-
   // Let the browser do the work
+  const parser: HTMLAnchorElement = document.createElement("a");
   parser.href = url;
 
   // Convert query string to object
-  if (parser.search) {
-    search = queryToObject(parser.search);
-  }
+  const search = queryToObjectTyped(parser.search);
 
   const { protocol, host, hostname, port, pathname, hash } = parser;
   return { protocol, host, hostname, port, pathname, hash, search };
 }
 
-// Adapted from https://gist.github.com/dineshsprabu/0405a1fbebde2c02a9401caee47fa3f5
-export function request(options: RequestOptions): Promise<any> {
-  return new Promise((resolve, reject) => {
-    // Options wrangling
-    if (!options.url) {
-      reject({
-        status: 0,
-        statusText: "No URL provided.",
+/**
+ * Wraps a fetch() request to handle common options in a sensible way.
+ * @param RequestOptions options
+ */
+export async function request(options: RequestOptions): Promise<any> {
+  // Options wrangling
+  if (!options.url) {
+    throw Error('No URL provided');
+  }
+
+  const method: string = String(options.method || "GET").toUpperCase();
+  const parsed: ParsedUrl = parseUrl(options.url);
+  const headers: StringDictionary = options.headers || {};
+
+  let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+  let search: FlatDictionary = parsed.search;
+
+  if (options.params || options.files || options.multipart) {
+    if (method === "GET") {
+      // GET requests, pack everything in the URL
+      search = search || {};
+      Object.keys(options.params).forEach((k) => {
+        search[k] = options.params[k] as string;
       });
-    }
+    } else if (!options.body) {
+      // Other types of requests, figure out content type if not specified
+      // and build the request body if not provided.
+      const type =
+        headers["Content-Type"] ||
+        (options.json && "json") ||
+        (options.files && "multipart") ||
+        (options.multipart && "multipart") ||
+        "form";
 
-    const method: string = String(options.method || "GET").toUpperCase();
-    const parsed: ParsedUrl = parseUrl(options.url);
-    const headers: StringDictionary = options.headers || {};
-    let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
-    let search: StringDictionary = parsed.search;
+      switch (type) {
+        case "json":
+        case "application/json":
+          headers["Content-Type"] = "application/json";
+          options.body = JSON.stringify(options.params);
+          break;
 
-    if (options.params || options.files || options.multipart) {
-      if (method === "GET") {
-        // GET requests, pack everything in the URL
-        search = search || {};
-        Object.keys(options.params).forEach((k) => {
-          search[k] = options.params[k] as string;
-        });
-      } else if (!options.body) {
-        // Other types of requests, figure out content type if not specified
-        // and build the request body if not provided.
-        const type =
-          headers["Content-Type"] ||
-          (options.json && "json") ||
-          (options.files && "multipart") ||
-          (options.multipart && "multipart") ||
-          "form";
+        case "multipart":
+        case "multipart/form-data":
+          delete headers["Content-Type"];
+          options.body = new FormData();
 
-        switch (type) {
-          case "json":
-          case "application/json":
-            headers["Content-Type"] = "application/json";
-            options.body = JSON.stringify(options.params);
-            break;
+          Object.keys(options.params).forEach((k) => {
+            (options.body as FormData).append(k, options.params[k] as string);
+          });
 
-          case "multipart":
-          case "multipart/form-data":
-            delete headers["Content-Type"];
-            options.body = new FormData();
+          Object.keys(options.files).forEach((k) => {
+            (options.body as FormData).append(
+              k,
+              new Blob([options.files[k].content], {
+                type: options.files[k].type,
+              }),
+              options.files[k].filename,
+            );
+          });
+          break;
 
-            Object.keys(options.params).forEach((k) => {
-              (options.body as FormData).append(k, options.params[k] as string);
-            });
-
-            Object.keys(options.files).forEach((k) => {
-              (options.body as FormData).append(
-                k,
-                new Blob([options.files[k].content], {
-                  type: options.files[k].type,
-                }),
-                options.files[k].filename,
-              );
-            });
-            break;
-
-          case "form":
-          case "application/x-www-form-urlencoded":
-          default:
-            headers["Content-Type"] = "application/x-www-form-urlencoded";
-            options.body = uriEncodeQuery(options.params as Dictionary);
-        }
+        case "form":
+        case "application/x-www-form-urlencoded":
+        default:
+          headers["Content-Type"] = "application/x-www-form-urlencoded";
+          options.body = objectToQuery(options.params as FlatDictionary);
       }
     }
+  }
 
-    if (search) {
-      url = `${url}?${uriEncodeQuery(search)}`;
-    }
+  if (Object.keys(search || {}).length) {
+    url = `${url}?${objectToQuery(search)}`;
+  }
 
-    // Make the request
-    // console.debug({ 'util.request': `${method} ${url}` });
+  if (options.username && options.password) {
+    headers.Authorization = `Basic ${btoa(`${options.username}:${options.password}`)}`;
+    options.credentials = 'include';
+  }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open(
-      method,
-      url,
-      true, // async
-      options.username || null,
-      options.password || null
+  // Debug if requested
+  if (options.debug) {
+    console.debug(
+      'util/request() -->',
+      {
+        'rawUrl': options.url,
+        url,
+        method,
+        headers,
+        'body': options.body,
+      },
     );
+  }
 
-    if (options.username && options.password) {
-      xhr.withCredentials = true;
-      xhr.setRequestHeader(
-        "Authorization",
-        `Basic ${btoa(`${options.username}:${options.password}`)}`
-      );
+  // Make the request
+  const response = await fetch(url, options as RequestInit);
+
+  // Debug if requested
+  if (options.debug) {
+    console.debug(
+      'util/request() <--',
+      `${response.status}: ${response.statusText}`,
+    );
+  }
+
+  if (response.ok) {
+    try {
+      return response.json();
+    } catch (e) {
+      return response.text();
     }
-
-    for (const k in headers || {}) {
-      xhr.setRequestHeader(k, headers[k]);
-    }
-
-    xhr.onload = () => {
-      // console.debug({ 'util.request.onload': [xhr.status, xhr.response] });
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          return resolve(JSON.parse(xhr.response));
-        } catch (e) {
-          return resolve(xhr.response);
-        }
-      }
-
-      return reject({
-        status: xhr.status,
-        statusText: xhr.statusText,
-      });
-    };
-
-    xhr.ontimeout = () => {
-      // console.debug({ 'util.request.ontimeout': [xhr.status] });
-      return reject({
-        status: xhr.status,
-        statusText: "Request timed out",
-      });
-    };
-
-    xhr.onerror = () => {
-      // console.debug({ 'util.request.onerror': [xhr.status, xhr.statusText] });
-      return reject({
-        status: xhr.status,
-        statusText: xhr.statusText,
-      });
-    };
-
-    xhr.send(options.body);
-  });
+  } else {
+    throw Error(`${response.status}: ${response.statusText}`);
+  }
 }
 
+const thousand = 1000;
+export const Byte = Math.pow(thousand, 0);
+export const Kilobyte = Math.pow(thousand, 1);
+export const Megabyte = Math.pow(thousand, 2);
+export const Gigabyte = Math.pow(thousand, 3);
+
 export function humanSize(bytes: number): string {
-  const i: number = bytes ? Math.floor(Math.log(bytes) / Math.log(binaryThousand)) : 0;
-  const n: string = (bytes / Math.pow(binaryThousand, i)).toFixed(2).replace(/\.?0+$/, "");
+  const i: number = bytes ? Math.floor(Math.log(bytes) / Math.log(thousand)) : 0;
+  const n: string = (bytes / Math.pow(thousand, i)).toFixed(2).replace(/\.?0+$/, "");
   const u: string = ["B", "kB", "MB", "GB", "TB"][i];
 
   return `${n} ${u}`;
 }
 
 export function humanSeconds(seconds: number): string {
-  const hours: number = Math.floor(((seconds % 31536000) % 86400) / 3600);
-  const minutes: number = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
-  seconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+  // Divide into sections
+  const hours = String(Math.floor(((seconds % 31536000) % 86400) / 3600));
+  let minutes = String(Math.floor((((seconds % 31536000) % 86400) % 3600) / 60));
+  let remainder = String((((seconds % 31536000) % 86400) % 3600) % 60);
 
-  return `${hours}:${minutes}:${seconds}`.replace(/^0+:/, "");
+  // pad minutes and seconds
+  minutes = `0${minutes}`.slice(-2);
+  remainder = `0${remainder}`.slice(-2);
+
+  // Coombine and remove 0 hours
+  return `${hours}:${minutes}:${remainder}`.replace(/^0+:/, "");
 }
 
 export function ucFirst(s: string): string {
@@ -228,7 +256,7 @@ export function ucFirst(s: string): string {
 }
 
 export function trunc(s: string, n: number): string {
-  return s.length > n ? `${s.substr(0, n - 1)}&hellip;` : s;
+  return s.length > n ? `${s.substr(0, n)}&hellip;` : s;
 }
 
 export function simplifyCategory(s: string): string {

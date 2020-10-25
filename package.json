@@ -31,8 +31,8 @@
     "lint": "esw --ext .js,.jsx,.ts,.tsx --color src",
     "lint:fix": "npm run lint -- --fix",
     "lint:watch": "npm run lint -- --watch",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "jest --color",
+    "test:watch": "npm run test -- --verbose --watch",
     "watch": "concurrently -k -r -s first 'npm run test:watch' 'npm run lint:watch' 'npm run sass:watch'",
     "prebuild": "npm run lint && nom run test",
     "build": "npm run clean && npm run copy && npm run sass && npm run typescript",
@@ -58,7 +58,11 @@
     "roots": [
       "./src"
     ],
-    "testEnvironment": "node"
+    "setupFiles": [
+      "jest-webextension-mock",
+      "jest-fetch-mock"
+    ],
+    "testEnvironment": "jsdom"
   },
   "dependencies": {
     "@types/chrome": "0.0.125",
@@ -73,6 +77,8 @@
     "eslint": "^7.12.0",
     "eslint-watch": "^7.0.0",
     "jest": "^26.6.1",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-webextension-mock": "^3.7.0",
     "rimraf": "^3.0.2",
     "sass": "^1.27.0",
     "ts-jest": "^26.4.2",
