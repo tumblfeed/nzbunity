@@ -1,14 +1,18 @@
-import { getQuery } from '.';
+import { queryToObject } from '.';
 
 test('getQuery', () => {
-    const search = '?foo=bar&num=1&bln=true&nil=&str=hello';
-    const query = getQuery(search);
+    console.debug(queryToObject(''));
 
-    expect(query).toMatchObject({
+    expect(queryToObject('')).toBeTruthy();
+
+    const queryString = '?foo=bar&num=1&bln=true&nil=&str=hello';
+
+    expect(queryToObject(queryString)).toMatchObject({
         foo: 'bar',
         num: '1',
         bln: 'true',
         nil: '',
         str: 'hello',
     });
+
 });

@@ -1,4 +1,4 @@
-import { browser, BrowserAction } from "webextension-polyfill-ts";
+import { browser } from "webextension-polyfill-ts";
 import { Dictionary, ParsedUrl, RequestOptions, StringDictionary } from "./types";
 
 const binaryThousand = 1024;
@@ -7,7 +7,7 @@ export const Kilobyte = Math.pow(binaryThousand, 1);
 export const Megabyte = Math.pow(binaryThousand, 2);
 export const Gigabyte = Math.pow(binaryThousand, 3);
 
-export function setMenuIcon(color  : string = "green", status: string | null = null): Promise<void> {
+export function setMenuIcon(color: string = "green", status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
   //       Green for NZBGet, Orange for SABNzbd
   color = color.toLowerCase();
@@ -31,19 +31,22 @@ export function setMenuIcon(color  : string = "green", status: string | null = n
   return browser.browserAction.setIcon({ path: bySize });
 }
 
-export function getQuery(query : string = window.location.search): StringDictionary {
-  return query
+export function queryToObject(query: string = window.location.search): StringDictionary {
+  if (!query) return null;
+
+  return String(query)
     .replace(/^\?/, "")
     .split("&")
-    .reduce((q, i) => {
-      const [k, v] = i.split("=");
-      q[k] = v;
-      return q;
+    .reduce((obj, pair) => {
+      const [key, val] = pair.split("=");
+      obj[key] = val;
+      return obj;
     }, {});
 }
 
-export function getQueryParam(k: string, def: string = null): string {
-  return getQuery()[k] ?? def;
+export function getQueryParam(k: string, def: string = null, query: string = undefined): string|null {
+  const obj = queryToObject(query);
+  return obj ? obj[k] : def;
 }
 
 export function uriEncodeQuery(query: Dictionary): string {
@@ -63,7 +66,7 @@ export function parseUrl(url: string): ParsedUrl {
 
   // Convert query string to object
   if (parser.search) {
-    search = getQuery(parser.search);
+    search = queryToObject(parser.search);
   }
 
   const { protocol, host, hostname, port, pathname, hash } = parser;
@@ -115,18 +118,20 @@ export function request(options: RequestOptions): Promise<any> {
           case "multipart/form-data":
             delete headers["Content-Type"];
             options.body = new FormData();
-            for (let k in options.params) {
-              options.body.append(k, options.params[k] as string);
-            }
-            for (let k in options.files) {
-              options.body.append(
+
+            Object.keys(options.params).forEach((k) => {
+              (options.body as FormData).append(k, options.params[k] as string);
+            });
+
+            Object.keys(options.files).forEach((k) => {
+              (options.body as FormData).append(
                 k,
                 new Blob([options.files[k].content], {
                   type: options.files[k].type,
                 }),
-                options.files[k].filename
+                options.files[k].filename,
               );
-            }
+            });
             break;
 
           case "form":

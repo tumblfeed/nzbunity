@@ -1,31 +1,10 @@
 {
-  "files": [
-    "src/background/util.ts",
-    "src/background/nzb.ts",
-    // "src/background/main.ts",
-    // "src/content/options.ts",
-    // "src/content/popup.ts",
-    // "src/content/sites/newznab.ts",
-    // "src/content/sites/newznab-detect.ts",
-    // "src/content/sites/althub.ts",
-    // "src/content/sites/binsearch.ts",
-    // "src/content/sites/dognzb.ts",
-    // "src/content/sites/drunkenslug.ts",
-    // "src/content/sites/gingadaddy.ts",
-    // "src/content/sites/nzbfinder.ts",
-    // "src/content/sites/nzbgeek.ts",
-    // "src/content/sites/nzbindex.ts",
-    // "src/content/sites/nzbking.ts",
-    // "src/content/sites/nzbserver.ts",
-    // "src/content/sites/nzbsu.ts",
-    // "src/content/sites/omgwtfnzbs.ts",
-    // "src/content/sites/tabularasa.ts"
-  ],
   "compileOnSave": false,
   "compilerOptions": {
+    "outDir": "dist",
     // "moduleResolution": "node",
-    "strict": true,
-    "suppressImplicitAnyIndexErrors": true,
+    // "strict": true,
+    // "suppressImplicitAnyIndexErrors": true,
     "pretty": true,
     "esModuleInterop": true,
     "target": "ES2015",
@@ -39,5 +18,7 @@
       "node_modules/web-ext-types",
       "node_modules/webextension-polyfill-ts"
     ]
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"]
 }

@@ -84,7 +84,7 @@ export declare interface ParsedUrl {
   hostname: string;
   port: string;
   pathname: string;
-  search: StringDictionary;
+  search?: StringDictionary;
   hash: string;
 }
 

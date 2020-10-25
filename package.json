@@ -22,13 +22,36 @@
     "url": "https://github.com/clutterskull/nzbunity/issues"
   },
   "scripts": {
-    "gulp": "gulp",
-    "build": "gulp build",
-    "dist": "gulp dist",
-    "watch": "gulp watch",
-    "lint": "tslint -c ./tslint.json 'src/**/*.ts'",
-    "lint:fix": "tslint -c ./tslint.json --fix 'src/**/*.ts'",
-    "test": "jest"
+    "clean": "rimraf build && rimraf dist && mkdir build && mkdir dist",
+    "zip": "node -e \"const zip = require('cross-zip'); zip.zipSync('build', 'dist/nzbunity.zip');\"",
+    "copy": "copyfiles --exclude src/**/*.ts src/** build",
+    "typescript": "tsc",
+    "sass": "sass --update --color src/content/css:build/content/css",
+    "sass:watch": "npm run lint -- --watch",
+    "lint": "esw --ext .js,.jsx,.ts,.tsx --color src",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:watch": "npm run lint -- --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "watch": "concurrently -k -r -s first 'npm run test:watch' 'npm run lint:watch' 'npm run sass:watch'",
+    "prebuild": "npm run lint && nom run test",
+    "build": "npm run clean && npm run copy && npm run sass && npm run typescript",
+    "postbuild": "echo 'Build successful!'",
+    "dist": "npm run build && npm run zip"
+  },
+  "eslintConfig": {
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "rules": {
+      "@typescript-eslint/no-inferrable-types": "off"
+    }
   },
   "jest": {
     "preset": "ts-jest",
@@ -41,21 +64,20 @@
     "@types/chrome": "0.0.125",
     "@types/firefox-webext-browser": "^78.0.1",
     "@types/jest": "^26.0.15",
-    "colors": "^1.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.5.0",
+    "@typescript-eslint/parser": "^4.5.0",
+    "concurrently": "^5.3.0",
     "consola": "^2.15.0",
-    "del": "^6.0.0",
-    "gulp": "^4.0.2",
-    "gulp-autoprefixer": "^7.0.1",
-    "gulp-debug": "^4.0.0",
-    "gulp-sass": "^4.1.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "gulp-typescript": "^5.0.1",
-    "gulp-zip": "^5.0.2",
+    "copyfiles": "^2.4.0",
+    "cross-zip": "^3.1.0",
+    "eslint": "^7.12.0",
+    "eslint-watch": "^7.0.0",
     "jest": "^26.6.1",
+    "rimraf": "^3.0.2",
+    "sass": "^1.27.0",
     "ts-jest": "^26.4.2",
     "typescript": "^4.0.3",
     "web-ext-types": "^3.2.1",
-    "webextension-polyfill-ts": "^0.20.0",
-    "yargs": "^16.1.0"
+    "webextension-polyfill-ts": "^0.20.0"
   }
 }
