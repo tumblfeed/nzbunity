@@ -1,9 +1,50 @@
 import { browser } from "webextension-polyfill-ts";
-import { FlatDictionary, ParsedUrl, RequestOptions, StringDictionary } from "./types";
+import { FlatDictionary, NestedDictionary, StringDictionary } from "./types";
+
+export declare interface ParsedUrl {
+  protocol: string;
+  host: string;
+  hostname: string;
+  port: string;
+  pathname: string;
+  search?: FlatDictionary;
+  hash: string;
+}
+
+export declare interface RequestOptions {
+  url: string;
+  method?: string;
+  headers?: StringDictionary;
+  params?: NestedDictionary;
+  body?: string | FormData;
+  username?: string;
+  password?: string;
+  json?: boolean;
+  multipart?: boolean;
+  files?: {
+    [key:string]: {
+      filename: string;
+      type: string;
+      content: any;
+    }
+  };
+  mode?: string,
+  cache?: string,
+  credentials?: string,
+  redirect?: string,
+  referrerPolicy?: string,
+  debug?: boolean;
+}
+
+export declare interface CreateAddLinkOptions {
+  url: string;
+  category?: string;
+}
+
 
 export function setMenuIcon(color: string = "green", status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
-  //       Green for NZBGet, Orange for SABNzbd
+  //       Green for NZBGet, Orange for SABnzbd
   color = color.toLowerCase();
   if (/^(active|downloading)/i.test(color)) color = "green";
   if (/^(inactive|idle|paused|gray)/i.test(color)) color = "grey";
@@ -67,7 +108,11 @@ export function queryToObjectTyped(query: string = undefined): FlatDictionary {
       }, {});
 }
 
-export function getQueryParam(k: string, def: string = null, query: string = undefined): string|null {
+export function getQueryParam(
+  k: string,
+  def: string = null,
+  query: string = undefined
+): string|null {
   const obj = queryToObject(query);
   return typeof obj[k] === 'undefined' ? def : obj[k];
 }
@@ -97,7 +142,13 @@ export function objectToQuery(obj: FlatDictionary): string {
  * @param url
  */
 export function parseUrl(url: string): ParsedUrl {
-  // Let the browser do the work
+  // If url does not start with protocol, but also does not start with a '/'
+  // for a relative url, assume http protocol so simple addresses will still work
+  if (!/^[a-z]+:\/\//i.test(url) && !/^\//.test(url)) {
+    url = `http://${url}`;
+  }
+
+  // DOM anchor tags parse hrefs into constituent parts, we can the DOM do the work.
   const parser: HTMLAnchorElement = document.createElement("a");
   parser.href = url;
 
@@ -154,16 +205,14 @@ export async function request(options: RequestOptions): Promise<any> {
           delete headers["Content-Type"];
           options.body = new FormData();
 
-          Object.keys(options.params).forEach((k) => {
+          Object.keys(options.params ?? []).forEach((k) => {
             (options.body as FormData).append(k, options.params[k] as string);
           });
 
-          Object.keys(options.files).forEach((k) => {
+          Object.keys(options.files ?? []).forEach((k) => {
             (options.body as FormData).append(
               k,
-              new Blob([options.files[k].content], {
-                type: options.files[k].type,
-              }),
+              new Blob([options.files[k].content], { type: options.files[k].type }),
               options.files[k].filename,
             );
           });

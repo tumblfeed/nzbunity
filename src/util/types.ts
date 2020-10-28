@@ -58,7 +58,7 @@ export declare interface NZBUnityOptions extends NestedDictionary {
   OverrideCategory: string,
   ReplaceLinks: boolean,
   UITheme: string
-};
+}
 
 export const DefaultOptions:NZBUnityOptions = {
   Initialized: false,
@@ -81,50 +81,3 @@ export const DefaultOptions:NZBUnityOptions = {
   ReplaceLinks: false,
   UITheme: ''
 };
-
-export declare interface ParsedUrl {
-  protocol: string;
-  host: string;
-  hostname: string;
-  port: string;
-  pathname: string;
-  search?: FlatDictionary;
-  hash: string;
-}
-
-export declare interface RequestOptions {
-  url: string;
-  method?: string;
-  headers?: StringDictionary;
-  params?: NestedDictionary;
-  body?: string | FormData;
-  username?: string;
-  password?: string;
-  json?: boolean;
-  multipart?: boolean;
-  files?: {
-    [key:string]: {
-      filename: string;
-      type: string;
-      content: any;
-    }
-  };
-  mode?: string,
-  cache?: string,
-  credentials?: string,
-  redirect?: string,
-  referrerPolicy?: string,
-  debug?: boolean;
-}
-
-export declare interface CreateAddLinkOptions {
-  url: string;
-  category?: string;
-}
-
-export declare interface NZBStorage {
-  get: (keys: string | string[] | Object) => Promise<NZBUnityOptions>;
-  set: (items: NestedDictionary) => Promise<void>;
-  remove: (key: string) => Promise<void>;
-  clear: () => Promise<void>;
-}

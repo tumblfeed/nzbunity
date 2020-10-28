@@ -99,6 +99,12 @@ describe('util/parseUrl', () => {
     expect(parsed).toHaveProperty('pathname', '/lol');
   });
 
+  test('Parses a local url', () => {
+    const parsed = parseUrl('127.0.0.1:9090');
+    expect(parsed).toHaveProperty('hostname', '127.0.0.1');
+    expect(parsed).toHaveProperty('port', '9090');
+  });
+
   test('Parses relative url', () => {
     const parsed = parseUrl('/lol');
     expect(parsed).toHaveProperty('host', 'localhost');
@@ -112,6 +118,7 @@ describe('util/parseUrl', () => {
       lol: 1337,
     });
   });
+
 });
 
 describe('util/request', () => {

@@ -1,142 +1,141 @@
-class PageUtil {
-    static readonly iconGreen:string = chrome.extension.getURL('content/images/nzb-16-green.png');
-    static readonly iconGrey:string = chrome.extension.getURL('content/images/nzb-16-grey.png');
-    static readonly iconOrange:string = chrome.extension.getURL('content/images/nzb-16-orange.png');
-    static readonly iconRed:string = chrome.extension.getURL('content/images/nzb-16-reg.png');
-    static readonly backgroundNormal:string = 'rgb(23, 162, 184)';
-    static readonly backgroundPending:string = 'rgb(156, 166, 168)';
+import { browser } from "webextension-polyfill-ts";
+import { CreateAddLinkOptions, FlatDictionary } from './types';
+import { request } from '.';
 
-    static request(options:RequestOptions):Promise<any> {
-      options.url = `${window.location.origin}${options.url || ''}`;
-      return Util.request(options);
-    }
+export const iconGreen: string = chrome.extension.getURL('content/images/nzb-16-green.png');
+export const iconGrey: string = chrome.extension.getURL('content/images/nzb-16-grey.png');
+export const iconOrange: string = chrome.extension.getURL('content/images/nzb-16-orange.png');
+export const iconRed: string = chrome.extension.getURL('content/images/nzb-16-reg.png');
+export const backgroundNormal: string = 'rgb(23, 162, 184)';
+export const backgroundPending: string = 'rgb(156, 166, 168)';
 
-    static requestAndAddFile(
-      filename:string,
-      category:string = '',
-      url:string = window.location.origin,
-      params:StringDictionary = {},
-    ):Promise<any> {
-      // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
-      // Fetches a single NZB from a POST request and adds it to the server as a file upload
-      return Util.request({ method: 'POST', url, params })
-        .then(content => Util.sendMessage({
-          'content.addFile': { filename, content, category }
-        }));
-    }
+export { request };
 
-    static bindAddUrl(
-      options:CreateAddLinkOptions,
-      el:JQuery<HTMLElement>|HTMLElement,
-      exclusive:boolean = false,
-    ):JQuery<HTMLElement> {
-      if (exclusive) {
-        $(el).off('click');
-      }
+export function addFileByRequest(
+  filename: string,
+  category: string = '',
+  url: string = window.location.origin,
+  params: FlatDictionary = {},
+): Promise<any> {
+  // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
+  // Fetches a single NZB from a POST request and adds it to the server as a file upload
+  return request({ method: 'POST', url, params })
+    .then(content => browser.runtime.sendMessage({
+      'content.addFile': { filename, content, category }
+    }));
+}
 
-      return $(el)
-        .on('click', (e) => {
-          e.preventDefault();
-          console.info(`[NZB Unity] Adding URL: ${options.url}`);
+export function bindAddUrl(
+  options: CreateAddLinkOptions,
+  el: HTMLElement,
+  exclusive: boolean = false,
+): HTMLElement {
+  el.addEventListener('click', (event) => {
+    event.preventDefault();
+    console.info(`[NZB Unity] Adding URL: ${options.url}`);
 
-          $(e.target).trigger('nzb.pending');
+    el.dispatchEvent(new Event('nzb.pending'));
 
-          Util.sendMessage({ 'content.addUrl': options })
-            .then((r:boolean) => {
-              setTimeout(() => {
-                $(e.target).trigger(r === false ? 'nzb.failure' : 'nzb.success');
-              }, 1000);
-            });
-        }) as JQuery<HTMLElement>;
-    }
+    browser.runtime.sendMessage({ 'content.addUrl': options })
+      .then((rsp:boolean) => {
+        setTimeout(() => {
+          el.dispatchEvent(new Event(rsp === false ? 'nzb.failure' : 'nzb.success'));
+        }, 500);
+      });
+  }, {
+    capture: Boolean(exclusive)
+  });
 
-    static createLink():JQuery<HTMLElement> {
-      return $(`
-        <a class="NZBUnityLink" title="Download with NZB Unity">
-          <img src="${PageUtil.iconGreen}">
-        </a>
-      `)
-        .css({
-          cursor: 'pointer',
-          display: 'inline-block',
-        })
-        .on('nzb.pending', (e) => {
-          $(e.currentTarget).find('img').attr('src', PageUtil.iconGrey)
-        })
-        .on('nzb.success', (e) => {
-          $(e.currentTarget).find('img').attr('src', PageUtil.iconGreen)
-        })
-        .on('nzb.failure', (e) => {
-          $(e.currentTarget).find('img').attr('src', PageUtil.iconRed)
-        });
-    }
+  return el;
+}
 
-    static createButton():JQuery<HTMLElement> {
-      return $(`
-        <button class="NZBUnityDownloadAll"
-          title="Download selected items with NZB Unity"
-        >
-          Download Selected
-        </button>
-      `)
-        .css({
-          background: `${PageUtil.backgroundNormal} url(${PageUtil.iconGreen}) no-repeat scroll 4px center`,
-          border: '1px solid rgb(19, 132, 150)',
-          'border-radius': '4px',
-          color: '#fff',
-          cursor: 'pointer',
-          display: 'inline-block',
-          'font-size': '11px',
-          'font-weight': 'normal',
-          margin: '0 0.5em 0 0',
-          padding: '3px 8px 3px 25px',
-          'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
-          'white-space': 'nowrap',
-        })
-        .on('nzb.pending', (e) => {
-          $(e.currentTarget).css({
-            'background-color': PageUtil.backgroundPending,
-            'background-image': `url(${PageUtil.iconGrey})`,
-          });
-        })
-        .on('nzb.success', (e) => {
-          $(e.currentTarget).css({
-            'background-color': PageUtil.backgroundNormal,
-            'background-image': `url(${PageUtil.iconGreen})`,
-          });
-        })
-        .on('nzb.failure', (e) => {
-          $(e.currentTarget).css({
-            'background-color': PageUtil.backgroundNormal,
-            'background-image': `url(${PageUtil.iconRed})`,
-          });
-        });
-    }
+export function createLink(): HTMLElement {
+  const a = document.createElement('a');
+  a.classList.add('NZBUnityLink');
+  a.setAttribute('title', 'Download with NZB Unity');
+  a.insertAdjacentHTML('afterbegin', `<img src="${iconGreen}">`);
 
-    static createAddUrlLink(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
-      // console.log('createAddUrlLink', url, category);
-      const link = PageUtil.bindAddUrl(options, PageUtil.createLink())
-        .attr('href', options.url)
-        .css({
-          height: '16px',
-          width: '16px',
-        });
+  Object.assign(a.style, {
+    cursor: 'pointer',
+    display: 'inline-block',
+  });
 
-      if (adjacent) {
-        link.insertAfter(adjacent);
-      }
+  a.addEventListener('nzb.pending', () => a.children[0].setAttribute('src', iconGrey));
+  a.addEventListener('nzb.success', () => a.children[0].setAttribute('src', iconGreen));
+  a.addEventListener('nzb.failure', () => a.children[0].setAttribute('src', iconRed));
 
-      return link;
-    }
+  return a;
+}
 
-    static createAddUrlButton(options:CreateAddLinkOptions, adjacent:JQuery<HTMLElement>|HTMLElement = null):JQuery<HTMLElement> {
-      // console.log('createAddUrlLink', url, category);
-      const button = PageUtil.bindAddUrl(options, PageUtil.createButton());
+export function createButton(): HTMLElement {
+  const btn = document.createElement('a');
+  btn.classList.add('NZBUnityDownloadAll');
+  btn.setAttribute('title', 'Download selected items with NZB Unity');
+  btn.insertAdjacentText('afterbegin', 'Download Selected');
 
-      if (adjacent) {
-        button.insertAfter(adjacent);
-      }
+  Object.assign(btn.style, {
+    background: `${backgroundNormal} url(${iconGreen}) no-repeat scroll 4px center`,
+    border: '1px solid rgb(19, 132, 150)',
+    'border-radius': '4px',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'inline-block',
+    'font-size': '11px',
+    'font-weight': 'normal',
+    margin: '0 0.5em 0 0',
+    padding: '3px 8px 3px 25px',
+    'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
+    'white-space': 'nowrap',
+  });
 
-      return button;
-    }
+  btn.addEventListener('nzb.pending', () => Object.assign(btn.style, {
+    'background-color': backgroundPending,
+    'background-image': `url(${iconGrey})`,
+  }));
+
+  btn.addEventListener('nzb.success', () => Object.assign(btn.style, {
+    'background-color': backgroundNormal,
+    'background-image': `url(${iconGreen})`,
+  }));
+
+  btn.addEventListener('nzb.failure', () => Object.assign(btn.style, {
+    'background-color': backgroundNormal,
+    'background-image': `url(${iconRed})`,
+  }));
+
+  return btn;
+}
+
+export function createAddUrlLink(
+  options: CreateAddLinkOptions,
+  adjacent: HTMLElement = null
+): HTMLElement {
+  // console.log('createAddUrlLink', url, category);
+  const a = bindAddUrl(options, createLink());
+  a.setAttribute('href', options.url);
+
+  Object.assign(a.style, {
+    height: '16px',
+    width: '16px',
+  });
+
+  if (adjacent) {
+    adjacent.insertAdjacentElement('afterend', a);
   }
+
+  return a;
+}
+
+export function createAddUrlButton(
+  options: CreateAddLinkOptions,
+  adjacent: HTMLElement = null
+): HTMLElement {
+  // console.log('createAddUrlLink', url, category);
+  const btn = bindAddUrl(options, createButton());
+
+  if (adjacent) {
+    adjacent.insertAdjacentElement('afterend', btn);
+  }
+
+  return btn;
+}
