@@ -19,8 +19,8 @@ import {
 } from '.';
 
 export class SABnzbdHost extends NZBHost {
-    name:string = 'SABnzbd';
-    apikey:string;
+    name: string = 'SABnzbd';
+    apikey: string;
 
     constructor(options:Dictionary = {}) {
       super(options);
@@ -91,6 +91,12 @@ export class SABnzbdHost extends NZBHost {
         res.result = true;
       }
       return res;
+    }
+
+    async getHistory(options: Dictionary): Promise<NZBQueueItem[]> {
+      const res = await this.call('history', options);
+
+      return [];
     }
 
     async getQueue(): Promise<NZBQueue> {

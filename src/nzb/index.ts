@@ -98,6 +98,7 @@ export abstract class NZBHost {
   abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
+  abstract getHistory(options: Dictionary): Promise<NZBQueueItem[]>;
   abstract getQueue(): Promise<NZBQueue>;
   abstract pauseQueue(): Promise<NZBResult>;
   abstract resumeQueue(): Promise<NZBResult>;
