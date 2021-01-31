@@ -23,8 +23,7 @@ class NZBUnityNzbgeek {
 
   initializeLinks() {
     // Create direct download links
-    // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.
-    $('img[src$="download.png"]').closest('a').each((i, el) => {
+    $('a[href*="/api?t=get&id="]').each((i, el) => {
       let a:JQuery<HTMLElement> = $(el);
       let row:JQuery<HTMLElement> = a.closest('tr[id^="guid"]');
 
@@ -33,20 +32,21 @@ class NZBUnityNzbgeek {
       let catSrc:string = 'default';
       let pathSearch:string = window.location.pathname + window.location.search;
 
-      if (row.find('a[href*="geekseek.php?c="]').length) {
-        // Standard page
-        category = row.find('a[href*="geekseek.php?c="]').text().split(/\s*>\s*/)[0];
-        catSrc = 'row';
-      } else if (pathSearch.match(/^\/geekseek.php\?c=/)) {
-        // Category search
-        let match:string[] = $('center > font[size="4"] > b').text().match(/your seek returned [\d,]+ ([^,]+)/i);
-        if (match) {
-          category = match[1];
-          catSrc = 'header'
-        }
-      }
+      // TODO: Category fetch disabled until it can be confirmed
+      // if (row.find('a[href*="geekseek.php?c="]').length) {
+      //   // Standard page
+      //   category = row.find('a[href*="geekseek.php?c="]').text().split(/\s*>\s*/)[0];
+      //   catSrc = 'row';
+      // } else if (pathSearch.match(/^\/geekseek.php\?c=/)) {
+      //   // Category search
+      //   let match:string[] = $('center > font[size="4"] > b').text().match(/your seek returned [\d,]+ ([^,]+)/i);
+      //   if (match) {
+      //     category = match[1];
+      //     catSrc = 'header'
+      //   }
+      // }
 
-      let opts:CreateAddLinkOptions = { url: a.attr('href'), category: category };
+      let opts:CreateAddLinkOptions = { url: a.attr('href'), category };
 
       if (this.replace) {
         PageUtil.bindAddUrl(opts, a, true);

@@ -263,3 +263,7 @@ Last major release before rebuild
 * New option to ignore site categories completely (uses group names in the NZB)
 * Fixes drunkenslug.com integration (apikey and categories)
 * Fixes usenet-crawler.com api url
+
+### 1.15.1
+
+Site profile updates for nzbgeek and tabula-rasa
