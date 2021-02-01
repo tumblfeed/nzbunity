@@ -267,3 +267,7 @@ Last major release before rebuild
 ### 1.15.1
 
 Site profile updates for nzbgeek and tabula-rasa
+
+### 1.15.2
+
+Category fix for nzbgeek (thanks to @drew7579 and @d1th)
