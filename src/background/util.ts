@@ -464,7 +464,7 @@ class PageUtil {
   static readonly iconGreen:string = chrome.extension.getURL('content/images/nzb-16-green.png');
   static readonly iconGrey:string = chrome.extension.getURL('content/images/nzb-16-grey.png');
   static readonly iconOrange:string = chrome.extension.getURL('content/images/nzb-16-orange.png');
-  static readonly iconRed:string = chrome.extension.getURL('content/images/nzb-16-reg.png');
+  static readonly iconRed:string = chrome.extension.getURL('content/images/nzb-16-red.png');
   static readonly backgroundNormal:string = 'rgb(23, 162, 184)';
   static readonly backgroundPending:string = 'rgb(156, 166, 168)';
 

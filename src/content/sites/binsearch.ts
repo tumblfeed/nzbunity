@@ -50,7 +50,7 @@ class NZBUnityBinsearch {
             return PageUtil.requestAndAddFile(
               nzbId,
               '',
-              `https://www.binsearch.info${this.form.attr('action')}`,
+              `${window.location.origin}${this.form.attr('action')}`,
               {
                 action: 'nzb',
                 [nzbId]: 'on'
@@ -86,7 +86,7 @@ class NZBUnityBinsearch {
               return PageUtil.requestAndAddFile(
                 nzbId,
                 '',
-                `https://www.binsearch.info${this.form.attr('action')}`,
+                `${window.location.origin}${this.form.attr('action')}`,
                 {
                   action: 'nzb',
                   [nzbId]: 'on'
@@ -112,7 +112,7 @@ class NZBUnityBinsearch {
 
     if (this.isDetail) {
       let button:JQuery<HTMLElement> = PageUtil.createButton()
-        .text('Download All')
+        .text('Download NZB')
         .attr('title', 'Download with NZB Unity')
         .on('click', (e) => {
           e.preventDefault();

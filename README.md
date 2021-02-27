@@ -271,3 +271,10 @@ Site profile updates for nzbgeek and tabula-rasa
 ### 1.15.2
 
 Category fix for nzbgeek (thanks to @drew7579 and @d1th)
+
+### 1.15.3
+
+* Fixes broken error icon
+* Fixes binsearch.info and nzbindex.nl integration (thanks to @Sunshow3r)
+* Fixes gingadaddy integration (using their download API now)
+* Changes several site URLs from hardcoded https to window.location.origin for CORS

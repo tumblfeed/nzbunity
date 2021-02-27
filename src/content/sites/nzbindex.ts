@@ -8,6 +8,11 @@ class NZBUnityNzbindex {
   constructor() {
     Util.storage.get('Providers')
       .then((opts) => {
+        // result rows load async, so they are not immediately available on first load
+        // but are available on reload. Just wait a little for them to show up.
+        return new Promise((resolve) => setTimeout(() => resolve(opts), 500));
+      })
+      .then((opts: NZBUnityOptions) => {
         let provider = opts.Providers && opts.Providers.nzbindex;
         let enabled:boolean = provider ? provider.Enabled : true;
 
@@ -29,7 +34,7 @@ class NZBUnityNzbindex {
   }
 
   getNzbUrl(id:string):string {
-    return `${window.location.protocol}//${window.location.host}/download/${id}`;
+    return `${window.location.origin}/download/${id}`;
   }
 
   getNzbIds():string[] {
@@ -38,10 +43,15 @@ class NZBUnityNzbindex {
   }
 
   initializeLinks() {
+    console.info(this);
+
     // Direct download links
     if (this.isList) {
       this.results.find(this.checkboxSelector).each((i, el) => {
         let checkbox = $(el);
+
+        console.info(checkbox);
+
         let link = PageUtil.createLink()
           .css({ 'display': 'block' })
           .on('click', (e) => {

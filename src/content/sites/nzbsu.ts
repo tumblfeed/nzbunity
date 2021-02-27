@@ -32,7 +32,7 @@ class NZBUnityNzbsu {
   }
 
   getNzbUrl(id:string):string {
-    return `https://nzb.su/getnzb/${id}.nzb?i=${this.uid}&r=${this.apikey}`;
+    return `${window.location.origin}/getnzb/${id}.nzb?i=${this.uid}&r=${this.apikey}`;
   }
 
   initializeLinks() {

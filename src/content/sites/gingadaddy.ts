@@ -1,4 +1,6 @@
 class NZBUnityGingadaddy {
+  public uid:string;
+  public apikey:string;
   public replace:boolean = false;
 
   constructor() {
@@ -7,19 +9,44 @@ class NZBUnityGingadaddy {
         this.replace = opts.ReplaceLinks;
         let provider = opts.Providers && opts.Providers.gingadaddy;
         let enabled:boolean = provider ? provider.Enabled : true;
-        enabled = false;
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
-          this.initializeLinks();
+
+          this.uid = this.getUid();
+
+          this.getApiKey()
+            .then((apikey) => {
+              this.apikey = apikey;
+
+              if (this.uid && this.apikey) {
+                console.info(`Got uid and api key: ${this.uid}, ${this.apikey}`);
+                this.initializeLinks();
+              } else {
+                console.warn('Could not get API key');
+              }
+            });
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
         }
       });
   }
 
+  getUid():string {
+    const [match, uid] = $('#accblck a[href*="userdetails.php?id="]').prop('href').match(/id=(\d+)/);
+    return uid;
+  }
+
+  getApiKey():Promise<string> {
+    return PageUtil.request({ url: `/userdetails.php?id=${this.uid}` })
+      .then((r) => {
+        const [match, apikey] = r.match(/API KEY<\/td>\s*<td><b>(.*)<\/b>/mi);
+        return apikey?.trim();
+      })
+  }
+
   getNzbUrl(id:string):string {
-    return `https://www.gingadaddy.com/nzbgingadownload.php?id=${id}&t=dlnzb`;
+    return `${window.location.origin}/gingasrssdownload.php?h=${id}&i=${this.apikey}&uid=${this.uid}&t=dlnzb`;
   }
 
   initializeLinks() {
@@ -45,11 +72,11 @@ class NZBUnityGingadaddy {
         url: this.getNzbUrl(id),
         category: category
       })
+        .prop('title', 'Download with NZB Unity (VIP ONLY)')
         .css({ float: 'left', margin: '0 0 0 20px' })
         .prependTo(a.closest('[id^=row]').find('[class^="pstrow"]:last'));
     });
   }
-
 }
 
 $(($) => {
