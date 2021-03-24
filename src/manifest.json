@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.15.3",
+  "version": "1.15.4",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -70,7 +70,8 @@
       "js": [
         "vendor/jquery-3.3.1.slim.min.js",
         "background/util.js"
-      ]
+      ],
+      "run_at": "document_start"
     },
     {
       "matches": ["*://*.althub.co.za/*"],
