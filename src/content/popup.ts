@@ -95,7 +95,7 @@ class Popup {
         // Buttons
         this.queuePause.on('click', (e) => {
           e.preventDefault();
-          if (this.queuePause.find('.icon').hasClass('fa-pause-circle')) {
+          if (this.queuePause.find('.icon-glyph').hasClass('fa-pause')) {
             this.sendMessage('pauseQueue');
           } else {
             this.sendMessage('resumeQueue');
