@@ -80,7 +80,7 @@ abstract class NZBHost {
   name:string;
   displayName:string;
   host:string;
-  hostParsed:ParsedUrl;
+  hostParsed:URL;
   hostAsEntered:boolean = false;
   apiUrl:string;
 
@@ -134,6 +134,11 @@ class SABnzbdHost extends NZBHost {
         mode: operation
       }
     };
+
+    if (this.hostParsed.username) {
+      request.username = this.hostParsed.username;
+      request.password = this.hostParsed.password ?? undefined;
+    }
 
     for (let k in params) {
       request.params[k] = String(params[k]);
@@ -415,7 +420,7 @@ class NZBGetHost extends NZBHost {
   }
 
   getCategories():Promise<string[]> {
-    // NZBGet API does not have a method to get categories, but the 
+    // NZBGet API does not have a method to get categories, but the
     // categories are listed in the config, so let's get them there.
     return this.call('config')
       .then(res => res.success

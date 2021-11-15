@@ -79,16 +79,6 @@ const DefaultOptions:NZBUnityOptions = {
   UITheme: ''
 };
 
-declare interface ParsedUrl {
-  protocol: string;
-  host: string;
-  hostname: string;
-  port: string;
-  pathname: string;
-  search: StringDictionary;
-  hash: string;
-}
-
 declare interface RequestOptions {
   method?: string;
   url: string;
@@ -252,47 +242,23 @@ class Util {
     });
   }
 
-  static getQuery(query:string = window.location.search):StringDictionary {
-    return query
-      .replace(/^\?/, '')
-      .split('&')
-      .reduce((q, i) => {
-        const [k, v] = i.split('=');
-        q[k] = v;
-        return q;
-      }, {});
+  static getQuery(query:string = window.location.search):URLSearchParams {
+    return new URLSearchParams(query);
   }
 
   static getQueryParam(k:string, def:string = null):string {
-    return Util.getQuery()[k] || def;
+    return Util.getQuery().get(k) ?? def;
   }
 
-  // Adapted from https://www.abeautifulsite.net/parsing-urls-in-javascript
-  static parseUrl(url:string):ParsedUrl {
-    const parser:HTMLAnchorElement = document.createElement('a');
-    let search:StringDictionary = null;
+  static parseUrl(url:string): URL {
+    // default http if no protocol
+    url = url.replace(/^\/\//, '');
 
-    if (!/^https?:\/\//i.test(url)) {
-      url = `http://${url}`; // default http
+    if (!/^\w+:\/\//i.test(url)) {
+      url = `http://${url}`;
     }
 
-    // Let the browser do the work
-    parser.href = url;
-
-    // Convert query string to object
-    if (parser.search) {
-      search = Util.getQuery(parser.search);
-    }
-
-    return {
-      protocol: parser.protocol,
-      host: parser.host,
-      hostname: parser.hostname,
-      port: parser.port,
-      pathname: parser.pathname,
-      hash: parser.hash,
-      search
-    };
+    return new URL(url);
   }
 
   // Adapted from https://gist.github.com/dineshsprabu/0405a1fbebde2c02a9401caee47fa3f5
@@ -307,17 +273,16 @@ class Util {
       }
 
       const method:string = String(options.method || 'GET').toUpperCase();
-      const parsed:ParsedUrl = Util.parseUrl(options.url);
+      const parsed:URL = Util.parseUrl(options.url);
       const headers:StringDictionary = options.headers || {};
       let url:string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
-      let search:StringDictionary = parsed.search;
+      let search:URLSearchParams = parsed.searchParams;
 
       if (options.params || options.files || options.multipart) {
         if (method === 'GET') {
           // GET requests, pack everything in the URL
-          search = search || {};
           for (const k in options.params) {
-            search[k] = options.params[k] as string;
+            search.set(k, String(options.params[k]));
           }
         } else if (!options.body) {
           // Other types of requests, figure out content type if not specified
@@ -361,7 +326,7 @@ class Util {
       }
 
       if (search) {
-        url = `${url}?${Util.uriEncodeQuery(search)}`;
+        url = `${url}?${search.toString()}`;
       }
 
       // Make the request
@@ -422,9 +387,13 @@ class Util {
   }
 
   static uriEncodeQuery(query:Dictionary):string {
-    return Object.keys(query)
-      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(query[k] as string)}`)
-      .join('&');
+    return Object.entries(query)
+      .reduce((params, entry) => {
+        const [k, v] = entry;
+        params.set(k, String(v));
+        return params;
+      }, new URLSearchParams())
+      .toString();
   }
 
   static humanSize(bytes:number) {
