@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "1.15.5",
+  "version": "1.15.6",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "clutterskull@gmail.com",
