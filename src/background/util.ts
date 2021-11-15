@@ -325,7 +325,7 @@ class Util {
         }
       }
 
-      if (search) {
+      if (search.toString()) {
         url = `${url}?${search.toString()}`;
       }
 
