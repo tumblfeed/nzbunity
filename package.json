@@ -34,7 +34,7 @@
     "test": "jest --color",
     "test:watch": "npm run test -- --verbose --watch",
     "watch": "concurrently -k -r -s first 'npm run test:watch' 'npm run lint:watch' 'npm run sass:watch'",
-    "prebuild": "npm run lint && nom run test",
+    "prebuild": "npm run lint && npm run test",
     "build": "npm run clean && npm run copy && npm run sass && npm run typescript",
     "postbuild": "echo 'Build successful!'",
     "dist": "npm run build && npm run zip"
