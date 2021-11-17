@@ -45,7 +45,7 @@ class NZBUnityDrunkenslug {
   }
 
   getNzbUrl(id:string):string {
-    return `https://drunkenslug.com/getnzb/${id}?i=${this.uid}&r=${this.apikey}`;
+    return `${window.location.origin}/getnzb/${id}?i=${this.uid}&r=${this.apikey}`;
   }
 
   initializeLinks() {

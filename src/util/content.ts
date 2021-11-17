@@ -5,7 +5,7 @@ import { request } from '.';
 export const iconGreen: string = chrome.extension.getURL('content/images/nzb-16-green.png');
 export const iconGrey: string = chrome.extension.getURL('content/images/nzb-16-grey.png');
 export const iconOrange: string = chrome.extension.getURL('content/images/nzb-16-orange.png');
-export const iconRed: string = chrome.extension.getURL('content/images/nzb-16-reg.png');
+export const iconRed: string = chrome.extension.getURL('content/images/nzb-16-red.png');
 export const backgroundNormal: string = 'rgb(23, 162, 184)';
 export const backgroundPending: string = 'rgb(156, 166, 168)';
 

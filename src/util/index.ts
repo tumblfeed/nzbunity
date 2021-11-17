@@ -1,16 +1,6 @@
 import { browser } from "webextension-polyfill-ts";
 import { FlatDictionary, NestedDictionary, StringDictionary } from "./types";
 
-export declare interface ParsedUrl {
-  protocol: string;
-  host: string;
-  hostname: string;
-  port: string;
-  pathname: string;
-  search?: FlatDictionary;
-  hash: string;
-}
-
 export declare interface RequestOptions {
   url: string;
   method?: string;
@@ -66,46 +56,8 @@ export function setMenuIcon(color: string = "green", status: string = null): Pro
   return browser.browserAction.setIcon({ path: bySize });
 }
 
-export function queryToObject(query: string = window.location.search): StringDictionary {
-  return String(query)
-    .replace(/^\?/, '')
-    .split('&')
-    .reduce((obj, pair) => {
-      const [key, val] = pair.split('=');
-      if (key) {
-        obj[decodeURIComponent(key)] = decodeURIComponent(val);
-      }
-      return obj;
-    }, {});
-}
-
-export function queryToObjectTyped(query: string = undefined): FlatDictionary {
-    const queryObj = queryToObject(query);
-
-    return Object.keys(queryObj)
-      .map((key) => ({ key, val: queryObj[key] }))
-      .reduce((obj, pair) => {
-        if (pair.key) {
-          // Default string value
-          let newVal: string|boolean|number|null = pair.val;
-
-          // Null, but will also catch flag-style param in "&param=&" and "&param&"
-          if (/^(null|)$/i.test(pair.val)) newVal = null;
-
-          // Boolean
-          if (/^true$/i.test(pair.val)) newVal = true;
-          if (/^false$/i.test(pair.val)) newVal = false;
-
-          // Numbers
-          if (/^\d+$/.test(pair.val)) newVal = parseInt(pair.val, 10);
-          if (/^0x[0-9A-F]+$/i.test(pair.val)) newVal = parseInt(pair.val, 16);
-          if (/^\d+\.\d+$/.test(pair.val)) newVal = parseFloat(pair.val);
-          if (/^(\d+\.)?\d+e\d+$/.test(pair.val)) newVal = parseFloat(pair.val);
-
-          obj[pair.key] = newVal;
-        }
-        return obj;
-      }, {});
+export function queryToObject(query: string = window.location.search): URLSearchParams {
+  return new URLSearchParams(query);
 }
 
 export function getQueryParam(
@@ -113,50 +65,31 @@ export function getQueryParam(
   def: string = null,
   query: string = undefined
 ): string|null {
-  const obj = queryToObject(query);
-  return typeof obj[k] === 'undefined' ? def : obj[k];
-}
-
-export function getQueryParamTyped(
-  key: string,
-  def: string|boolean|number|null = null,
-  query: string = undefined
-): string|boolean|number|null {
-  const obj: FlatDictionary = queryToObjectTyped(query);
-  return typeof obj[key] === 'undefined' ? def : obj[key];
+  return queryToObject(query).get(k) ?? def;
 }
 
 export function objectToQuery(obj: FlatDictionary): string {
-  return Object.keys(obj)
-    .map((key) => {
-      const k = encodeURIComponent(key);
-      const v = encodeURIComponent(obj[key] as string);
-
-      return (obj[key] === null) ? k : `${k}=${v}`;
-    })
-    .join("&");
+  return Object.entries(obj)
+    .reduce((params, [k, v]) => {
+      params.set(k, String(v));
+      return params;
+    }, new URLSearchParams())
+    .toString();
 }
 
 /**
  * Parse a given URL into parts
  * @param url
  */
-export function parseUrl(url: string): ParsedUrl {
-  // If url does not start with protocol, but also does not start with a '/'
-  // for a relative url, assume http protocol so simple addresses will still work
-  if (!/^[a-z]+:\/\//i.test(url) && !/^\//.test(url)) {
-    url = `http://${url}`;
-  }
+export function parseUrl(url: string): URL {
+  // Add missing protocol: current protocol if relative, http if not specified
+  if (/^\/\//.test(url)) {
+      url = `${window.location.protocol}${url}`;
+    } else if (!/^\w+:\/\//i.test(url)) {
+      url = `http://${url}`;
+    }
 
-  // DOM anchor tags parse hrefs into constituent parts, we can the DOM do the work.
-  const parser: HTMLAnchorElement = document.createElement("a");
-  parser.href = url;
-
-  // Convert query string to object
-  const search = queryToObjectTyped(parser.search);
-
-  const { protocol, host, hostname, port, pathname, hash } = parser;
-  return { protocol, host, hostname, port, pathname, hash, search };
+    return new URL(url);
 }
 
 /**
@@ -170,19 +103,18 @@ export async function request(options: RequestOptions): Promise<any> {
   }
 
   const method: string = String(options.method || "GET").toUpperCase();
-  const parsed: ParsedUrl = parseUrl(options.url);
+  const parsed: URL = parseUrl(options.url);
   const headers: StringDictionary = options.headers || {};
 
   let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
-  let search: FlatDictionary = parsed.search;
+  let search: URLSearchParams = parsed.searchParams;
 
   if (options.params || options.files || options.multipart) {
     if (method === "GET") {
       // GET requests, pack everything in the URL
-      search = search || {};
-      Object.keys(options.params).forEach((k) => {
-        search[k] = options.params[k] as string;
-      });
+      for (const [k, v] of Object.entries(options.params)) {
+        search.set(k, String(v));
+      }
     } else if (!options.body) {
       // Other types of requests, figure out content type if not specified
       // and build the request body if not provided.
@@ -227,8 +159,8 @@ export async function request(options: RequestOptions): Promise<any> {
     }
   }
 
-  if (Object.keys(search || {}).length) {
-    url = `${url}?${objectToQuery(search)}`;
+  if (search.toString()) {
+    url = `${url}?${search.toString()}`;
   }
 
   if (options.username && options.password) {

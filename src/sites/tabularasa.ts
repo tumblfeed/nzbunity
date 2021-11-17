@@ -1,7 +1,7 @@
 class NZBUnityTabulaRasa {
   public apikey:string;
   public replace:boolean = false;
-  
+
   constructor() {
     this.initialize();
   }
@@ -35,7 +35,7 @@ class NZBUnityTabulaRasa {
   }
 
   getNzbUrl(id:string):string {
-    return `${window.location.origin}/getnzb?id=${id}&api_token=${this.apikey}`;
+    return `${window.location.origin}/api/v2/getnzb?id=${id}&api_token=${this.apikey}`;
   }
 
   initializeLinks() {

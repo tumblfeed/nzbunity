@@ -14,10 +14,10 @@ class NZBUnityNzbsu {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
           let rssUrl:string = $('link[href^="/rss"]').attr('href');
-          let parsedRssUrl:ParsedUrl = Util.parseUrl(rssUrl);
+          let parsedRssUrl:URL = Util.parseUrl(rssUrl);
 
-          this.uid = rssUrl ? parsedRssUrl.search.i : null;
-          this.apikey = rssUrl ? parsedRssUrl.search.r : null;
+          this.uid = rssUrl ? parsedRssUrl.searchParams.get('i') : null;
+          this.apikey = rssUrl ? parsedRssUrl.searchParams.get('r') : null;
 
           if (this.uid && this.apikey) {
             console.info(`Got uid and api key: ${this.uid}, ${this.apikey}`);
@@ -32,7 +32,7 @@ class NZBUnityNzbsu {
   }
 
   getNzbUrl(id:string):string {
-    return `https://nzb.su/getnzb/${id}.nzb?i=${this.uid}&r=${this.apikey}`;
+    return `${window.location.origin}/getnzb/${id}.nzb?i=${this.uid}&r=${this.apikey}`;
   }
 
   initializeLinks() {

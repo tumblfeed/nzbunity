@@ -1,5 +1,5 @@
 import { Dictionary, NestedDictionary } from '../util/types';
-import { parseUrl, ParsedUrl } from '../util';
+import { parseUrl } from '../util';
 
 export declare interface NZBAddOptions {
   url?: string;
@@ -84,7 +84,7 @@ export abstract class NZBHost {
   name: string;
   displayName: string;
   host: string;
-  hostParsed: ParsedUrl;
+  hostParsed: URL;
   hostAsEntered: boolean = false;
   apiUrl: string;
 

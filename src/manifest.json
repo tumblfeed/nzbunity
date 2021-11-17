@@ -71,7 +71,8 @@
       "js": [
         // "vendor/browser-polyfill.min.js",
         "background/util.js"
-      ]
+      ],
+      "run_at": "document_start"
     },
     {
       "matches": ["*://*.althub.co.za/*"],

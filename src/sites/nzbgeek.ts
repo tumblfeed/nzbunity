@@ -23,30 +23,31 @@ class NZBUnityNzbgeek {
 
   initializeLinks() {
     // Create direct download links
-    // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.
-    $('img[src$="download.png"]').closest('a').each((i, el) => {
+    $('a[href*="/api?t=get&id="]').each((i, el) => {
       let a:JQuery<HTMLElement> = $(el);
-      let row:JQuery<HTMLElement> = a.closest('tr[id^="guid"]');
+      let row:JQuery<HTMLElement> = a.closest('tr.releases');
 
       // Get the category
       let category:string = '';
       let catSrc:string = 'default';
       let pathSearch:string = window.location.pathname + window.location.search;
 
-      if (row.find('a[href*="geekseek.php?c="]').length) {
+      if (row.find('a.releases_category_text').length) {
         // Standard page
-        category = row.find('a[href*="geekseek.php?c="]').text().split(/\s*>\s*/)[0];
+        category = row.find('a.releases_category_text').text().split(/\s*>\s*/)[0];
         catSrc = 'row';
-      } else if (pathSearch.match(/^\/geekseek.php\?c=/)) {
-        // Category search
-        let match:string[] = $('center > font[size="4"] > b').text().match(/your seek returned [\d,]+ ([^,]+)/i);
-        if (match) {
-          category = match[1];
-          catSrc = 'header'
-        }
+      } else if (/^\/geekseek.php\?movieid=/.test(pathSearch)) {
+        $('tr.details').each((i, el) => {
+          const text = $(el).text().replace(/\s/g, '');
+          const match = text.match(/Category:(.*)/i);
+          if (match) {
+            category = match[1].split('>')[0];
+            catSrc = 'detail';
+          }
+        })
       }
 
-      let opts:CreateAddLinkOptions = { url: a.attr('href'), category: category };
+      let opts:CreateAddLinkOptions = { url: a.attr('href'), category };
 
       if (this.replace) {
         PageUtil.bindAddUrl(opts, a, true);

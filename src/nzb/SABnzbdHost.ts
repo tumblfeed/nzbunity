@@ -51,6 +51,11 @@ export class SABnzbdHost extends NZBHost {
         debug: Boolean(params.debug),
       };
 
+      if (this.hostParsed.username) {
+        reqParams.username = this.hostParsed.username;
+        reqParams.password = this.hostParsed.password ?? undefined;
+      }
+
       Object.keys(params).forEach((k) => reqParams.params[k] = String(params[k]));
 
       try {
