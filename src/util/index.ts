@@ -220,16 +220,16 @@ export function humanSize(bytes: number): string {
 
 export function humanSeconds(seconds: number): string {
   // Divide into sections
-  const hours = String(Math.floor(((seconds % 31536000) % 86400) / 3600));
-  let minutes = String(Math.floor((((seconds % 31536000) % 86400) % 3600) / 60));
-  let remainder = String((((seconds % 31536000) % 86400) % 3600) % 60);
+  const hours = String(Math.floor(seconds / 3600));
+  let minutes = String(Math.floor((seconds % 3600) / 60));
+  let remainder = String(seconds % 60);
 
   // pad minutes and seconds
   minutes = `0${minutes}`.slice(-2);
   remainder = `0${remainder}`.slice(-2);
 
   // Coombine and remove 0 hours
-  return `${hours}:${minutes}:${remainder}`.replace(/^0+:/, "");
+  return `${hours}:${minutes}:${remainder}`.replace(/^0+:/, '');
 }
 
 export function ucFirst(s: string): string {
