@@ -437,6 +437,14 @@ class PageUtil {
   static readonly backgroundNormal:string = 'rgb(23, 162, 184)';
   static readonly backgroundPending:string = 'rgb(156, 166, 168)';
 
+  static ready(callback: () => void): void {
+    if (document.readyState != 'loading'){
+      callback();
+    } else {
+      document.addEventListener('DOMContentLoaded', callback);
+    }
+  }
+
   static request(options:RequestOptions):Promise<any> {
     options.url = `${window.location.origin}${options.url || ''}`;
     return Util.request(options);
