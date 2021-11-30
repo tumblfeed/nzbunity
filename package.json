@@ -11,16 +11,17 @@
     "type": "git",
     "url": "https://github.com/clutterskull/nzbunity"
   },
-  "homepage": "https://github.com/clutterskull/nzbunity",
-  "keywords": [
-    "NZB"
+  "scripts": {
+    "gulp": "gulp",
+    "build": "gulp build",
+    "dist": "gulp dist",
+    "watch": "gulp watch"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "> 5%",
+    "Firefox ESR"
   ],
-  "engines": {
-    "node": ">12"
-  },
-  "bugs": {
-    "url": "https://github.com/clutterskull/nzbunity/issues"
-  },
   "dependencies": {
     "@types/bootstrap": "^4.3.0",
     "@types/chrome": "0.0.85",
@@ -40,15 +41,5 @@
     "typescript": "^3.4.5",
     "web-ext-types": "^3.1.0"
   },
-  "scripts": {
-    "gulp": "gulp",
-    "build": "gulp build",
-    "dist": "gulp dist",
-    "watch": "gulp watch"
-  },
-  "browserslist": [
-    "last 2 versions",
-    "> 5%",
-    "Firefox ESR"
-  ]
+  "packageManager": "yarn@3.1.1"
 }
