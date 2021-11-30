@@ -41,7 +41,7 @@ class NZBUnityNzbfinder {
   }
 
   getLinkContainer(link: HTMLElement): HTMLElement {
-    return link.closest(this.isList(link) ? 'tr' : 'article');
+    return link.closest(this.isList(link) ? 'tr' : 'article') ?? link.closest('#buttongroup');
   }
 
   getFirstChild(container: HTMLElement): HTMLElement {
@@ -49,7 +49,7 @@ class NZBUnityNzbfinder {
   }
 
   getCategory(link: HTMLElement): string {
-    const cat = this.getLinkContainer(link).querySelector('#catname')?.textContent.trim();
+    const cat = this.getLinkContainer(link)?.querySelector('#catname')?.textContent.trim();
 
     if (/^\w+$/.test(cat)) {
       // If the category is a single word, it's probably a sub-category
@@ -70,17 +70,17 @@ class NZBUnityNzbfinder {
       const a = el as HTMLElement;
       const guidMatch = a.getAttribute('href').match(/\/getnzb\?id=([\w-]+)/i) as string[];
       const id = guidMatch && guidMatch[1];
-      const url = this.getNzbUrl(id);
 
-      // Get the category
-      let category = this.getCategory(a) ?? '';
-      const opts:CreateAddLinkOptions = { url, category };
+      const opts: CreateAddLinkOptions = {
+        url: this.getNzbUrl(id),
+        category: this.getCategory(a),
+      };
 
       if (window.location.pathname.startsWith('/details')) {
         // Item detail
-        const catLink = document.querySelectorAll('table a[href*="/browse/"]:not([href*="/browse/group?"])');
-        if (catLink.length) {
-          opts.category = (catLink[0] as HTMLElement).innerText.trim();
+        const catLink = document.querySelector('table a[href*="/browse/"]:not([href*="/browse/group?"])');
+        if (catLink) {
+          opts.category = (catLink as HTMLElement).innerText.trim();
         }
 
         if (this.replace) {
@@ -114,13 +114,13 @@ class NZBUnityNzbfinder {
           // List
           const link = PageUtil.createAddUrlLink(opts)
             .addClass(this.getFirstChild(a).classList.value)
-            .removeClass('h-5 w-5')
             .css({ display: 'inline', height: '', width: '' })
             .insertBefore(a);
 
           link.find('> img')
             .css({ display: 'inline' });
 
+          a.parentElement.style.minWidth = `75px`;
         } else {
           // Covers
           PageUtil.createAddUrlLink(opts)
