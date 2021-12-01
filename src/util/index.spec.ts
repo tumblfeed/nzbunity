@@ -23,7 +23,7 @@ describe('util/queryToObject', () => {
   });
 
   it('Returns string record for query string', () => {
-    const obj = queryToObject('?foo=bar&num=1&bln=true&nil=&str=hello')
+    const obj = queryToObject('?foo=bar&num=1&bln=true&nil=&str=hello');
     expect(obj).toBeInstanceOf(URLSearchParams);
     expect(obj.toString()).toBe('foo=bar&num=1&bln=true&nil=&str=hello');
     expect(obj.get('foo')).toBe('bar');
@@ -83,7 +83,6 @@ describe('util/parseUrl', () => {
     expect(parsed.searchParams.get('foo')).toBe('bar');
     expect(parsed.searchParams.get('lol')).toBe('1337');
   });
-
 });
 
 describe('util/request', () => {

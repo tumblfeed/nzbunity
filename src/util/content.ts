@@ -11,7 +11,7 @@ export const backgroundPending: string = 'rgb(156, 166, 168)';
 export { request };
 
 export function ready(callback: () => void): void {
-  if (document.readyState != 'loading'){
+  if (document.readyState != 'loading') {
     callback();
   } else {
     document.addEventListener('DOMContentLoaded', callback);
@@ -23,35 +23,35 @@ export function addFileByRequest(
   category: string = '',
   url: string = window.location.origin,
   params: Record<string, unknown> = {},
-): Promise<any> {
+): Promise<unknown> {
   // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
   // Fetches a single NZB from a POST request and adds it to the server as a file upload
-  return request({ method: 'POST', url, params })
-    .then(content => browser.runtime.sendMessage({
-      'content.addFile': { filename, content, category }
-    }));
+  return request({ method: 'POST', url, params }).then(content =>
+    browser.runtime.sendMessage({
+      'content.addFile': { filename, content, category },
+    }),
+  );
 }
 
-export function bindAddUrl(
-  options: CreateAddLinkOptions,
-  el: HTMLElement,
-  exclusive: boolean = false,
-): HTMLElement {
-  el.addEventListener('click', (event) => {
-    event.preventDefault();
-    console.info(`[NZB Unity] Adding URL: ${options.url}`);
+export function bindAddUrl(options: CreateAddLinkOptions, el: HTMLElement, exclusive: boolean = false): HTMLElement {
+  el.addEventListener(
+    'click',
+    event => {
+      event.preventDefault();
+      console.info(`[NZB Unity] Adding URL: ${options.url}`);
 
-    el.dispatchEvent(new Event('nzb.pending'));
+      el.dispatchEvent(new Event('nzb.pending'));
 
-    browser.runtime.sendMessage({ 'content.addUrl': options })
-      .then((rsp:boolean) => {
+      browser.runtime.sendMessage({ 'content.addUrl': options }).then((rsp: boolean) => {
         setTimeout(() => {
           el.dispatchEvent(new Event(rsp === false ? 'nzb.failure' : 'nzb.success'));
         }, 500);
       });
-  }, {
-    capture: Boolean(exclusive)
-  });
+    },
+    {
+      capture: Boolean(exclusive),
+    },
+  );
 
   return el;
 }
@@ -95,28 +95,31 @@ export function createButton(): HTMLElement {
     whiteSpace: 'nowrap',
   });
 
-  btn.addEventListener('nzb.pending', () => Object.assign(btn.style, {
-    backgroundColor: backgroundPending,
-    backgroundImage: `url(${iconGrey})`,
-  }));
+  btn.addEventListener('nzb.pending', () =>
+    Object.assign(btn.style, {
+      backgroundColor: backgroundPending,
+      backgroundImage: `url(${iconGrey})`,
+    }),
+  );
 
-  btn.addEventListener('nzb.success', () => Object.assign(btn.style, {
-    backgroundColor: backgroundNormal,
-    backgroundImage: `url(${iconGreen})`,
-  }));
+  btn.addEventListener('nzb.success', () =>
+    Object.assign(btn.style, {
+      backgroundColor: backgroundNormal,
+      backgroundImage: `url(${iconGreen})`,
+    }),
+  );
 
-  btn.addEventListener('nzb.failure', () => Object.assign(btn.style, {
-    backgroundColor: backgroundNormal,
-    backgroundImage: `url(${iconRed})`,
-  }));
+  btn.addEventListener('nzb.failure', () =>
+    Object.assign(btn.style, {
+      backgroundColor: backgroundNormal,
+      backgroundImage: `url(${iconRed})`,
+    }),
+  );
 
   return btn;
 }
 
-export function createAddUrlLink(
-  options: CreateAddLinkOptions,
-  adjacent: HTMLElement = null
-): HTMLElement {
+export function createAddUrlLink(options: CreateAddLinkOptions, adjacent: HTMLElement = null): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const a = bindAddUrl(options, createLink());
   a.setAttribute('href', options.url);
@@ -133,10 +136,7 @@ export function createAddUrlLink(
   return a;
 }
 
-export function createAddUrlButton(
-  options: CreateAddLinkOptions,
-  adjacent: HTMLElement = null
-): HTMLElement {
+export function createAddUrlButton(options: CreateAddLinkOptions, adjacent: HTMLElement = null): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const btn = bindAddUrl(options, createButton());
 

@@ -1,7 +1,7 @@
 // import { readFileSync } from 'fs';
 import { NZBQueueItem } from '.';
 import { SABnzbdHost } from './SABnzbdHost';
-import * as env from '../../.env.json'
+import * as env from '../../.env.json';
 
 // Queue operations need a little time in between or then don't work
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -131,16 +131,13 @@ describe('Queue manipulation', () => {
     expect.assertions(2);
 
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-    const res = await host.addUrl(
-      env.nzb.url,
-      {
-        category: 'download',
-        name: 'Test NZB'
-      },
-    );
+    const res = await host.addUrl(env.nzb.url, {
+      category: 'download',
+      name: 'Test NZB',
+    });
 
     id = res.result as string;
-    item = (await host.getQueue()).queue.find((item) => item.id === id);
+    item = (await host.getQueue()).queue.find(item => item.id === id);
 
     expect(res).not.toBeNull();
     expect(id.length).toBeTruthy();
@@ -159,7 +156,7 @@ describe('Queue manipulation', () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await host.getQueue()).queue.find((item) => item.id === id);
+    item = (await host.getQueue()).queue.find(item => item.id === id);
   });
 
   it('Can resume queue item', async () => {
@@ -174,7 +171,7 @@ describe('Queue manipulation', () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await host.getQueue()).queue.find((item) => item.id === id);
+    item = (await host.getQueue()).queue.find(item => item.id === id);
   });
 
   it('Can remove queue item', async () => {

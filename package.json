@@ -27,17 +27,17 @@
     "copy": "copyfiles --exclude src/**/*.ts src/** build",
     "typescript": "tsc",
     "sass": "sass --update --color src/content/css:build/content/css",
-    "sass:watch": "npm run lint -- --watch",
+    "sass:watch": "yarn lint -- --watch",
     "lint": "esw --ext .js,.jsx,.ts,.tsx --color src",
-    "lint:fix": "npm run lint -- --fix",
-    "lint:watch": "npm run lint -- --watch",
+    "lint:fix": "yarn lint -- --fix",
+    "lint:watch": "yarn lint -- --watch",
     "test": "jest --color",
-    "test:watch": "npm run test -- --verbose --watch",
-    "watch": "concurrently -k -r -s first 'npm run test:watch' 'npm run lint:watch' 'npm run sass:watch'",
-    "prebuild": "npm run lint && npm run test",
-    "build": "npm run clean && npm run copy && npm run sass && npm run typescript",
+    "test:watch": "yarn test -- --verbose --watch",
+    "watch": "concurrently -k -r -s first 'yarn test:watch' 'yarn lint:watch' 'yarn sass:watch'",
+    "prebuild": "yarn lint && yarn test",
+    "build": "yarn clean && yarn copy && yarn sass && yarn typescript",
     "postbuild": "echo 'Build successful!'",
-    "dist": "npm run build && npm run zip"
+    "dist": "yarn build && yarn zip"
   },
   "eslintConfig": {
     "root": true,
@@ -47,6 +47,7 @@
       "plugin:prettier/recommended"
     ],
     "rules": {
+      "@typescript-eslint/no-inferrable-types": "off",
       "prettier/prettier": ["error", {
         "printWidth": 120,
         "singleQuote": true,

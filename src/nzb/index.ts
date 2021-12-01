@@ -94,7 +94,7 @@ export abstract class NZBHost {
     this.hostAsEntered = Boolean(options.hostAsEntered);
   }
 
-  abstract call(operation: string, params: Record<string, unknown>|unknown[]): Promise<NZBResult>;
+  abstract call(operation: string, params: Record<string, unknown> | unknown[]): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
   abstract getHistory(options: Record<string, unknown>): Promise<NZBQueueItem[]>;

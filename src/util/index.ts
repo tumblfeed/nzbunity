@@ -30,11 +30,7 @@ export function queryToObject(query: string = window.location.search): URLSearch
   return new URLSearchParams(query);
 }
 
-export function getQueryParam(
-  k: string,
-  def: string = null,
-  query: string = undefined
-): string|null {
+export function getQueryParam(k: string, def: string = null, query: string = undefined): string | null {
   return queryToObject(query).get(k) ?? def;
 }
 
@@ -103,11 +99,11 @@ export async function request(options: RequestOptions): Promise<any> {
           delete headers['Content-Type'];
           options.body = new FormData();
 
-          Object.keys(options.params ?? []).forEach((k) => {
+          Object.keys(options.params ?? []).forEach(k => {
             (options.body as FormData).append(k, options.params[k] as string);
           });
 
-          Object.keys(options.files ?? []).forEach((k) => {
+          Object.keys(options.files ?? []).forEach(k => {
             (options.body as FormData).append(
               k,
               new Blob([options.files[k].content], { type: options.files[k].type }),
@@ -136,16 +132,13 @@ export async function request(options: RequestOptions): Promise<any> {
 
   // Debug if requested
   if (options.debug) {
-    console.debug(
-      'util/request() -->',
-      {
-        'rawUrl': options.url,
-        url,
-        method,
-        headers,
-        'body': options.body,
-      },
-    );
+    console.debug('util/request() -->', {
+      rawUrl: options.url,
+      url,
+      method,
+      headers,
+      body: options.body,
+    });
   }
 
   // Make the request
@@ -153,10 +146,7 @@ export async function request(options: RequestOptions): Promise<any> {
 
   // Debug if requested
   if (options.debug) {
-    console.debug(
-      'util/request() <--',
-      `${response.status}: ${response.statusText}`,
-    );
+    console.debug('util/request() <--', `${response.status}: ${response.statusText}`);
   }
 
   if (response.ok) {
@@ -209,5 +199,8 @@ export function trunc(s: string, n: number): string {
 export function simplifyCategory(s: string): string {
   // If category name contains any non-word characters (eg 'Lol > Wut')
   // just return the first word (eg 'lol')
-  return s.split(/[^\w\d]+/i).shift().toLowerCase();
+  return s
+    .split(/[^\w\d]+/i)
+    .shift()
+    .toLowerCase();
 }
