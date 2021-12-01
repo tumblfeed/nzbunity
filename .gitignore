@@ -5,3 +5,16 @@ node_modules
 
 .test
 .env.json
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Without PnP
+.pnp.*
+# With PnP enabled
+# !.yarn/cache
