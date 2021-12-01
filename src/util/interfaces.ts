@@ -1,20 +1,34 @@
-export declare interface Dictionary {
-  [key:string]: boolean | number | string | null | Array<boolean | number | string>;
+export declare interface RequestOptions {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+  params?: Record<string, unknown>;
+  body?: string | FormData;
+  username?: string;
+  password?: string;
+  json?: boolean;
+  multipart?: boolean;
+  files?: {
+    [key:string]: {
+      filename: string;
+      type: string;
+      content: any;
+    }
+  };
+  mode?: string,
+  cache?: string,
+  credentials?: string,
+  redirect?: string,
+  referrerPolicy?: string,
+  debug?: boolean;
 }
 
-export declare interface StringDictionary {
-  [key:string]: string | null;
+export declare interface CreateAddLinkOptions {
+  url: string;
+  category?: string;
 }
 
-export declare interface FlatDictionary {
-  [key:string]: boolean | number | string | null;
-}
-
-export declare interface NestedDictionary {
-  [key:string]: boolean | number | string | null | Array<boolean | number | string> | NestedDictionary;
-}
-
-export declare interface NZBUnityProfileOptions extends Dictionary {
+export declare interface NZBUnityProfileOptions {
   ProfileName: string,
   ProfileType: string,
   ProfileHost: string,
@@ -25,28 +39,21 @@ export declare interface NZBUnityProfileOptions extends Dictionary {
   ProfileHostAsEntered: boolean
 }
 
-export declare interface NZBUnityProviderOptions extends Dictionary {
+export declare interface NZBUnityProviderOptions {
   Enabled: boolean,
   Matches: string[],
   Js: string[]
 }
 
-export declare interface NZBUnityProfileDictionary {
-  [key:string]: NZBUnityProfileOptions
-}
-
-export declare interface NZBUnityProviderDictionary {
-  [key:string]: NZBUnityProviderOptions
-}
-
-export declare interface NZBUnityOptions extends NestedDictionary {
+export declare interface NZBUnityOptions {
   Initialized: boolean,
   Debug: boolean,
-  Profiles: NZBUnityProfileDictionary,
+  Profiles: Record<string, NZBUnityProfileOptions>,
   ActiveProfile: string,
-  Providers: NZBUnityProviderDictionary,
+  Providers: Record<string, NZBUnityProviderOptions>,
   ProviderNewznab: string,
   ProviderEnabled: boolean,
+  ProviderDisplay: boolean,
   RefreshRate: number,
   InterceptDownloads: boolean,
   InterceptExclude: string,
@@ -60,15 +67,15 @@ export declare interface NZBUnityOptions extends NestedDictionary {
   UITheme: string
 }
 
-export const DefaultOptions:NZBUnityOptions = {
+export const DefaultOptions: NZBUnityOptions = {
   Initialized: false,
   Debug: false,
   Profiles: {},
   ActiveProfile: null,
-  ProviderEnabled: true,
-  ProviderDisplay: true,
   Providers: {},
   ProviderNewznab: '',
+  ProviderEnabled: true,
+  ProviderDisplay: true,
   RefreshRate: 15,
   InterceptDownloads: true,
   InterceptExclude: '',

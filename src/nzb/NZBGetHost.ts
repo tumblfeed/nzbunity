@@ -7,7 +7,6 @@ import {
   Kilobyte,
   Megabyte,
 } from '../util';
-import { Dictionary, StringDictionary } from '../util/interfaces';
 import {
   NZBAddOptions,
   NZBAddUrlResult,
@@ -23,7 +22,7 @@ export class NZBGetHost extends NZBHost {
     username: string;
     password: string;
 
-    constructor(options: Dictionary = {}) {
+    constructor(options: Record<string, unknown> = {}) {
       super(options);
       this.username = (options.username || '') as string;
       this.password = (options.password || '') as string;
@@ -74,7 +73,7 @@ export class NZBGetHost extends NZBHost {
       const res = await this.call('config');
 
       return res.success
-        ? (res.result as StringDictionary[])
+        ? (res.result as Record<string, string>[])
           .filter(i => /Category\d+\.Name/i.test(i.Name))
           .map(i => i.Value)
         : null;
@@ -126,7 +125,7 @@ export class NZBGetHost extends NZBHost {
 
       if (!(groups && groups.success)) return null;
 
-      queue.queue = (groups.result as Dictionary[])
+      queue.queue = (groups.result as Record<string, unknown>[])
         .map((slot) => {
           const sizeBytes: number = Math.floor((<number> slot['FileSizeMB']) * Megabyte); // MB convert to Bytes
           const sizeRemainingBytes: number = Math.floor((<number> slot['RemainingSizeMB']) * Megabyte); // MB convert to Bytes

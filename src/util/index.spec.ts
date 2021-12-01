@@ -16,45 +16,45 @@ import {
 } from '.';
 
 describe('util/queryToObject', () => {
-  it('Empty query returns empty object', () => {
+  it('Returns empty object for empty query', () => {
     const obj = queryToObject('');
     expect(typeof obj).toBe('object');
     expect(Object.keys(obj)).toHaveLength(0);
   });
 
-  it('Query string returns string dictionary', () => {
+  it('Returns string record for query string', () => {
     const obj = queryToObject('?foo=bar&num=1&bln=true&nil=&str=hello')
-    expect(obj).toMatchObject({
-      foo: 'bar',
-      num: '1',
-      bln: 'true',
-      nil: '',
-      str: 'hello',
-    });
+    expect(obj).toBeInstanceOf(URLSearchParams);
+    expect(obj.toString()).toBe('foo=bar&num=1&bln=true&nil=&str=hello');
+    expect(obj.get('foo')).toBe('bar');
+    expect(obj.get('num')).toBe('1');
+    expect(obj.get('bln')).toBe('true');
+    expect(obj.get('nil')).toBe('');
+    expect(obj.get('str')).toBe('hello');
   });
 });
 
 describe('util/getQueryParam', () => {
-  it('Returns expected value', () => {
+  it('Returns requested value from query string', () => {
     const val = getQueryParam('foo', 'lol', '?foo=1337');
     expect(val).toBe('1337');
   });
 
-  it('Returns default', () => {
+  it('Returns default when key not in query string', () => {
     const val = getQueryParam('bar', 'lol', '?foo=1337');
     expect(val).toBe('lol');
   });
 });
 
 describe('util/objectToQuery', () => {
-  it('Returns expected value', () => {
+  it('Returns expected query string', () => {
     const query = objectToQuery({
       foo: 'lul & wut',
       num: 1,
       bln: true,
       nil: null,
     });
-    expect(query).toBe('foo=lul%20%26%20wut&num=1&bln=true&nil');
+    expect(query).toBe('foo=lul%20%26%20wut&num=1&bln=true&nil=null');
   });
 });
 
@@ -80,16 +80,14 @@ describe('util/parseUrl', () => {
 
   it('Parses query', () => {
     const parsed = parseUrl('https://test.com/lol?foo=bar&lol=1337');
-    expect(parsed.search).toMatchObject({
-      foo: 'bar',
-      lol: 1337,
-    });
+    expect(parsed.searchParams.get('foo')).toBe('bar');
+    expect(parsed.searchParams.get('lol')).toBe('1337');
   });
 
 });
 
 describe('util/request', () => {
-  it('Simple GET request', async () => {
+  it('Can make a simple GET request', async () => {
     expect.assertions(1);
     const response = await request({
       url: 'https://jsonplaceholder.typicode.com/todos/1',
@@ -98,7 +96,7 @@ describe('util/request', () => {
     expect(response).toMatchObject({ id: 1 });
   });
 
-  it('Error no URL', async () => {
+  it('Errors on no URL', async () => {
     expect.assertions(1);
 
     try {
@@ -110,7 +108,7 @@ describe('util/request', () => {
 });
 
 describe('util/humanSize', () => {
-  it('Returns expected value', () => {
+  it('Returns human readable strings that match size', () => {
     expect(humanSize(2 * Byte)).toBe('2 B');
     expect(humanSize(2 * Kilobyte)).toBe('2 kB');
     expect(humanSize(2 * Megabyte)).toBe('2 MB');
@@ -119,26 +117,36 @@ describe('util/humanSize', () => {
 });
 
 describe('util/humanSeconds', () => {
-  it('Returns expected value', () => {
+  it('Returns human readable time durations that match seconds', () => {
     expect(humanSeconds(12345)).toBe('3:25:45');
     expect(humanSeconds(3600 * 1.5)).toBe('1:30:00');
   });
 });
 
 describe('util/ucFirst', () => {
-  it('Returns expected value', () => {
+  it('Returns uppercased first letter', () => {
     expect(ucFirst('lol')).toBe('Lol');
+    expect(ucFirst('Lol')).toBe('Lol');
   });
 });
 
 describe('util/trunc', () => {
-  it('Returns expected value', () => {
+  it('Truncates long strings', () => {
     expect(trunc('Really long string', 10)).toBe('Really lon&hellip;');
+  });
+
+  it('Does not truncate shorter strings', () => {
+    expect(trunc('Really long string', 100)).toBe('Really long string');
   });
 });
 
 describe('util/simplifyCategory', () => {
-  it('Returns expected value', () => {
+  it('Simplifies multi-word categories', () => {
+    expect(simplifyCategory('Movies')).toBe('movies');
     expect(simplifyCategory('Movies > New > Lol')).toBe('movies');
+    expect(simplifyCategory('Movies Lol')).toBe('movies');
+    expect(simplifyCategory('Movies^Lol')).toBe('movies');
+    expect(simplifyCategory('Movies_Lol')).toBe('movies_lol'); // underscore allowed by \w
+    expect(simplifyCategory('Movies123 Lol')).toBe('movies123'); // numbers allowed by \d
   });
 });

@@ -8,7 +8,6 @@ import {
   Megabyte,
   Gigabyte,
 } from '../util';
-import { Dictionary, StringDictionary } from '../util/interfaces';
 import {
   NZBAddOptions,
   NZBAddUrlResult,
@@ -22,7 +21,7 @@ export class SABnzbdHost extends NZBHost {
     name: string = 'SABnzbd';
     apikey: string;
 
-    constructor(options:Dictionary = {}) {
+    constructor(options: Record<string, unknown> = {}) {
       super(options);
       this.apikey = (options.apikey || '') as string;
 
@@ -39,7 +38,7 @@ export class SABnzbdHost extends NZBHost {
       }
     }
 
-    async call(operation: string, params: Dictionary = {}): Promise<NZBResult> {
+    async call(operation: string, params: Record<string, unknown> = {}): Promise<NZBResult> {
       const reqParams: RequestOptions = {
         method: 'GET',
         url: this.apiUrl,
@@ -98,9 +97,8 @@ export class SABnzbdHost extends NZBHost {
       return res;
     }
 
-    async getHistory(options: Dictionary): Promise<NZBQueueItem[]> {
-      const res = await this.call('history', options);
-
+    async getHistory(): Promise<NZBQueueItem[]> {
+      // TODO: Useful for done notifications?
       return [];
     }
 
@@ -142,7 +140,7 @@ export class SABnzbdHost extends NZBHost {
       };
 
       queue.queue = res.result['slots']
-        .map((slot:StringDictionary) => {
+        .map((slot: Record<string, string>) => {
           // MB convert to Bytes
           const sizeBytes: number = Math.floor(parseFloat(slot['mb']) * Megabyte);
           const sizeRemainingBytes: number = Math.floor(parseFloat(slot['mbleft']) * Megabyte);
@@ -184,7 +182,7 @@ export class SABnzbdHost extends NZBHost {
     }
 
     async addUrl(url: string, options: NZBAddOptions = {}): Promise<NZBAddUrlResult> {
-      const params: StringDictionary = { name: url };
+      const params: Record<string, string> = { name: url };
       let ids: string[];
 
       Object.keys(options).forEach((k) => {
@@ -216,7 +214,7 @@ export class SABnzbdHost extends NZBHost {
     }
 
     async addFile(filename: string, content: string|Buffer|File, options: NZBAddOptions = {}): Promise<NZBAddUrlResult> {
-      const params: StringDictionary = {
+      const params: Record<string, string> = {
         apikey: this.apikey,
         mode: 'addfile',
         nzbname: filename,

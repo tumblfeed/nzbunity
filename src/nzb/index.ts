@@ -1,4 +1,3 @@
-import { Dictionary, NestedDictionary } from '../util/interfaces';
 import { parseUrl } from '../util';
 
 export declare interface NZBAddOptions {
@@ -45,7 +44,7 @@ export declare interface DirectNZB {
 export declare interface NZBResult {
   success: boolean;
   operation?: string;
-  result?: boolean | number | string | NestedDictionary | Array<boolean|string|number|NestedDictionary>;
+  result?: unknown;
   error?: string;
 }
 
@@ -88,17 +87,17 @@ export abstract class NZBHost {
   hostAsEntered: boolean = false;
   apiUrl: string;
 
-  constructor(options:Dictionary = {}) {
+  constructor(options: Record<string, unknown> = {}) {
     this.displayName = (options.displayName || this.name) as string;
     this.host = (options.host || 'localhost') as string;
     this.hostParsed = parseUrl(this.host);
     this.hostAsEntered = Boolean(options.hostAsEntered);
   }
 
-  abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
+  abstract call(operation: string, params: Record<string, unknown>|unknown[]): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
-  abstract getHistory(options: Dictionary): Promise<NZBQueueItem[]>;
+  abstract getHistory(options: Record<string, unknown>): Promise<NZBQueueItem[]>;
   abstract getQueue(): Promise<NZBQueue>;
   abstract pauseQueue(): Promise<NZBResult>;
   abstract resumeQueue(): Promise<NZBResult>;

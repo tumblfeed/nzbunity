@@ -1,36 +1,6 @@
 import browser from 'webextension-polyfill';
-import { FlatDictionary, NestedDictionary, StringDictionary } from './interfaces';
-
-export declare interface RequestOptions {
-  url: string;
-  method?: string;
-  headers?: StringDictionary;
-  params?: NestedDictionary;
-  body?: string | FormData;
-  username?: string;
-  password?: string;
-  json?: boolean;
-  multipart?: boolean;
-  files?: {
-    [key:string]: {
-      filename: string;
-      type: string;
-      content: any;
-    }
-  };
-  mode?: string,
-  cache?: string,
-  credentials?: string,
-  redirect?: string,
-  referrerPolicy?: string,
-  debug?: boolean;
-}
-
-export declare interface CreateAddLinkOptions {
-  url: string;
-  category?: string;
-}
-
+import { RequestOptions } from './interfaces';
+export * from './interfaces';
 
 export function setMenuIcon(color: string = 'green', status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
@@ -68,13 +38,11 @@ export function getQueryParam(
   return queryToObject(query).get(k) ?? def;
 }
 
-export function objectToQuery(obj: FlatDictionary): string {
+export function objectToQuery(obj: Record<string, unknown>): string {
   return Object.entries(obj)
-    .reduce((params, [k, v]) => {
-      params.set(k, String(v));
-      return params;
-    }, new URLSearchParams())
-    .toString();
+    .map(([k, v]) => [encodeURIComponent(k), encodeURIComponent(String(v))])
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&');
 }
 
 /**
@@ -82,14 +50,12 @@ export function objectToQuery(obj: FlatDictionary): string {
  * @param url
  */
 export function parseUrl(url: string): URL {
-  // Add missing protocol: current protocol if relative, http if not specified
-  if (/^\/\//.test(url)) {
-      url = `${window.location.protocol}${url}`;
-    } else if (!/^\w+:\/\//i.test(url)) {
-      url = `http://${url}`;
-    }
+  // Add missing http if url looks like a host
+  if (/^\w+\./.test(url)) {
+    url = `http://${url}`;
+  }
 
-    return new URL(url);
+  return new URL(url, window.location.href);
 }
 
 /**
@@ -104,7 +70,7 @@ export async function request(options: RequestOptions): Promise<any> {
 
   const method: string = String(options.method || 'GET').toUpperCase();
   const parsed: URL = parseUrl(options.url);
-  const headers: StringDictionary = options.headers || {};
+  const headers: Record<string, string> = options.headers || {};
 
   let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
   const search: URLSearchParams = parsed.searchParams;
@@ -154,7 +120,7 @@ export async function request(options: RequestOptions): Promise<any> {
         case 'application/x-www-form-urlencoded':
         default:
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
-          options.body = objectToQuery(options.params as FlatDictionary);
+          options.body = objectToQuery(options.params);
       }
     }
   }
@@ -242,9 +208,6 @@ export function trunc(s: string, n: number): string {
 
 export function simplifyCategory(s: string): string {
   // If category name contains any non-word characters (eg 'Lol > Wut')
-  // just return the first word (eg 'Lol')
-  if (/[^\w\s]/.test(s)) {
-    [s] = s.split(/\s*[^\w\s]+\s*/i);
-  }
-  return s.toLowerCase();
+  // just return the first word (eg 'lol')
+  return s.split(/[^\w\d]+/i).shift().toLowerCase();
 }

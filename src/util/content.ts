@@ -1,5 +1,4 @@
 import browser from 'webextension-polyfill';
-import { FlatDictionary } from './interfaces';
 import { CreateAddLinkOptions, request } from '.';
 
 export const iconGreen: string = browser.runtime.getURL('content/images/nzb-16-green.png');
@@ -23,7 +22,7 @@ export function addFileByRequest(
   filename: string,
   category: string = '',
   url: string = window.location.origin,
-  params: FlatDictionary = {},
+  params: Record<string, unknown> = {},
 ): Promise<any> {
   // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
   // Fetches a single NZB from a POST request and adds it to the server as a file upload
