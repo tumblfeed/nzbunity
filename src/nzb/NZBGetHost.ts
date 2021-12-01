@@ -7,7 +7,7 @@ import {
   Kilobyte,
   Megabyte,
 } from '../util';
-import { Dictionary, StringDictionary } from '../util/types';
+import { Dictionary, StringDictionary } from '../util/interfaces';
 import {
   NZBAddOptions,
   NZBAddUrlResult,
@@ -88,6 +88,10 @@ export class NZBGetHost extends NZBHost {
         res.result = true;
       }
       return res;
+    }
+
+    async getHistory(): Promise<NZBQueueItem[]> {
+      return [];
     }
 
     async getQueue(): Promise<NZBQueue> {

@@ -20,7 +20,7 @@ beforeAll(() => {
 });
 
 describe('nzb/NZBGetHost::construct', () => {
-  test('Constructor works', () => {
+  it('Constructor works', () => {
     expect(host).toBeInstanceOf(NZBGetHost);
     expect(host.name).toBe('NZBGet');
     expect(host.displayName).toBe('Test NZBGet');
@@ -34,7 +34,7 @@ describe('nzb/NZBGetHost::construct', () => {
 
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
 describe('nzb/NZBGetHost::call', () => {
-  test('Can make a request to NZBGet', async () => {
+  it('Can make a request to NZBGet', async () => {
     expect.assertions(3);
 
     const res = await host.call('status');
@@ -47,7 +47,7 @@ describe('nzb/NZBGetHost::call', () => {
 
 // abstract getCategories(): Promise<string[]>;
 describe('nzb/NZBGetHost::getCategories', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(2);
 
     const response = await host.getCategories();
@@ -59,7 +59,7 @@ describe('nzb/NZBGetHost::getCategories', () => {
 
 // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
 describe('nzb/NZBGetHost::setMaxSpeed', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(2);
 
     const response = await host.setMaxSpeed(75);
@@ -71,7 +71,7 @@ describe('nzb/NZBGetHost::setMaxSpeed', () => {
 
 // abstract getQueue(): Promise<NZBQueueResult>;
 describe('nzb/NZBGetHost::getQueue', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(3);
 
     const response = await host.getQueue();
@@ -85,7 +85,7 @@ describe('nzb/NZBGetHost::getQueue', () => {
 // abstract resumeQueue(): Promise<NZBResult>;
 // abstract pauseQueue(): Promise<NZBResult>;
 describe('nzb/NZBGetHost::pauseQueue / resumeQueue', () => {
-  test('Can pause queue', async () => {
+  it('Can pause queue', async () => {
     expect.assertions(3);
 
     const response = await host.pauseQueue();
@@ -98,7 +98,7 @@ describe('nzb/NZBGetHost::pauseQueue / resumeQueue', () => {
     expect(queue.status).not.toBeNull();
   });
 
-  test('Can resume queue', async () => {
+  it('Can resume queue', async () => {
     expect.assertions(3);
 
     const response = await host.resumeQueue();
@@ -116,7 +116,7 @@ describe('Queue manipulation', () => {
   let id: string;
   let item: NZBQueueItem;
 
-  test('Adds NZB by URL', async () => {
+  it('Adds NZB by URL', async () => {
     expect.assertions(2);
 
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
@@ -135,7 +135,7 @@ describe('Queue manipulation', () => {
     expect(id.length).toBeTruthy();
   });
 
-  test('Can pause queue item', async () => {
+  it('Can pause queue item', async () => {
     expect.assertions(2);
 
     await sleep(1000); // wait for previous ops
@@ -151,7 +151,7 @@ describe('Queue manipulation', () => {
     item = (await host.getQueue()).queue.find((item) => item.id === id);
   });
 
-  test('Can resume queue item', async () => {
+  it('Can resume queue item', async () => {
     expect.assertions(2);
 
     await sleep(2000); // wait for previous ops
@@ -166,7 +166,7 @@ describe('Queue manipulation', () => {
     item = (await host.getQueue()).queue.find((item) => item.id === id);
   });
 
-  test('Can remove queue item', async () => {
+  it('Can remove queue item', async () => {
     expect.assertions(2);
 
     await sleep(3000); // wait for previous ops
@@ -179,7 +179,8 @@ describe('Queue manipulation', () => {
     expect(response.success).toBeTruthy();
   });
 
-  // TODO: This does not work from the node context, figure it out
+  // This does not work from the node context, figure it out
+  it.todo('Adds NZB by file upload, paused');
   // test('Adds NZB by file upload, paused', async () => {
   //   expect.assertions(2);
 
@@ -203,7 +204,7 @@ describe('Queue manipulation', () => {
 
 // abstract test(): Promise<NZBResult>;
 describe('nzb/NZBGetHost::test', () => {
-  test('Can construct a NZBGet host', async () => {
+  it('Can construct a NZBGet host', async () => {
     expect.assertions(2);
 
     const response = await host.test();

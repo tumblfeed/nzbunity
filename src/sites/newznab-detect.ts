@@ -5,7 +5,7 @@ if (!window['NZBUnityNewznabDetect']) { // Only run once
         console.log('[NewznabDetect] Newznab page detected');
 
         // Newznab usually has jQuery already, if so use it to notify the user
-        const iconUrl:string = chrome.extension.getURL('content/images/nzb-64-green.png');
+        const iconUrl:string = browser.runtime.getURL('content/images/nzb-64-green.png');
         const div:HTMLElement = document.createElement('div');
         div.id = 'NZBUnityAlert';
         div.innerHTML = `

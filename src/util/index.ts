@@ -1,5 +1,5 @@
-import { browser } from "webextension-polyfill-ts";
-import { FlatDictionary, NestedDictionary, StringDictionary } from "./types";
+import browser from 'webextension-polyfill';
+import { FlatDictionary, NestedDictionary, StringDictionary } from './interfaces';
 
 export declare interface RequestOptions {
   url: string;
@@ -32,12 +32,12 @@ export declare interface CreateAddLinkOptions {
 }
 
 
-export function setMenuIcon(color: string = "green", status: string = null): Promise<void> {
+export function setMenuIcon(color: string = 'green', status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
   //       Green for NZBGet, Orange for SABnzbd
   color = color.toLowerCase();
-  if (/^(active|downloading)/i.test(color)) color = "green";
-  if (/^(inactive|idle|paused|gray)/i.test(color)) color = "grey";
+  if (/^(active|downloading)/i.test(color)) color = 'green';
+  if (/^(inactive|idle|paused|gray)/i.test(color)) color = 'grey';
 
   if (!/grey|green|orange/.test(color)) {
     console.warn(`[setMenuIcon] Invalid color: ${color}, ${status}`);
@@ -45,11 +45,11 @@ export function setMenuIcon(color: string = "green", status: string = null): Pro
   }
 
   browser.browserAction.setTitle({
-    title: "NZB Unity" + (status ? ` - ${status}` : ""),
+    title: 'NZB Unity' + (status ? ` - ${status}` : ''),
   });
 
-  const bySize = ["16", "32", "64"].reduce((set, size) => {
-    set[size] = browser.extension.getURL(`content/images/nzb-${size}-${color}.png`);
+  const bySize = ['16', '32', '64'].reduce((set, size) => {
+    set[size] = browser.runtime.getURL(`content/images/nzb-${size}-${color}.png`);
     return set;
   }, {});
 
@@ -102,15 +102,15 @@ export async function request(options: RequestOptions): Promise<any> {
     throw Error('No URL provided');
   }
 
-  const method: string = String(options.method || "GET").toUpperCase();
+  const method: string = String(options.method || 'GET').toUpperCase();
   const parsed: URL = parseUrl(options.url);
   const headers: StringDictionary = options.headers || {};
 
   let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
-  let search: URLSearchParams = parsed.searchParams;
+  const search: URLSearchParams = parsed.searchParams;
 
   if (options.params || options.files || options.multipart) {
-    if (method === "GET") {
+    if (method === 'GET') {
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params)) {
         search.set(k, String(v));
@@ -119,22 +119,22 @@ export async function request(options: RequestOptions): Promise<any> {
       // Other types of requests, figure out content type if not specified
       // and build the request body if not provided.
       const type =
-        headers["Content-Type"] ||
-        (options.json && "json") ||
-        (options.files && "multipart") ||
-        (options.multipart && "multipart") ||
-        "form";
+        headers['Content-Type'] ||
+        (options.json && 'json') ||
+        (options.files && 'multipart') ||
+        (options.multipart && 'multipart') ||
+        'form';
 
       switch (type) {
-        case "json":
-        case "application/json":
-          headers["Content-Type"] = "application/json";
+        case 'json':
+        case 'application/json':
+          headers['Content-Type'] = 'application/json';
           options.body = JSON.stringify(options.params);
           break;
 
-        case "multipart":
-        case "multipart/form-data":
-          delete headers["Content-Type"];
+        case 'multipart':
+        case 'multipart/form-data':
+          delete headers['Content-Type'];
           options.body = new FormData();
 
           Object.keys(options.params ?? []).forEach((k) => {
@@ -150,10 +150,10 @@ export async function request(options: RequestOptions): Promise<any> {
           });
           break;
 
-        case "form":
-        case "application/x-www-form-urlencoded":
+        case 'form':
+        case 'application/x-www-form-urlencoded':
         default:
-          headers["Content-Type"] = "application/x-www-form-urlencoded";
+          headers['Content-Type'] = 'application/x-www-form-urlencoded';
           options.body = objectToQuery(options.params as FlatDictionary);
       }
     }
@@ -164,7 +164,7 @@ export async function request(options: RequestOptions): Promise<any> {
   }
 
   if (options.username && options.password) {
-    headers.Authorization = `Basic ${btoa(`${options.username}:${options.password}`)}`;
+    headers.Authorization = `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`;
     options.credentials = 'include';
   }
 
@@ -212,8 +212,8 @@ export const Gigabyte = Math.pow(thousand, 3);
 
 export function humanSize(bytes: number): string {
   const i: number = bytes ? Math.floor(Math.log(bytes) / Math.log(thousand)) : 0;
-  const n: string = (bytes / Math.pow(thousand, i)).toFixed(2).replace(/\.?0+$/, "");
-  const u: string = ["B", "kB", "MB", "GB", "TB"][i];
+  const n: string = (bytes / Math.pow(thousand, i)).toFixed(2).replace(/\.?0+$/, '');
+  const u: string = ['B', 'kB', 'MB', 'GB', 'TB'][i];
 
   return `${n} ${u}`;
 }
@@ -241,8 +241,8 @@ export function trunc(s: string, n: number): string {
 }
 
 export function simplifyCategory(s: string): string {
-  // If category name contains any non-word characters (eg "Lol > Wut")
-  // just return the first word (eg "Lol")
+  // If category name contains any non-word characters (eg 'Lol > Wut')
+  // just return the first word (eg 'Lol')
   if (/[^\w\s]/.test(s)) {
     [s] = s.split(/\s*[^\w\s]+\s*/i);
   }

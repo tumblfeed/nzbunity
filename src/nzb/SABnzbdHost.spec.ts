@@ -19,7 +19,7 @@ beforeAll(() => {
 });
 
 describe('nzb/SABnzbdHost::construct', () => {
-  test('Constructor works', () => {
+  it('Constructor works', () => {
     expect(host).toBeInstanceOf(SABnzbdHost);
     expect(host.name).toBe('SABnzbd');
     expect(host.displayName).toBe('Test SAB');
@@ -33,7 +33,7 @@ describe('nzb/SABnzbdHost::construct', () => {
 
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::call', () => {
-  test('Can make a request to SABnzbd', async () => {
+  it('Can make a request to SABnzbd', async () => {
     expect.assertions(3);
 
     const res = await host.call('fullstatus', { skip_dashboard: 1 });
@@ -46,7 +46,7 @@ describe('nzb/SABnzbdHost::call', () => {
 
 // abstract test(): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::test', () => {
-  test('Can construct a SABnzbd host', async () => {
+  it('Can construct a SABnzbd host', async () => {
     expect.assertions(2);
 
     const res = await host.test();
@@ -58,7 +58,7 @@ describe('nzb/SABnzbdHost::test', () => {
 
 // abstract getCategories(): Promise<string[]>;
 describe('nzb/SABnzbdHost::getCategories', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(2);
 
     const res = await host.getCategories();
@@ -70,7 +70,7 @@ describe('nzb/SABnzbdHost::getCategories', () => {
 
 // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::setMaxSpeed', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(2);
 
     const res = await host.setMaxSpeed(45000000);
@@ -82,7 +82,7 @@ describe('nzb/SABnzbdHost::setMaxSpeed', () => {
 
 // abstract getQueue(): Promise<NZBQueueResult>;
 describe('nzb/SABnzbdHost::getQueue', () => {
-  test('Returns expected value', async () => {
+  it('Returns expected value', async () => {
     expect.assertions(3);
 
     const res = await host.getQueue();
@@ -96,7 +96,7 @@ describe('nzb/SABnzbdHost::getQueue', () => {
 // abstract resumeQueue(): Promise<NZBResult>;
 // abstract pauseQueue(): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::pauseQueue / resumeQueue', () => {
-  test('Can pause queue', async () => {
+  it('Can pause queue', async () => {
     expect.assertions(3);
 
     const res = await host.pauseQueue();
@@ -109,7 +109,7 @@ describe('nzb/SABnzbdHost::pauseQueue / resumeQueue', () => {
     expect(queue.status).toBe('Paused');
   });
 
-  test('Can resume queue', async () => {
+  it('Can resume queue', async () => {
     expect.assertions(3);
 
     const res = await host.resumeQueue();
@@ -127,7 +127,7 @@ describe('Queue manipulation', () => {
   let id: string;
   let item: NZBQueueItem;
 
-  test('Adds NZB by URL', async () => {
+  it('Adds NZB by URL', async () => {
     expect.assertions(2);
 
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
@@ -146,7 +146,7 @@ describe('Queue manipulation', () => {
     expect(id.length).toBeTruthy();
   });
 
-  test('Can pause queue item', async () => {
+  it('Can pause queue item', async () => {
     expect.assertions(2);
 
     await sleep(500); // wait for previous ops
@@ -162,7 +162,7 @@ describe('Queue manipulation', () => {
     item = (await host.getQueue()).queue.find((item) => item.id === id);
   });
 
-  test('Can resume queue item', async () => {
+  it('Can resume queue item', async () => {
     expect.assertions(2);
 
     await sleep(1000); // wait for previous ops
@@ -177,7 +177,7 @@ describe('Queue manipulation', () => {
     item = (await host.getQueue()).queue.find((item) => item.id === id);
   });
 
-  test('Can remove queue item', async () => {
+  it('Can remove queue item', async () => {
     expect.assertions(2);
 
     await sleep(1500); // wait for previous ops
@@ -190,7 +190,8 @@ describe('Queue manipulation', () => {
     expect(res.success).toBeTruthy();
   });
 
-  // TODO: This does not work from the node context, figure it out
+  // This does not work from the node context, figure it out
+  it.todo('Adds NZB by file upload, paused');
   // test('Adds NZB by file upload, paused', async () => {
   //   expect.assertions(2);
 

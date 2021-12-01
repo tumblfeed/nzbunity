@@ -8,7 +8,7 @@ import {
   Megabyte,
   Gigabyte,
 } from '../util';
-import { Dictionary, StringDictionary } from '../util/types';
+import { Dictionary, StringDictionary } from '../util/interfaces';
 import {
   NZBAddOptions,
   NZBAddUrlResult,

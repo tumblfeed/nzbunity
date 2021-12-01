@@ -1,4 +1,4 @@
-import { Dictionary, NestedDictionary } from '../util/types';
+import { Dictionary, NestedDictionary } from '../util/interfaces';
 import { parseUrl } from '../util';
 
 export declare interface NZBAddOptions {

@@ -83,7 +83,7 @@ class NZBUnity {
         if (opts.EnableNotifications) {
           chrome.notifications.create(`nzbunity.${id}`, {
             'type': 'basic',
-            'iconUrl': chrome.extension.getURL('content/images/icon-32.png'),
+            'iconUrl': browser.runtime.getURL('content/images/icon-32.png'),
             'title': `NZB Unity - ${title}`,
             'message': message,
           });

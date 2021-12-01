@@ -1,15 +1,23 @@
-import { browser } from "webextension-polyfill-ts";
-import { CreateAddLinkOptions, FlatDictionary } from './types';
-import { request } from '.';
+import browser from 'webextension-polyfill';
+import { FlatDictionary } from './interfaces';
+import { CreateAddLinkOptions, request } from '.';
 
-export const iconGreen: string = chrome.extension.getURL('content/images/nzb-16-green.png');
-export const iconGrey: string = chrome.extension.getURL('content/images/nzb-16-grey.png');
-export const iconOrange: string = chrome.extension.getURL('content/images/nzb-16-orange.png');
-export const iconRed: string = chrome.extension.getURL('content/images/nzb-16-red.png');
+export const iconGreen: string = browser.runtime.getURL('content/images/nzb-16-green.png');
+export const iconGrey: string = browser.runtime.getURL('content/images/nzb-16-grey.png');
+export const iconOrange: string = browser.runtime.getURL('content/images/nzb-16-orange.png');
+export const iconRed: string = browser.runtime.getURL('content/images/nzb-16-red.png');
 export const backgroundNormal: string = 'rgb(23, 162, 184)';
 export const backgroundPending: string = 'rgb(156, 166, 168)';
 
 export { request };
+
+export function ready(callback: () => void): void {
+  if (document.readyState != 'loading'){
+    callback();
+  } else {
+    document.addEventListener('DOMContentLoaded', callback);
+  }
+}
 
 export function addFileByRequest(
   filename: string,
@@ -76,31 +84,31 @@ export function createButton(): HTMLElement {
   Object.assign(btn.style, {
     background: `${backgroundNormal} url(${iconGreen}) no-repeat scroll 4px center`,
     border: '1px solid rgb(19, 132, 150)',
-    'border-radius': '4px',
+    borderRadius: '4px',
     color: '#fff',
     cursor: 'pointer',
     display: 'inline-block',
-    'font-size': '11px',
-    'font-weight': 'normal',
+    fontSize: '11px',
+    fontWeight: 'normal',
     margin: '0 0.5em 0 0',
     padding: '3px 8px 3px 25px',
-    'text-shadow': '0 -1px 0 rgba(0,0,0,0.25)',
-    'white-space': 'nowrap',
+    textShadow: '0 -1px 0 rgba(0,0,0,0.25)',
+    whiteSpace: 'nowrap',
   });
 
   btn.addEventListener('nzb.pending', () => Object.assign(btn.style, {
-    'background-color': backgroundPending,
-    'background-image': `url(${iconGrey})`,
+    backgroundColor: backgroundPending,
+    backgroundImage: `url(${iconGrey})`,
   }));
 
   btn.addEventListener('nzb.success', () => Object.assign(btn.style, {
-    'background-color': backgroundNormal,
-    'background-image': `url(${iconGreen})`,
+    backgroundColor: backgroundNormal,
+    backgroundImage: `url(${iconGreen})`,
   }));
 
   btn.addEventListener('nzb.failure', () => Object.assign(btn.style, {
-    'background-color': backgroundNormal,
-    'background-image': `url(${iconRed})`,
+    backgroundColor: backgroundNormal,
+    backgroundImage: `url(${iconRed})`,
   }));
 
   return btn;
