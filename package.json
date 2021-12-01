@@ -86,5 +86,6 @@
     "typescript": "^4.0.3",
     "web-ext-types": "^3.2.1",
     "webextension-polyfill-ts": "^0.20.0"
-  }
+  },
+  "packageManager": "yarn@3.1.1"
 }
