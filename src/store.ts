@@ -1,29 +1,29 @@
 import browser from 'webextension-polyfill';
 
 export const storageArea = browser.storage.local;
-const manifestVersion = browser.runtime.getManifest().version;
+const manifest = browser.runtime.getManifest();
 
 // Current version
 export interface ProfileOptions {
-  ProfileName: string;
-  ProfileType: string;
-  ProfileHost: string;
-  ProfileApiKey: string;
-  ProfileUsername: string;
-  ProfilePassword: string;
-  ProfileServerUrl: string;
-  ProfileHostAsEntered: boolean;
+  Name: string;
+  Type: string;
+  Host: string;
+  ApiKey: string;
+  Username: string;
+  Password: string;
+  ServerUrl: string;
+  HostAsEntered: boolean;
 }
 
 export const DefaultProfileOptions: ProfileOptions = {
-  ProfileName: 'Default',
-  ProfileType: null,
-  ProfileHost: null,
-  ProfileApiKey: null,
-  ProfileUsername: null,
-  ProfilePassword: null,
-  ProfileServerUrl: null,
-  ProfileHostAsEntered: false,
+  Name: 'Default',
+  Type: null,
+  Host: null,
+  ApiKey: null,
+  Username: null,
+  Password: null,
+  ServerUrl: null,
+  HostAsEntered: false,
 };
 
 export interface ProviderOptions {
@@ -57,7 +57,7 @@ export interface NZBUnityOptions {
 
 export const DefaultOptions: NZBUnityOptions = {
   Initialized: false,
-  Version: manifestVersion,
+  Version: manifest.version,
   Debug: false,
   Profiles: {},
   ActiveProfile: null,
@@ -80,11 +80,14 @@ export const DefaultOptions: NZBUnityOptions = {
 
 export async function getOptions(): Promise<NZBUnityOptions> {
   await runMigrations();
-  return (await storageArea.get(DefaultOptions)) as NZBUnityOptions;
+
+  const options = (await storageArea.get(DefaultOptions)) as NZBUnityOptions;
+  await updateProviders(options); // init providers
+  return options;
 }
 
 export async function setOptions(options: NZBUnityOptions): Promise<NZBUnityOptions> {
-  options.Version = manifestVersion; // Set last version used
+  options.Version = manifest.version; // Set last version used
   await storageArea.set(options);
   return options;
 }
@@ -117,21 +120,54 @@ export async function setActiveProfile(profileName: string): Promise<void> {
   await setOptions(options);
 }
 
+export async function getProfileCount(): Promise<number> {
+  const profiles = await getProfiles();
+  return Object.keys(profiles).length;
+}
+
+export async function getDefaultProfile(): Promise<ProfileOptions> {
+  const profiles = await getProfiles();
+  if (profiles['Default']) {
+    return profiles['Default'];
+  } else if (profiles['default']) {
+    return profiles['default'];
+  } else if (Object.keys(profiles).length > 0) {
+    return Object.values(profiles)[0];
+  } else {
+    return null;
+  }
+}
+
 // Providers
+export async function updateProviders(options: NZBUnityOptions): Promise<void> {
+  // Init providers from manifest
+  const providers = {} as Record<string, ProviderOptions>;
+
+  for (const script of manifest.content_scripts) {
+    const js: string = Array.isArray(script.js) && [...script.js].pop();
+    const [, name] = js ? js.match(/(\w+)\.js$/) : [];
+
+    if (name && name !== 'util') {
+      providers[name] = {
+        Enabled: options.Providers[name]?.Enabled ?? true,
+        Matches: [...script.matches],
+        Js: [...script.js],
+      };
+    }
+  }
+
+  options.Providers = providers;
+  await setOptions(options);
+}
+
 export async function getProviders(): Promise<Record<string, ProviderOptions>> {
   const options = await getOptions();
   return options.Providers;
 }
 
-export async function setProviders(providers: Record<string, ProviderOptions>): Promise<void> {
-  const options = await getOptions();
-  options.Providers = providers;
-  await setOptions(options);
-}
-
 export async function getProvider(providerName: string): Promise<ProviderOptions> {
-  const options = await getOptions();
-  return options.Providers[providerName] ?? ({} as ProviderOptions);
+  const providers = await getProviders();
+  return providers[providerName] ?? ({} as ProviderOptions);
 }
 
 // Watchers
@@ -210,7 +246,7 @@ export async function migrateV1(): Promise<void> {
     // Copy base options
     const newOptions: NZBUnityOptions = {
       ...DefaultOptions,
-      Version: manifestVersion,
+      Version: manifest.version,
     };
 
     for (const [key, value] of Object.entries(oldOptions)) {

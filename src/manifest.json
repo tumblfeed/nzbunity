@@ -51,28 +51,6 @@
   ],
   "content_scripts": [
     {
-      "matches": [
-        "*://*.althub.co.za/*",
-        "*://*.binsearch.info/*",
-        "*://*.dognzb.cr/*",
-        "*://*.drunkenslug.com/*",
-        "*://*.gingadaddy.com/*",
-        "*://*.nzbfinder.ws/*",
-        "*://*.nzbgeek.info/*",
-        "*://*.nzbindex.com/*",
-        "*://*.nzbindex.nl/*",
-        "*://*.nzbking.com/*",
-        "*://*.nzbserver.com/*",
-        "*://*.nzb.su/*",
-        "*://*.omgwtfnzbs.me/*",
-        "*://*.tabula-rasa.pw/*"
-      ],
-      "js": [
-        "background/util.js"
-      ],
-      "run_at": "document_start"
-    },
-    {
       "matches": ["*://*.althub.co.za/*"],
       "js": ["content/sites/althub.js"]
     },
