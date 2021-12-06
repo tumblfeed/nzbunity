@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill';
-import { CreateAddLinkOptions, request } from '.';
+import { request, RequestOptions } from './util';
+export { request, RequestOptions };
 
 export const iconGreen: string = browser.runtime.getURL('content/images/nzb-16-green.png');
 export const iconGrey: string = browser.runtime.getURL('content/images/nzb-16-grey.png');
@@ -8,9 +9,12 @@ export const iconRed: string = browser.runtime.getURL('content/images/nzb-16-red
 export const backgroundNormal: string = 'rgb(23, 162, 184)';
 export const backgroundPending: string = 'rgb(156, 166, 168)';
 
-export { request };
+export interface AddUrlOptions {
+  url: string;
+  category?: string;
+}
 
-export function ready(callback: () => void): void {
+export function onReady(callback: () => void): void {
   if (document.readyState != 'loading') {
     callback();
   } else {
@@ -33,7 +37,7 @@ export function addFileByRequest(
   );
 }
 
-export function bindAddUrl(options: CreateAddLinkOptions, el: HTMLElement, exclusive: boolean = false): HTMLElement {
+export function bindAddUrl(options: AddUrlOptions, el: HTMLElement, exclusive: boolean = false): HTMLElement {
   el.addEventListener(
     'click',
     event => {
@@ -119,7 +123,7 @@ export function createButton(): HTMLElement {
   return btn;
 }
 
-export function createAddUrlLink(options: CreateAddLinkOptions, adjacent: HTMLElement = null): HTMLElement {
+export function createAddUrlLink(options: AddUrlOptions, adjacent: HTMLElement = null): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const a = bindAddUrl(options, createLink());
   a.setAttribute('href', options.url);
@@ -136,7 +140,7 @@ export function createAddUrlLink(options: CreateAddLinkOptions, adjacent: HTMLEl
   return a;
 }
 
-export function createAddUrlButton(options: CreateAddLinkOptions, adjacent: HTMLElement = null): HTMLElement {
+export function createAddUrlButton(options: AddUrlOptions, adjacent: HTMLElement = null): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const btn = bindAddUrl(options, createButton());
 

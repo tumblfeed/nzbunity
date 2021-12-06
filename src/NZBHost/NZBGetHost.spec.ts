@@ -1,30 +1,29 @@
 // import { readFileSync } from 'fs';
 import { NZBQueueItem } from '.';
-import { SABnzbdHost } from './SABnzbdHost';
-import * as env from '../../.env.json';
+import { NZBGetHost } from './NZBGetHost';
 
 // Queue operations need a little time in between or then don't work
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 jest.setTimeout(15000);
 
-let host: SABnzbdHost;
+let host: NZBGetHost;
 
 beforeAll(() => {
-  host = new SABnzbdHost({
-    displayName: 'Test SAB',
-    host: env.SABnzbd.host,
-    hostAsEntered: env.SABnzbd.hostAsEntered,
-    apikey: env.SABnzbd.apikey,
+  host = new NZBGetHost({
+    displayName: 'Test NZBGet',
+    host: process.env.NZBGET_HOST,
+    username: process.env.NZBGET_USERNAME,
+    password: process.env.NZBGET_PASSWORD,
   });
 });
 
-describe('nzb/SABnzbdHost::construct', () => {
+describe('nzb/NZBGetHost::construct', () => {
   it('Constructor works', () => {
-    expect(host).toBeInstanceOf(SABnzbdHost);
-    expect(host.name).toBe('SABnzbd');
-    expect(host.displayName).toBe('Test SAB');
-    expect(host.host).toBe(env.SABnzbd.host);
-    expect(host.apikey).toBe(env.SABnzbd.apikey);
+    expect(host).toBeInstanceOf(NZBGetHost);
+    expect(host.name).toBe('NZBGet');
+    expect(host.displayName).toBe('Test NZBGet');
+    expect(host.host).toBe(process.env.NZBGET_HOST);
+    expect(host.username).toBe(process.env.NZBGET_USERNAME);
     expect(host.hostParsed).not.toBeNull();
   });
 });
@@ -32,90 +31,78 @@ describe('nzb/SABnzbdHost::construct', () => {
 // Note, the following tests will fail if sab instance is not running
 
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
-describe('nzb/SABnzbdHost::call', () => {
-  it('Can make a request to SABnzbd', async () => {
+describe('nzb/NZBGetHost::call', () => {
+  it('Can make a request to NZBGet', async () => {
     expect.assertions(3);
 
-    const res = await host.call('fullstatus', { skip_dashboard: 1 });
+    const res = await host.call('status');
 
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
-    expect(res).toHaveProperty('result.pid');
-  });
-});
-
-// abstract test(): Promise<NZBResult>;
-describe('nzb/SABnzbdHost::test', () => {
-  it('Can construct a SABnzbd host', async () => {
-    expect.assertions(2);
-
-    const res = await host.test();
-
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(res).toHaveProperty('result.UpTimeSec');
   });
 });
 
 // abstract getCategories(): Promise<string[]>;
-describe('nzb/SABnzbdHost::getCategories', () => {
+describe('nzb/NZBGetHost::getCategories', () => {
   it('Returns expected value', async () => {
     expect.assertions(2);
 
-    const res = await host.getCategories();
+    const response = await host.getCategories();
 
-    expect(res).not.toBeNull();
-    expect(Array.isArray(res)).toBe(true);
+    expect(response).not.toBeNull();
+    expect(Array.isArray(response)).toBe(true);
   });
 });
 
 // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
-describe('nzb/SABnzbdHost::setMaxSpeed', () => {
+describe('nzb/NZBGetHost::setMaxSpeed', () => {
   it('Returns expected value', async () => {
     expect.assertions(2);
 
-    const res = await host.setMaxSpeed(45000000);
+    const response = await host.setMaxSpeed(75);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
   });
 });
 
 // abstract getQueue(): Promise<NZBQueueResult>;
-describe('nzb/SABnzbdHost::getQueue', () => {
+describe('nzb/NZBGetHost::getQueue', () => {
   it('Returns expected value', async () => {
     expect.assertions(3);
 
-    const res = await host.getQueue();
+    const response = await host.getQueue();
 
-    expect(res).not.toBeNull();
-    expect(res).toHaveProperty('queue');
-    expect(Array.isArray(res.queue)).toBe(true);
+    expect(response).not.toBeNull();
+    expect(response).toHaveProperty('queue');
+    expect(Array.isArray(response.queue)).toBe(true);
   });
 });
 
 // abstract resumeQueue(): Promise<NZBResult>;
 // abstract pauseQueue(): Promise<NZBResult>;
-describe('nzb/SABnzbdHost::pauseQueue / resumeQueue', () => {
+describe('nzb/NZBGetHost::pauseQueue / resumeQueue', () => {
   it('Can pause queue', async () => {
     expect.assertions(3);
 
-    const res = await host.pauseQueue();
+    const response = await host.pauseQueue();
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     const queue = await host.getQueue();
 
-    expect(queue.status).toBe('Paused');
+    expect(queue.status).not.toBeNull();
   });
 
   it('Can resume queue', async () => {
     expect.assertions(3);
 
-    const res = await host.resumeQueue();
+    const response = await host.resumeQueue();
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     const queue = await host.getQueue();
 
@@ -131,30 +118,30 @@ describe('Queue manipulation', () => {
     expect.assertions(2);
 
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-    const res = await host.addUrl(env.nzb.url, {
+    const response = await host.addUrl(process.env.NZB_URL, {
       category: 'download',
       name: 'Test NZB',
     });
 
-    id = res.result as string;
+    id = response.result as string;
     item = (await host.getQueue()).queue.find(item => item.id === id);
 
-    expect(res).not.toBeNull();
+    expect(response).not.toBeNull();
     expect(id.length).toBeTruthy();
   });
 
   it('Can pause queue item', async () => {
     expect.assertions(2);
 
-    await sleep(500); // wait for previous ops
+    await sleep(1000); // wait for previous ops
 
     // abstract pauseId(id: string): Promise<NZBResult>;
     // abstract pauseItem(id: NZBQueueItem): Promise<NZBResult>;
     // note, pauseItem uses pauseId internally
-    const res = await host.pauseItem(item);
+    const response = await host.pauseItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     item = (await host.getQueue()).queue.find(item => item.id === id);
   });
@@ -162,14 +149,14 @@ describe('Queue manipulation', () => {
   it('Can resume queue item', async () => {
     expect.assertions(2);
 
-    await sleep(1000); // wait for previous ops
+    await sleep(2000); // wait for previous ops
 
     // abstract resumeId(id: string): Promise<NZBResult>;
     // abstract resumeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const res = await host.resumeItem(item);
+    const response = await host.resumeItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     item = (await host.getQueue()).queue.find(item => item.id === id);
   });
@@ -177,14 +164,14 @@ describe('Queue manipulation', () => {
   it('Can remove queue item', async () => {
     expect.assertions(2);
 
-    await sleep(1500); // wait for previous ops
+    await sleep(3000); // wait for previous ops
 
     // abstract removeId(id: string): Promise<NZBResult>;
     // abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const res = await host.removeItem(item);
+    const response = await host.removeItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
   });
 
   // This does not work from the node context, figure it out
@@ -208,4 +195,16 @@ describe('Queue manipulation', () => {
   //   );
 
   // });
+});
+
+// abstract test(): Promise<NZBResult>;
+describe('nzb/NZBGetHost::test', () => {
+  it('Can construct a NZBGet host', async () => {
+    expect.assertions(2);
+
+    const response = await host.test();
+
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
+  });
 });

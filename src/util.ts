@@ -1,6 +1,29 @@
 import browser from 'webextension-polyfill';
-import { RequestOptions } from './interfaces';
-export * from './interfaces';
+
+export interface RequestOptions {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+  params?: Record<string, unknown>;
+  body?: string | FormData;
+  username?: string;
+  password?: string;
+  json?: boolean;
+  multipart?: boolean;
+  files?: {
+    [key: string]: {
+      filename: string;
+      type: string;
+      content: any;
+    };
+  };
+  mode?: string;
+  cache?: string;
+  credentials?: string;
+  redirect?: string;
+  referrerPolicy?: string;
+  debug?: boolean;
+}
 
 export function setMenuIcon(color: string = 'green', status: string = null): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
@@ -58,7 +81,7 @@ export function parseUrl(url: string): URL {
  * Wraps a fetch() request to handle common options in a sensible way.
  * @param RequestOptions options
  */
-export async function request(options: RequestOptions): Promise<any> {
+export async function request(options: RequestOptions): Promise<unknown> {
   // Options wrangling
   if (!options.url) {
     throw Error('No URL provided');

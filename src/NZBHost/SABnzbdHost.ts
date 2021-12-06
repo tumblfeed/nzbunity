@@ -1,4 +1,5 @@
-import { request, RequestOptions, humanSize, ucFirst, objectToQuery, Kilobyte, Megabyte, Gigabyte } from '../util';
+import { RequestOptions } from '../interfaces';
+import { request, humanSize, ucFirst, objectToQuery, Kilobyte, Megabyte, Gigabyte } from '../util';
 import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from '.';
 
 export class SABnzbdHost extends NZBHost {

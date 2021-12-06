@@ -1,6 +1,6 @@
 import { parseUrl } from '../util';
 
-export declare interface NZBAddOptions {
+export interface NZBAddOptions {
   url?: string;
   name?: string;
   category?: string;
@@ -27,7 +27,7 @@ export enum NZBPostProcessing {
   repair_unpack_delete,
 }
 
-export declare interface DirectNZB {
+export interface DirectNZB {
   rcode?: string;
   rtext?: string;
   name?: string;
@@ -41,14 +41,14 @@ export declare interface DirectNZB {
   failure?: string;
 }
 
-export declare interface NZBResult {
+export interface NZBResult {
   success: boolean;
   operation?: string;
   result?: unknown;
   error?: string;
 }
 
-export declare interface NZBQueue {
+export interface NZBQueue {
   status: string;
   speed: string;
   speedBytes: number;
@@ -60,7 +60,7 @@ export declare interface NZBQueue {
   queue: NZBQueueItem[];
 }
 
-export declare interface NZBQueueItem {
+export interface NZBQueueItem {
   id: string;
   status: string;
   name: string;
@@ -73,7 +73,7 @@ export declare interface NZBQueueItem {
   percentage: number;
 }
 
-export declare interface NZBAddUrlResult {
+export interface NZBAddUrlResult {
   success: boolean;
   result?: string;
   error?: string;
