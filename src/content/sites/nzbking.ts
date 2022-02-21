@@ -1,125 +1,40 @@
 class NZBUnityNzbking {
-  public form:JQuery<HTMLElement>;
-  public csrfToken:string;
-  public isList:boolean;
-  public isDetail:boolean;
-
   constructor() {
     Util.storage.get('Providers')
       .then((opts) => {
-        let provider = opts.Providers && opts.Providers.nzbking;
-        let enabled:boolean = provider ? provider.Enabled : true;
+        const provider = opts.Providers && opts.Providers.nzbking;
+        const enabled:boolean = provider ? provider.Enabled : true;
 
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
-          this.form = $('form[name="r"]');
-          this.csrfToken = <string> this.form.find('input[name="csrfmiddlewaretoken"]').val();
-          this.isList = /^\/(group|search)/.test(window.location.pathname);
-          this.isDetail = /^\/(details)/.test(window.location.pathname);
-
-          if (this.form && this.csrfToken) {
-            console.info(this.csrfToken);
-            this.initializeLinks();
-          } else {
-            console.error(`[NZB Unity] Could not locate csrf token, 1-click disabled`);
-          }
+          this.initializeLinks();
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
         }
       });
   }
 
-  getNzbIds():string[] {
-    return this.form.serializeArray()
-      .filter((i) => { return i.name === 'nzb' })
-      .map((i) => { return i.value });
+  getCsrfToken():string {
+    return String($('input[name="csrfmiddlewaretoken"]').val());
+  }
+
+  getNzbUrl(id:string):string {
+    return `${window.location.origin}/nzb:${id}/`;
   }
 
   initializeLinks() {
-    // Create direct download button
-    this.form.find('[type="submit"]').each((i, el) => {
-      let submit:JQuery<HTMLElement> = $(el);
-      let button:JQuery<HTMLElement> = PageUtil.createButton()
-        .on('click', (e) => {
-          e.preventDefault();
-
-          let nzbIds:string[] = this.getNzbIds();
-          if (nzbIds.length) {
-            console.info(`[NZB Unity] Adding ${nzbIds.length} NZB(s)`);
-            button.trigger('nzb.pending');
-
-            Promise.all(nzbIds.map((nzbId) => {
-              return PageUtil.requestAndAddFile(
-                nzbId,
-                '',
-                'http://nzbking.com/nzb/',
-                {
-                  csrfmiddlewaretoken: this.csrfToken,
-                  nzb: nzbId
-                }
-              )
-                .catch((e) => {
-                  console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-                });
-            }))
-              .then((results:any[]) => {
-                setTimeout(() => {
-                  if (results.some((r) => { return r === false; })) {
-                    button.trigger('nzb.failure');
-                  } else {
-                    button.trigger('nzb.success');
-                  }
-                }, 1000);
-              });
-          }
-        })
-        .insertBefore(submit);
-
-      if (this.isDetail) {
-        button.text('Download All').attr('title', 'Download with NZB Unity');
-      }
+    $('a[href^="/nzb:"]').each((i, el) => {
+      const a = $(el);
+      PageUtil.createAddUrlLink({
+        url: `${window.location.origin}${a.attr('href')}`,
+        // category: category
+      })
+        .css({ margin: '0 5px 0 0', 'vertical-align': 'middle' })
+        .insertBefore(a);
     });
-
-    // Direct download links
-    if (this.isList) {
-      $('input[name="nzb"][type="checkbox"]').each((i, el) => {
-        let checkbox = $(el);
-        let link = PageUtil.createLink()
-          .css({ 'margin': '0 0 3px 3px' })
-          .on('click', (e) => {
-            e.preventDefault();
-            link.trigger('nzb.pending');
-
-            let nzbId = <string> checkbox.val();
-
-            console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-
-            return PageUtil.requestAndAddFile(
-              nzbId,
-              '',
-              'http://nzbking.com/nzb/',
-              {
-                csrfmiddlewaretoken: this.csrfToken,
-                nzb: nzbId
-              }
-            )
-              .then((r) => {
-                setTimeout(() => {
-                  link.trigger(r === false ? 'nzb.failure' : 'nzb.success');
-                }, 1000);
-              })
-              .catch((e) => {
-                link.trigger('nzb.failure');
-                console.error(`[NZB Unity] Error fetching NZB content (${nzbId}): ${e.status} ${e.statusText}`);
-              });
-
-          })
-          .insertAfter(checkbox);
-      });
-    }
   }
 }
 
 $(($) => {
-  let nzbIntegration = new NZBUnityNzbking();
+  const nzbIntegration = new NZBUnityNzbking();
 });

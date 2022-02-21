@@ -8,6 +8,7 @@
     "src/content/sites/newznab.ts",
     "src/content/sites/newznab-detect.ts",
     "src/content/sites/althub.ts",
+    "src/content/sites/animetosho.ts",
     "src/content/sites/binsearch.ts",
     "src/content/sites/dognzb.ts",
     "src/content/sites/drunkenslug.ts",

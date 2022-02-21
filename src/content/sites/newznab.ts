@@ -62,7 +62,12 @@ class NZBUnityNewznab {
       if (this.replace) {
         a.replaceWith(link);
       } else {
-        link.css({ margin: '0 .2em 0 .5em' });
+        if (/nzbplanet\.net/i.test(window.location.host)) {
+          a.closest('td').css({ width: '62px' });
+          link.css({ margin: '2px 0 0 3px' });
+        } else {
+          link.css({ margin: '0 .2em 0 .5em' });
+        }
         link.appendTo(a.closest('td'));
       }
     });

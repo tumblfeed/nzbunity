@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.16.2",
+  "version": "1.17.0",
   "author": "clutterskull@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -53,6 +53,7 @@
     {
       "matches": [
         "*://*.althub.co.za/*",
+        "*://*.animetosho.org/*",
         "*://*.binsearch.info/*",
         "*://*.dognzb.cr/*",
         "*://*.drunkenslug.com/*",
@@ -76,6 +77,10 @@
     {
       "matches": ["*://*.althub.co.za/*"],
       "js": ["content/sites/althub.js"]
+    },
+    {
+      "matches": ["*://*.animetosho.org/*"],
+      "js": ["content/sites/animetosho.js"]
     },
     {
       "matches": ["*://*.binsearch.info/*"],

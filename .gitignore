@@ -4,7 +4,7 @@ dist/*
 node_modules
 
 .test
-.env.json
+.env*
 
 # Yarn
 .yarn/*
