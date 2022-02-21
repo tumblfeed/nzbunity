@@ -1,7 +1,4 @@
 import browser from 'webextension-polyfill';
-
-import consola from 'consola';
-
 import {
   NZBUnityOptions,
   DefaultOptions,
@@ -18,8 +15,8 @@ import {
   getDefaultProfile,
   getProviders,
   getProvider,
-  watchOptions,
-  watchActiveProvider,
+  // watchOptions,
+  // watchActiveProvider,
 } from './store';
 
 const testOptions: NZBUnityOptions = {
@@ -187,17 +184,58 @@ describe('providers', () => {
 });
 
 // Watchers
-describe('watchers', () => {
-  it.todo('should watch options');
-  // it('should watch options', async () => {
-  // });
-});
+// Note: jest-webextension-mock does not appear to support storageArea.onChanged
+// describe.only('watchers', () => {
+//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//   const watcher = jest.spyOn(consola, 'debug');
 
-// export function watchOptions(watchers: { [key: string]: (newValue: unknown) => void }): void {
-// export function watchActiveProvider(callback: (provider: ProviderOptions) => void): void {
+//   it('should watch all options', async () => {
+//     watchOptions(consola.debug);
+
+//     const options = await getOptions();
+//     options.DefaultCategory = 'test';
+//     await setOptions(options);
+
+//     expect(watcher).toHaveBeenCalledTimes(1);
+//     expect(watcher).toHaveBeenCalledWith(options);
+//   });
+// });
 
 // Migrations
 describe('migrations', () => {
+  const v1Options = {
+    ActiveProfile: 'Local',
+    Debug: true,
+    DefaultCategory: null,
+    EnableNewznab: true,
+    EnableNotifications: false,
+    IgnoreCategories: false,
+    Initialized: true,
+    InterceptDownloads: true,
+    InterceptExclude: '',
+    OverrideCategory: null,
+    Profiles: {
+      Local: {
+        ApiKey: process.env.SABNZBD_APIKEY,
+        Host: process.env.SABNZBD_HOST,
+        HostAsEntered: false,
+        Name: 'Local',
+        Password: '',
+        ServerUrl: '',
+        Type: 'SABnzbd',
+        Username: '',
+      },
+    },
+    Providers: {},
+    ProviderDisplay: true,
+    ProviderEnabled: true,
+    ProviderNewznab: 'nzb.cat',
+    RefreshRate: 15,
+    ReplaceLinks: false,
+    SimplifyCategories: true,
+    UITheme: '',
+  };
+
   it.todo('should migrate v1 options');
 });
 //export async function migrateV1(): Promise<void> {

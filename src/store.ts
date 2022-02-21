@@ -1,7 +1,8 @@
 import browser from 'webextension-polyfill';
 
-export const storageArea = browser.storage.local;
 const manifest = browser.runtime.getManifest();
+const storageAreaName = 'local';
+export const storageArea = browser.storage[storageAreaName];
 
 // Current version
 export interface ProfileOptions {
@@ -171,12 +172,18 @@ export async function getProvider(providerName: string): Promise<ProviderOptions
 }
 
 // Watchers
-export function watchOptions(watchers: { [key: string]: (newValue: unknown) => void }): void {
+export function watchOptions(
+  watchers: { [key: string]: (newValue: unknown) => void } | ((newValue: unknown) => void),
+): void {
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local') {
-      for (const [key, value] of Object.entries(changes)) {
-        if (watchers[key]) {
-          watchers[key](value?.newValue);
+    if (areaName === storageAreaName) {
+      if (typeof watchers === 'function') {
+        watchers(changes);
+      } else {
+        for (const [key, value] of Object.entries(changes)) {
+          if (watchers[key]) {
+            watchers[key](value?.newValue);
+          }
         }
       }
     }
@@ -193,52 +200,52 @@ export function watchActiveProvider(callback: (provider: ProviderOptions) => voi
   });
 }
 
-// Used for Migration of options from V1
-interface NZBUnityOptionsV1 extends Record<string, unknown> {
-  Initialized: boolean;
-  Debug: boolean;
-  Profiles: {
-    [key: string]: {
-      ProfileName: string;
-      ProfileType: string;
-      ProfileHost: string;
-      ProfileApiKey: string;
-      ProfileUsername: string;
-      ProfilePassword: string;
-      ProfileServerUrl: string;
-      ProfileHostAsEntered: boolean;
-    };
-  };
-  ActiveProfile: string;
-  Providers: {
-    [key: string]: {
-      Enabled: boolean;
-      Matches: string[];
-      Js: string[];
-    };
-  };
-  ProviderNewznab: string;
-  ProviderEnabled: boolean;
-  ProviderDisplay: boolean;
-  RefreshRate: number;
-  InterceptDownloads: boolean;
-  InterceptExclude: string;
-  EnableNotifications: boolean;
-  EnableNewznab: boolean;
-  IgnoreCategories: boolean;
-  SimplifyCategories: boolean;
-  DefaultCategory: string;
-  OverrideCategory: string;
-  ReplaceLinks: boolean;
-  UITheme: string;
-}
-
 // Migrations (exported for testing)
 async function runMigrations(): Promise<void> {
   await migrateV1();
 }
 
 export async function migrateV1(): Promise<void> {
+  /*
+  interface NZBUnityOptionsV1 {
+    Initialized: boolean;
+    Debug: boolean;
+    Profiles: {
+      [key: string]: {
+        ProfileName: string;
+        ProfileType: string;
+        ProfileHost: string;
+        ProfileApiKey: string;
+        ProfileUsername: string;
+        ProfilePassword: string;
+        ProfileServerUrl: string;
+        ProfileHostAsEntered: boolean;
+      };
+    };
+    ActiveProfile: string;
+    Providers: {
+      [key: string]: {
+        Enabled: boolean;
+        Matches: string[];
+        Js: string[];
+      };
+    };
+    ProviderNewznab: string;
+    ProviderEnabled: boolean;
+    ProviderDisplay: boolean;
+    RefreshRate: number;
+    InterceptDownloads: boolean;
+    InterceptExclude: string;
+    EnableNotifications: boolean;
+    EnableNewznab: boolean;
+    IgnoreCategories: boolean;
+    SimplifyCategories: boolean;
+    DefaultCategory: string;
+    OverrideCategory: string;
+    ReplaceLinks: boolean;
+    UITheme: string;
+  }
+  */
   const oldOptions = await browser.storage.local.get(null); // V1 always stored in local
 
   // V1 options will Initialized but notversion set usually, but check if set to "1" just in case
