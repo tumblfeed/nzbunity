@@ -2,9 +2,9 @@
 
 Send and control NZB files directly with SABnzbd or NZBGet download clients. Allows monitoring and control of your download queue (pause, resume), optionally intercepts NZB downloads, and allows 1-click downloading from a handful of membership NZB sites. Tested in Chrome and Firefox, but should be compatible with any webextension compatible browser.
 
-* [Homepage](https://github.com/clutterskull/nzbunity)
-* [Issues / Feature requests](https://github.com/clutterskull/nzbunity/issues)
-* [Wiki / Roadmap](https://github.com/clutterskull/nzbunity/wiki)
+* [Homepage](https://github.com/tumblfeed/nzbunity)
+* [Issues / Feature requests](https://github.com/tumblfeed/nzbunity/issues)
+* [Wiki / Roadmap](https://github.com/tumblfeed/nzbunity/wiki)
 
 For feature requests, please consider submitting a pull request (see below for building instructions).
 
