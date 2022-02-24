@@ -3,9 +3,9 @@
   "version": "2.0.0-alpha.0",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
-  "author": "clutterskull@gmail.com",
+  "author": "tumblfeed@gmail.com",
   "contributors": [
-    "clutterskull@gmail.com"
+    "tumblfeed@gmail.com"
   ],
   "keywords": [
     "NZB"
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/clutterskull/nzbunity"
+    "url": "https://github.com/tumblfeed/nzbunity"
   },
-  "homepage": "https://github.com/clutterskull/nzbunity",
+  "homepage": "https://github.com/tumblfeed/nzbunity",
   "bugs": {
-    "url": "https://github.com/clutterskull/nzbunity/issues"
+    "url": "https://github.com/tumblfeed/nzbunity/issues"
   },
   "scripts": {
     "clean": "rimraf build && rimraf dist && mkdir build && mkdir dist",

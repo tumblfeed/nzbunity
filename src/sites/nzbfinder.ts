@@ -1,5 +1,3 @@
-import { onReady } from '../page';
-
 class NZBUnityNzbfinder {
   public uid: string;
   public apikey: string;
@@ -190,4 +188,4 @@ class NZBUnityNzbfinder {
   }
 }
 
-onReady(() => new NZBUnityNzbfinder());
+PageUtil.ready(() => new NZBUnityNzbfinder());

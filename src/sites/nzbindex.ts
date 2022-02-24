@@ -43,10 +43,15 @@ class NZBUnityNzbindex {
   }
 
   initializeLinks() {
+    console.info(this);
+
     // Direct download links
     if (this.isList) {
       this.results.find(this.checkboxSelector).each((i, el) => {
         let checkbox = $(el);
+
+        console.info(checkbox);
+
         let link = PageUtil.createLink()
           .css({ 'display': 'block' })
           .on('click', (e) => {
