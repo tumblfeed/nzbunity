@@ -658,11 +658,11 @@ export class NZBUnity {
       // Do Newznab detection / loading
       if (this.isNewznabProvider(tab.url)) {
         // Check if URL matches known newznab sites, as this is less intrusive
-        chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.3.1.slim.min.js' }, () => {
-          chrome.tabs.executeScript(tabId, { file: 'background/util.js' }, () => {
-            chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab.js' });
-          });
-        });
+        // chrome.tabs.executeScript(tabId, { file: 'vendor/jquery-3.3.1.slim.min.js' }, () => {
+        //   chrome.tabs.executeScript(tabId, { file: 'background/util.js' }, () => {
+        chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab.js' });
+        //   });
+        // });
       } else if (this.newznabDetect) {
         // If autodetection is enabled, check every site for newznabbiness
         chrome.tabs.executeScript(tabId, { file: 'content/sites/newznab-detect.js' });

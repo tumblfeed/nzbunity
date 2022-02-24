@@ -1,15 +1,11 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "author": "tumblfeed@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
-    "scripts": [
-      "background/util.js",
-      "background/nzb.js",
-      "background/main.js"
-    ]
+    "scripts": ["background.ts"]
   },
   "icons": {
     "16": "content/images/nzb-16-green.png",
@@ -52,59 +48,59 @@
   "content_scripts": [
     {
       "matches": ["*://*.althub.co.za/*"],
-      "js": ["content/sites/althub.js"]
+      "js": ["sites/althub.ts"]
     },
     {
       "matches": ["*://*.animetosho.org/*"],
-      "js": ["content/sites/animetosho.js"]
+      "js": ["sites/animetosho.ts"]
     },
     {
       "matches": ["*://*.binsearch.info/*"],
-      "js": ["content/sites/binsearch.js"]
+      "js": ["sites/binsearch.ts"]
     },
     {
       "matches": ["*://*.dognzb.cr/*"],
-      "js": ["content/sites/dognzb.js"]
+      "js": ["sites/dognzb.ts"]
     },
     {
       "matches": ["*://*.drunkenslug.com/*"],
-      "js": ["content/sites/drunkenslug.js"]
+      "js": ["sites/drunkenslug.ts"]
     },
     {
       "matches": ["*://*.gingadaddy.com/*"],
-      "js": ["content/sites/gingadaddy.js"]
+      "js": ["sites/gingadaddy.ts"]
     },
     {
       "matches": ["*://*.nzbfinder.ws/*"],
-      "js": ["content/sites/nzbfinder.js"]
+      "js": ["sites/nzbfinder.ts"]
     },
     {
       "matches": ["*://*.nzbgeek.info/*"],
-      "js": ["content/sites/nzbgeek.js"]
+      "js": ["sites/nzbgeek.ts"]
     },
     {
       "matches": ["*://*.nzbindex.com/*", "*://*.nzbindex.nl/*"],
-      "js": ["content/sites/nzbindex.js"]
+      "js": ["sites/nzbindex.ts"]
     },
     {
       "matches": ["*://*.nzbking.com/*"],
-      "js": ["content/sites/nzbking.js"]
+      "js": ["sites/nzbking.ts"]
     },
     {
       "matches": ["*://*.nzbserver.com/*"],
-      "js": ["content/sites/nzbserver.js"]
+      "js": ["sites/nzbserver.ts"]
     },
     {
       "matches": ["*://*.nzb.su/*"],
-      "js": ["content/sites/nzbsu.js"]
+      "js": ["sites/nzbsu.ts"]
     },
     {
       "matches": ["*://*.omgwtfnzbs.me/*"],
-      "js": ["content/sites/omgwtfnzbs.js"]
+      "js": ["sites/omgwtfnzbs.ts"]
     },
     {
       "matches": ["*://*.tabula-rasa.pw/*"],
-      "js": ["content/sites/tabularasa.js"]
+      "js": ["sites/tabularasa.ts"]
     }
   ],
   "commands": {
