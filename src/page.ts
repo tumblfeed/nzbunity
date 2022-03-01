@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { request, RequestOptions } from './util';
+import { request, RequestOptions } from './util.js';
 export { request, RequestOptions };
 
 export const iconGreen: string = browser.runtime.getURL('content/images/nzb-16-green.png');

@@ -1,4 +1,10 @@
-import { parseUrl } from '../util';
+import { parseUrl } from '../util.js';
+
+export interface NZBHostOptions {
+  displayName?: string;
+  host?: string;
+  hostAsEntered?: boolean;
+}
 
 export interface NZBAddOptions {
   url?: string;
@@ -80,18 +86,18 @@ export interface NZBAddUrlResult {
 }
 
 export abstract class NZBHost {
-  name: string;
+  name: string = 'NZBHost';
   displayName: string;
   host: string;
   hostParsed: URL;
-  hostAsEntered: boolean = false;
+  hostAsEntered: boolean;
   apiUrl: string;
 
-  constructor(options: Record<string, unknown> = {}) {
-    this.displayName = (options.displayName || this.name) as string;
-    this.host = (options.host || 'localhost') as string;
+  constructor({ displayName, host, hostAsEntered }: NZBHostOptions) {
+    this.displayName = displayName ?? this.name;
+    this.host = host ?? 'localhost';
     this.hostParsed = parseUrl(this.host);
-    this.hostAsEntered = Boolean(options.hostAsEntered);
+    this.hostAsEntered = hostAsEntered ?? false;
   }
 
   abstract call(operation: string, params: Record<string, unknown> | unknown[]): Promise<NZBResult>;

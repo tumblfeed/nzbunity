@@ -1,6 +1,5 @@
-import { RequestOptions } from '../interfaces';
-import { request, humanSize, ucFirst, objectToQuery, Kilobyte, Megabyte, Gigabyte } from '../util';
-import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from '.';
+import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../util.js';
+import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost.js';
 
 export class SABnzbdHost extends NZBHost {
   name: string = 'SABnzbd';

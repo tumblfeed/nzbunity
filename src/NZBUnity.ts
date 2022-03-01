@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { NZBHost } from './NZBHost';
+import { NZBHost } from './NZBHost/NZBHost.js';
 
 export class NZBUnity {
   public optionsTab: chrome.tabs.Tab;

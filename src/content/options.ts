@@ -1,3 +1,5 @@
+import './css/options.scss';
+
 class OptionsPage {
   public _debug:boolean = false;
   public form:JQuery<HTMLElement>;
