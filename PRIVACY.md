@@ -2,8 +2,8 @@
 
 ## What Information is Collected?
 
-No user data or personally indentifiable information is collected by this extension. Server authentication
-settings are stored in the user's browser local storage and never collected or stored elsewhere.
+Settings - including server authentication information - are stored in browser local storage and used
+only to connect to servers at the user's request. No user data is stored remotely or shared by this extension.
 
 
 ## How is Information Used?
