@@ -1,19 +1,13 @@
 // import { readFileSync } from 'fs';
-import { NZBQueueItem } from '.';
-import { SABnzbdHost } from './SABnzbdHost';
+import { NZBQueueItem, SABnzbdHost } from './SABnzbdHost';
 
 // Queue operations need a little time in between or then don't work
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 jest.setTimeout(15000);
 
-let host: SABnzbdHost;
-
-beforeAll(() => {
-  host = new SABnzbdHost({
-    displayName: 'Test SAB',
-    host: process.env.SABNZBD_HOST,
-    apikey: process.env.SABNZBD_APIKEY,
-  });
+const host = new SABnzbdHost({
+  displayName: 'Test SAB',
+  host: process.env.SABNZBD_HOST,
+  apikey: process.env.SABNZBD_APIKEY,
 });
 
 describe('nzb/SABnzbdHost::construct', () => {
@@ -32,8 +26,6 @@ describe('nzb/SABnzbdHost::construct', () => {
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::call', () => {
   it('Can make a request to SABnzbd', async () => {
-    expect.assertions(3);
-
     const res = await host.call('fullstatus', { skip_dashboard: 1 });
 
     expect(res).not.toBeNull();
@@ -45,8 +37,6 @@ describe('nzb/SABnzbdHost::call', () => {
 // abstract test(): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::test', () => {
   it('Can construct a SABnzbd host', async () => {
-    expect.assertions(2);
-
     const res = await host.test();
 
     expect(res).not.toBeNull();
@@ -57,8 +47,6 @@ describe('nzb/SABnzbdHost::test', () => {
 // abstract getCategories(): Promise<string[]>;
 describe('nzb/SABnzbdHost::getCategories', () => {
   it('Returns expected value', async () => {
-    expect.assertions(2);
-
     const res = await host.getCategories();
 
     expect(res).not.toBeNull();
@@ -69,8 +57,6 @@ describe('nzb/SABnzbdHost::getCategories', () => {
 // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::setMaxSpeed', () => {
   it('Returns expected value', async () => {
-    expect.assertions(2);
-
     const res = await host.setMaxSpeed(45000000);
 
     expect(res).not.toBeNull();
@@ -81,8 +67,6 @@ describe('nzb/SABnzbdHost::setMaxSpeed', () => {
 // abstract getQueue(): Promise<NZBQueueResult>;
 describe('nzb/SABnzbdHost::getQueue', () => {
   it('Returns expected value', async () => {
-    expect.assertions(3);
-
     const res = await host.getQueue();
 
     expect(res).not.toBeNull();
@@ -95,8 +79,6 @@ describe('nzb/SABnzbdHost::getQueue', () => {
 // abstract pauseQueue(): Promise<NZBResult>;
 describe('nzb/SABnzbdHost::pauseQueue / resumeQueue', () => {
   it('Can pause queue', async () => {
-    expect.assertions(3);
-
     const res = await host.pauseQueue();
 
     expect(res).not.toBeNull();
@@ -108,8 +90,6 @@ describe('nzb/SABnzbdHost::pauseQueue / resumeQueue', () => {
   });
 
   it('Can resume queue', async () => {
-    expect.assertions(3);
-
     const res = await host.resumeQueue();
 
     expect(res).not.toBeNull();
@@ -126,8 +106,6 @@ describe('Queue manipulation', () => {
   let item: NZBQueueItem;
 
   it('Adds NZB by URL', async () => {
-    expect.assertions(2);
-
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
     const res = await host.addUrl(process.env.NZB_URL, {
       category: 'download',
@@ -142,10 +120,6 @@ describe('Queue manipulation', () => {
   });
 
   it('Can pause queue item', async () => {
-    expect.assertions(2);
-
-    await sleep(500); // wait for previous ops
-
     // abstract pauseId(id: string): Promise<NZBResult>;
     // abstract pauseItem(id: NZBQueueItem): Promise<NZBResult>;
     // note, pauseItem uses pauseId internally
@@ -158,10 +132,6 @@ describe('Queue manipulation', () => {
   });
 
   it('Can resume queue item', async () => {
-    expect.assertions(2);
-
-    await sleep(1000); // wait for previous ops
-
     // abstract resumeId(id: string): Promise<NZBResult>;
     // abstract resumeItem(id: NZBQueueItem): Promise<NZBResult>;
     const res = await host.resumeItem(item);
@@ -173,10 +143,6 @@ describe('Queue manipulation', () => {
   });
 
   it('Can remove queue item', async () => {
-    expect.assertions(2);
-
-    await sleep(1500); // wait for previous ops
-
     // abstract removeId(id: string): Promise<NZBResult>;
     // abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
     const res = await host.removeItem(item);
@@ -188,11 +154,7 @@ describe('Queue manipulation', () => {
   // This does not work from the node context, figure it out
   it.todo('Adds NZB by file upload, paused');
   // test('Adds NZB by file upload, paused', async () => {
-  //   expect.assertions(2);
-
-  //   await sleep(2000); // wait for previous ops
-
-  //   const content = readFileSync(env.nzb.file);
+  //     //   const content = readFileSync(env.nzb.file);
 
   //   // abstract addFile(filename: string, content: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
   //   const response = await host.addFile(

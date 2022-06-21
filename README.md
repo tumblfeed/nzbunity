@@ -12,15 +12,13 @@ Heavily inspired by [SABconnect++](https://github.com/gboudreau/sabconnectpluspl
 
 ## v2 Roadmap
 
-1. Update TypeScript and dependencies
+1. ~~Update TypeScript and dependencies~~
 2. Remove dependencies on external libraries (jQuery, Bootstrap)
 3. Total refactor of classes and compilation
    1. Single bundled file for each use: Background, options, dropdown, sites
-4. Refactor of utility and helper classes, possibly into npm libs
-   1. Refactor XHTTP helper to just Fetch API
-   2. Refactor promisified storage helpers into class
-   3. Extension utils? Does this already exist on npm?
-   4. Extension boilerplate?
+4. ~~Refactor of utility and helper classes~~
+   1. ~~Refactor XHTTP helper to just Fetch API~~
+   2. ~~Refactor promisified storage helpers into class~~
 5. Redesign options page
 6. Redesign drop down
 7. Make all settings profile-dependent, maybe allow for a "default" profile

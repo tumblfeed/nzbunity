@@ -1,4 +1,4 @@
-import { NZBHost } from './NZBHost/NZBHost.js';
+import { NZBHost } from './nzb/NZBHost';
 
 export class Profile {
   #name: string;

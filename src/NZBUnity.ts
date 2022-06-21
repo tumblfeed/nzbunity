@@ -1,15 +1,16 @@
 import browser from 'webextension-polyfill';
-import { NZBHost } from './NZBHost/NZBHost.js';
+import { NZBHost } from './nzb/NZBHost';
 
 export class NZBUnity {
-  public optionsTab: chrome.tabs.Tab;
-  public nzbHost: NZBHost;
-  public _debugMessages: string[] = [];
-  public _debugMessagesMax: number = 1000;
-  private interceptExclude: string;
-  private newznabDetect: boolean;
-  private newznabProviders: string;
-  private refreshTimer: NodeJS.Timer;
+  optionsTab: chrome.tabs.Tab;
+  nzbHost: NZBHost;
+  _debugMessages: string[] = [];
+  _debugMessagesMax: number = 1000;
+
+  interceptExclude: string;
+  newznabDetect: boolean;
+  newznabProviders: string;
+  refreshTimer: NodeJS.Timer;
 
   constructor() {
     // Initialize default options

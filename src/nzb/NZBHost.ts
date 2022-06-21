@@ -1,4 +1,4 @@
-import { parseUrl } from '../util.js';
+import { parseUrl } from '../util';
 
 export interface NZBHostOptions {
   displayName?: string;

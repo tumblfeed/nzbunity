@@ -1,5 +1,7 @@
-import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../util.js';
-import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost.js';
+import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../util';
+import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+
+export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class SABnzbdHost extends NZBHost {
   name: string = 'SABnzbd';
@@ -47,10 +49,6 @@ export class SABnzbdHost extends NZBHost {
       // check for error conditions
       if (typeof result === 'string') {
         throw Error('Invalid result from host');
-      }
-
-      if (result.status === false && result.error) {
-        throw Error(result.error);
       }
 
       // Collapse single key result
@@ -240,11 +238,6 @@ export class SABnzbdHost extends NZBHost {
 
     try {
       let res = await request(reqParams);
-
-      // check for error condition
-      if (res.status === false && res.error) {
-        throw Error(res.error);
-      }
 
       // Collapse single key result
       if (Object.values(res).length === 1) {

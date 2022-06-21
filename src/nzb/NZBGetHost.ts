@@ -1,5 +1,7 @@
-import { request, RequestOptions, humanSeconds, humanSize, Kilobyte, Megabyte, ucFirst } from '../util.js';
-import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBPriority, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost.js';
+import { request, RequestOptions, humanSeconds, humanSize, Kilobyte, Megabyte, ucFirst } from '../util';
+import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBPriority, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+
+export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class NZBGetHost extends NZBHost {
   name: string = 'NZBGet';
@@ -41,11 +43,7 @@ export class NZBGetHost extends NZBHost {
         throw Error('Invalid result from host');
       }
 
-      if (result.error) {
-        throw Error(`${result.error.name}: ${result.error.message}`);
-      }
-
-      return { success: true, operation, result: result.result };
+      return { success: true, operation, result };
     } catch (error) {
       return { success: false, operation, error };
     }
