@@ -14,20 +14,16 @@ class NZBUnityOmgwtfnzbs {
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
-          this.username = this.getUsername();
           this.apiurl = `${window.location.protocol}//api.omgwtfnzbs.me/nzb/`;
+          this.username = this.getUsername();
+          this.apikey = this.getApiKey();
 
-          this.getApiKey()
-            .then((apikey) => {
-              this.apikey = apikey;
-
-              if (this.username && this.apikey) {
-                console.info(`Got username and api key: ${this.username}, ${this.apikey}`);
-                this.initializeLinks();
-              } else {
-                console.warn('Could not get API key');
-              }
-            });
+          if (this.username && this.apikey) {
+            console.info(`Got username and api key: ${this.username}, ${this.apikey}`);
+            this.initializeLinks();
+          } else {
+            console.warn('Could not get API key');
+          }
         } else {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
         }
@@ -35,16 +31,17 @@ class NZBUnityOmgwtfnzbs {
   }
 
   getUsername():string {
-    return $('a[href="/account"]')[0].innerText;
+    // Username is in an html comment that looks like:
+    // <!---<extention_user>somebody</extention_user>-->
+    const match = document.body.innerHTML.match(/<extention_user>(.*?)<\/extention_user>/);
+    return match ? match[1].trim() : null;
   }
 
-  getApiKey():Promise<string> {
-    return PageUtil.request({ url: '/account' })
-      .then((r) => {
-        let el = $(r).find('a[href="account?action=api"]');
-        let api:string = el.length ? el[0].innerText : null;
-        return api.match(/^[a-f0-9]+$/i) ? api : null; // api key must be hex
-      })
+  getApiKey():string {
+    // API key is in an html comment that looks like:
+    // <!---<extention_api>deadbeefcafe1234</extention_api>-->
+    const match = document.body.innerHTML.match(/<extention_api>(.*?)<\/extention_api>/);
+    return match ? match[1].trim() : null;
   }
 
   getNzbUrl(id:string):string {

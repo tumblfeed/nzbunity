@@ -18,6 +18,8 @@ const gSass = require('gulp-sass');
 const gSourcemaps = require('gulp-sourcemaps');
 const gZip = require('gulp-zip');
 
+const package = require('./package.json');
+
 // Config & Helpers
 
 const paths = {
@@ -104,7 +106,7 @@ function sass() {
  */
 function zip() {
   return src(`${paths.build}/**/*`)
-    .pipe(gZip('nzbunity.zip'))
+    .pipe(gZip(`nzbunity-${package.version}.zip`))
     .pipe(dest(paths.dist));
 }
 

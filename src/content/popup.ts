@@ -154,6 +154,22 @@ class Popup {
       // Queue
       this.queue.empty();
 
+      // For testing large queues
+      // for (let i = 0; i < 40; i++) {
+      //   queue.queue.push({
+      //     id: `test${i}`,
+      //     status: 'Downloading',
+      //     name: `test item ${i}`,
+      //     category: 'test',
+      //     size: '0MB',
+      //     sizeBytes: 0,
+      //     sizeRemaining: '0MB',
+      //     sizeRemainingBytes: 0,
+      //     timeRemaining: '0s',
+      //     percentage: Math.floor(Math.random() * 100),
+      //   });
+      // }
+
       if (queue.queue.length) {
         queue.queue.forEach((item) => {
           // console.log(i);

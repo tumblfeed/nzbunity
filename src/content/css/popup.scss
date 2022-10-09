@@ -8,7 +8,6 @@ body {
   font-size: 13px;
   overflow-x: hidden;
   width: 380px;
-  max-height: 380px;
 }
 
 select, input, .btn {
@@ -44,7 +43,7 @@ input {
     color: $dark-blue;
     float: right;
     font-size: 10px;
-    margin-top: -5px;    
+    margin-top: -5px;
   }
 
   #profile {
@@ -138,8 +137,8 @@ input {
       border-top: 1px solid $dark-blue;
     }
 
-    &:nth-child(odd) {
-    }
+    // &:nth-child(odd) {
+    // }
 
     span {
       display: block;
@@ -155,8 +154,8 @@ input {
       margin-left: 5px;
     }
 
-    .category {
-    }
+    // .category {
+    // }
 
     .size {
       margin-right: 5px;
@@ -181,7 +180,6 @@ input {
   font-family: monospace;
   font-size: 11px;
   line-height: 13px;
-  margin: 10px 0;
   max-height: 220px;
   min-height: 120px;
   overflow: scroll;
@@ -195,7 +193,7 @@ input {
 
 #menu {
   @extend .flex-row;
-  margin: 10px 0;
+  padding: 10px 0;
 
   .btn {
     flex-grow: 0;
