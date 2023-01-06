@@ -438,11 +438,9 @@ class NZBGetHost extends NZBHost {
       .then((res) => {
         if (!res.success) return null;
 
-        let status:string = res.result['ServerStandBy']
-          ? 'idle'
-          : res.result['DownloadPaused']
-            ? 'paused'
-            : 'downloading';
+        let serverStandBy:boolean = res.result['ServerStandBy']
+        let downloadPaused:boolean = res.result['DownloadPaused']
+        let status:string = (serverStandBy && downloadPaused) ? 'paused' : (serverStandBy) ? 'idle' : 'downloading'
 
         let speedBytes:number = res.result['DownloadRate']; // in Bytes / Second
         let maxSpeedBytes:number = parseInt(res.result['DownloadLimit']);
