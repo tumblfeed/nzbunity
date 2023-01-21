@@ -34,7 +34,7 @@
     "gulp-autoprefixer": "^6.1.0",
     "gulp-cli": "^2.3.0",
     "gulp-debug": "^4.0.0",
-    "gulp-sass": "^4.1.0",
+    "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^2.6.0",
     "gulp-typescript": "^5.0.1",
     "gulp-zip": "^4.0.0",
