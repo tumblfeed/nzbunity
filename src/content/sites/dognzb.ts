@@ -60,8 +60,6 @@ class NZBUnityDognzb {
               .prepend('<td width="19"><div class="dog-icon-tick"></div></td>');
           });
 
-        console.warn(this.replace);
-
         if (this.replace) {
           a.closest('td').attr('width', '20');
           a.replaceWith(link);

@@ -1,5 +1,6 @@
 class NZBUnityNzbserver {
   public apiurl:string;
+  public observer:MutationObserver;
   public replace:boolean = false;
 
   constructor() {
@@ -13,6 +14,13 @@ class NZBUnityNzbserver {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
           this.apiurl = `${window.location.protocol}//www.nzbserver.com/`;
+
+          // nzbserver has a dyanamic loading list, watch for dom changes.
+          this.observer = new MutationObserver((mutations) => {
+            console.info(`[NZB Unity] Content changed, updating links...`);
+            this.initializeLinks();
+          });
+          this.observer.observe(document.getElementById('spots'), { childList: true });
 
           this.initializeLinks();
         } else {
@@ -29,7 +37,6 @@ class NZBUnityNzbserver {
     $('a.NZBUnityLink').remove();
 
     // Create direct download links
-    // I'm not a huge fan of matching against the download icon, but it works for this site without hitting multiple links in the same row.
     $('#spots a.nzb').each((i, el) => {
       let a:JQuery<HTMLElement> = $(el);
       let idMatch:string[] = a.attr('href').match(/messageid=([\w%.]+)/i);
@@ -49,11 +56,11 @@ class NZBUnityNzbserver {
       })
         .css({ margin: '0 5px' });
 
-      if (this.replace) {
-        a.replaceWith(link);
-      } else {
-        link.insertAfter(a);
-      }
+      // Do not replace links, just add them (so we don't break things on a dynamic refresh)
+      link.insertAfter(a);
+    });
+
+    $('#content').on('DOMSubtreeModified', () => {
     });
 
     $('#details a.nzbbutton').each((i, el) => {
