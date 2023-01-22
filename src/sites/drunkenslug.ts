@@ -58,18 +58,14 @@ class NZBUnityDrunkenslug {
 
       // Get the category
       let category:string = '';
-      let catSrc:string = 'default';
-
 
       if (window.location.pathname.startsWith('/details')) {
         if ($('dd a[href^="/browse?t="]').length) {
           category = $('dd a[href^="/browse?t="]').text();
-          catSrc = 'href';
         }
       } else {
         if (a.closest('tr').find('a[href^="/browse?t="]').length) {
           category = a.closest('tr').find('a[href^="/browse?t="]').text();
-          catSrc = 'href';
         }
       }
 
@@ -108,11 +104,9 @@ class NZBUnityDrunkenslug {
               if (/[a-d0-9]+/.test(id)) {
                 // Get the category
                 let category:string = '';
-                let catSrc:string = 'default';
 
-                if (check.closest('tr').find('.label:first-child').length) {
-                  category = check.closest('tr').find('.label:first-child').text();
-                  catSrc = 'href';
+                if (check.closest('tr').find('a[href^="/browse?t="]').length) {
+                  category = check.closest('tr').find('a[href^="/browse?t="]').text();
                 }
 
                 let split:string[] = category.split(/[^\w-]/); // Either "Movies: HD" or "Movies HD"

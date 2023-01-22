@@ -34,7 +34,7 @@ class NZBUnityDognzb {
 
   getNzbUrl(id:string):string {
     let rsstoken:string = <string> $('input[name="rsstoken" i]').val();
-    return `${window.location.origin}/fetch/${id}/${rsstoken}`;
+    return `${window.location.protocol}//dl.${window.location.host}/fetch/${id}/${rsstoken}`;
   }
 
   initializeLinks() {
@@ -59,8 +59,6 @@ class NZBUnityDognzb {
             catLabel.closest('tr')
               .prepend('<td width="19"><div class="dog-icon-tick"></div></td>');
           });
-
-        console.warn(this.replace);
 
         if (this.replace) {
           a.closest('td').attr('width', '20');

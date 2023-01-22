@@ -7,14 +7,6 @@ node_modules
 .env*
 
 # Yarn
+yarn.lock
+.yarnrc.yml
 .yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-
-# Without PnP
-.pnp.*
-# With PnP enabled
-# !.yarn/cache

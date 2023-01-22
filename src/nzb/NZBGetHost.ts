@@ -78,11 +78,9 @@ export class NZBGetHost extends NZBHost {
 
     if (!res.success) return null;
 
-    const status: string = res.result['ServerStandBy']
-      ? 'idle'
-      : res.result['DownloadPaused']
-      ? 'paused'
-      : 'downloading';
+    const serverStandBy: boolean = res.result['ServerStandBy']
+    const downloadPaused: boolean = res.result['DownloadPaused']
+    const status: string = (serverStandBy && downloadPaused) ? 'paused' : (serverStandBy) ? 'idle' : 'downloading'
 
     const speedBytes: number = res.result['DownloadRate']; // in Bytes / Second
     const maxSpeedBytes: number = parseInt(res.result['DownloadLimit']);

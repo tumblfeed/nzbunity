@@ -17,8 +17,9 @@ class NZBUnityAnimeTosho {
   initializeLinks() {
     $('a[href*="/nzbs/"]').each((i, el) => {
       const a = $(el);
+      console.log(decodeURIComponent(a.attr('href')).replace(/\.gz$/, ''));
       PageUtil.createAddUrlLink({
-        url: a.attr('href'),
+        url: decodeURIComponent(a.attr('href')).replace(/\.gz$/, ''),
       })
         .css({ margin: '0 0 0 3px', 'vertical-align': 'middle' })
         .insertAfter(a);
