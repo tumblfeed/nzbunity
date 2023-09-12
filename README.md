@@ -74,7 +74,7 @@ The toolbar popup shows statistics and controls for the currently active profile
 
 ## 1-Click Site Downloads
 
-The following sites are currently supported for 1-click downloads: dognzb.cr, nzbgeek.info, and omgwtfnzbs.me. An icon identical to the toolbar icon will be shown next to any NZB that can be downloaded. More sites are currently planned, but please put in a feature request if your favorite site is not supported (or even better, build an adapter and submit it as a pull-request).
+For sites which have 1-click download enabled, a green NZB icon will be shown next to any NZB that can be downloaded. No more custom sites are currently planned, but please put in a feature request if your favorite site is not supported (or even better, build an adapter and submit it as a pull-request).
 
 ## Building
 

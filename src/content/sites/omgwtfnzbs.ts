@@ -14,7 +14,7 @@ class NZBUnityOmgwtfnzbs {
         if (enabled) {
           console.info(`[NZB Unity] Initializing 1-click functionality...`);
 
-          this.apiurl = `${window.location.protocol}//api.omgwtfnzbs.me/nzb/`;
+          this.apiurl = `${window.location.protocol}//api.omgwtfnzbs.org/nzb/`;
           this.username = this.getUsername();
           this.apikey = this.getApiKey();
 

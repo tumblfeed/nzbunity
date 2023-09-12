@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "1.17.3",
+  "version": "1.17.4",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "tumblfeed@gmail.com",
@@ -12,10 +12,11 @@
     "url": "https://github.com/tumblfeed/nzbunity"
   },
   "scripts": {
-    "gulp": "gulp",
+    "start": "gulp watch",
     "build": "gulp build",
     "dist": "gulp dist",
-    "watch": "gulp watch"
+    "watch": "gulp watch",
+    "gulp": "gulp"
   },
   "browserslist": [
     "last 2 versions",
