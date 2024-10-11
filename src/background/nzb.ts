@@ -77,11 +77,72 @@ declare interface NZBAddUrlResult {
 }
 
 abstract class NZBHost {
+  /**
+   * Given a host, return an array of possible URLs for the download API
+   * @param host The host to generate suggestions for (e.g. localhost:8080, http://localhost, etc)
+   * @param ports An array of ports to try (eg: ['8080', '9090'])
+   * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
+   * @returns An array of possible URLs for the download API
+   */
+  static getApiUrlSuggestions(host:string, ports: string[] = [''], paths: string[] = ['']):string[] {
+    const parsed = Util.parseUrl(host); // Will default to http if no protocol is present
+
+    // If host specifies a protocol only use that, otherwise use both http and https
+    const protocols = /^\w+:\/\//.test(host) ? [parsed.protocol] : ['http:', 'https:'];
+
+    // If host has a port only use that, otherwise use the default ports
+    if (parsed.port) {
+      ports = [parsed.port];
+    } else if (parsed.pathname.length > 1) {
+      // If no port is specified, but a path is, it's possible the port was left out intentionally
+      // so we'll try the default ports also
+      ports.unshift('');
+    }
+
+    // Generate suggestions
+    const suggestions:string[] = [];
+
+    for (const path of paths) {
+      for (const port of ports) {
+        for (const protocol of protocols) {
+          const sugg = new URL(parsed.href); // clone the parsed URL
+          // URL's rules for base URL relative paths are a little silly,
+          // so we're going to do it manually, gluing the paths together and removing extra slashes
+          sugg.pathname = `${sugg.pathname}/${path}`.replace(/\/+/g, '/');
+          sugg.port = port;
+          sugg.protocol = protocol;
+
+          suggestions.push(sugg.href);
+        }
+      }
+    }
+
+    return suggestions;
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    return Promise.reject('Not implemented in base class');
+  }
+
+  static async findApiUrl(profile:NZBUnityProfileOptions):Promise<string> {
+    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
+    for (const url of urls) {
+      const r = await this.testApiUrl(url, profile);
+      if (r.success) return url;
+    }
+  }
+
+  static async findAllApiUrls(profile:NZBUnityProfileOptions):Promise<string[]> {
+    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
+    const results = await Promise.all(urls.map(url => this.testApiUrl(url, profile)));
+    return urls.filter((url, i) => results[i].success);
+  }
+
   name:string;
   displayName:string;
   host:string;
   hostParsed:URL;
-  hostAsEntered:boolean = false;
+  hostAsEntered:boolean = true;
   apiUrl:string;
 
   constructor(options:Dictionary = {}) {
@@ -104,6 +165,18 @@ abstract class NZBHost {
 }
 
 class SABnzbdHost extends NZBHost {
+  static getApiUrlSuggestions(host:string):string[] {
+    return super.getApiUrlSuggestions(host, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    const host = new SABnzbdHost({
+      host: url, hostAsEntered: true,
+      apikey: profile.ProfileApiKey,
+    });
+    return host.test();
+  }
+
   name:string = 'SABnzbd';
   apikey:string;
 
@@ -114,13 +187,15 @@ class SABnzbdHost extends NZBHost {
     if (this.hostAsEntered) {
       this.apiUrl = this.host;
     } else {
-      // If path is empty and root is not allowed, default to /sabnzbd
-      let apiPath:string = '';
-      if (/^\/*$/i.test(this.hostParsed.pathname)) apiPath += 'sabnzbd';
-      if (!/api$/i.test(this.hostParsed.pathname)) apiPath += '/api';
+      // This is maintained for legacy compatibility, but the preferred method is to let the
+      // Options page test a list of suggested API URLs and lock in the correct one.
+      const parsed = Util.parseUrl(this.host);
+      // If path is empty ('' or '/'), default to /sabnzbd
+      if (/^\/*$/i.test(parsed.pathname)) parsed.pathname = '/sabnzbd';
+      // If path does not end in /api, add it
+      if (!/api$/i.test(parsed.pathname)) parsed.pathname += '/api';
 
-      const pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
-      this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+      this.apiUrl = parsed.href;
     }
   }
 
@@ -128,6 +203,7 @@ class SABnzbdHost extends NZBHost {
     let request:RequestOptions = {
       method: 'GET',
       url: this.apiUrl,
+      json: true,
       params: {
         output: 'json',
         apikey: this.apikey,
@@ -369,6 +445,18 @@ class SABnzbdHost extends NZBHost {
 }
 
 class NZBGetHost extends NZBHost {
+  static getApiUrlSuggestions(host:string):string[] {
+    return super.getApiUrlSuggestions(host, ['6789'], ['', 'jsonrpc']);
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    const host = new NZBGetHost({
+      host: url, hostAsEntered: true,
+      username: profile.ProfileUsername, password: profile.ProfilePassword,
+    });
+    return host.test();
+  }
+
   name:string = 'NZBGet';
   username:string;
   password:string;

@@ -166,9 +166,9 @@ class OptionsPage {
     // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
       const profiles:Object = changes['Profiles'].newValue;
-      for (const k in profiles) {
-        if (profiles[k].ProfileName !== k) {
-          this.profileNameChanged(k, profiles[k].ProfileName);
+      for (const [k, profile] of Object.entries(profiles)) {
+        if (profile.ProfileName !== k) {
+          this.profileNameChanged(k, profile.ProfileName);
         }
       }
 
@@ -224,6 +224,24 @@ class OptionsPage {
 
   /* PROFILES */
 
+  profileSave() {
+    return Util.storage.set({ Profiles: this.profiles })
+      .then(() => this.sendMessage('profilesSaved', this.profiles));
+  }
+
+  profileUpdate(props:Partial<NZBUnityProfileOptions>) {
+    for (const [k, v] of Object.entries(props)) {
+      const el = $(`#${k}`);
+      if (el.attr('type') === 'checkbox') {
+        el.prop('checked', v as boolean);
+      } else {
+        el.val(v as string);
+      }
+      this.profileData[k] = v;
+    }
+    this.profileSave();
+  }
+
   profileNameChanged(oldName:string, newName:string):Promise<void> {
     if (newName) {
       const profile = this.profiles[oldName];
@@ -238,11 +256,6 @@ class OptionsPage {
       return this.profileSave()
         .then(() => this.sendMessage('profileNameChanged', { old: oldName, new: newName }));
     }
-  }
-
-  profileSave() {
-    return Util.storage.set({ Profiles: this.profiles })
-      .then(() => this.sendMessage('profilesSaved', this.profiles));
   }
 
   profileSelectUpdate() {
@@ -358,10 +371,44 @@ class OptionsPage {
     return name;
   }
 
-  profileTest() {
+  async profileTest() {
     const name:string = this.profileData.ProfileName;
     this.debug('[OptionsPage.profileTest] ', name);
-    this.sendMessage('profileTest', name);
+    this.profileTestClear();
+
+    if (this.profileData.ProfileHostAsEntered) {
+      // If the host is set to use the entered value, we'll just send it off to main to test
+      this.sendMessage('profileTest', name);
+    } else {
+      // Otherwise, we'll check the entered value and try to find the aboslute API URL
+      // and then set the host and lock it and manage the events ourselves.
+      this.debug('[OptionsPage.profileTest] Finding API URL for', name, this.profileData.ProfileType, this.profileData.ProfileHost);
+      this.profileTestStart();
+
+      let url:string;
+      switch (this.profileData.ProfileType) {
+        case 'SABnzbd':
+          url = await SABnzbdHost.findApiUrl(this.profileData);
+          break;
+
+        case 'NZBGet':
+          url = await NZBGetHost.findApiUrl(this.profileData);
+          break;
+
+        default:
+          this.profileTestFailure('Invalid profile type');
+          break;
+      }
+
+      if (url) {
+        this.debug('[OptionsPage.profileTest] Found API URL for', name, url);
+        this.profileUpdate({ ProfileHost: url, ProfileHostAsEntered: true });
+        this.profileTestSuccess(`Found running ${this.profileData.ProfileType} at ${url}!<br>Settings updated.`);
+      } else {
+        this.debug('[OptionsPage.profileTest] Could not find API URL for', name);
+        this.profileTestFailure('Could not find host URL');
+      }
+    }
   }
 
   profileTestEnd(res:any) {
@@ -410,7 +457,12 @@ class OptionsPage {
         .show();
   }
 
-  profileTestSuccess():JQuery<HTMLElement> {
+  profileTestSuccess(message:string = null):JQuery<HTMLElement> {
+    if (message) {
+      $('#profileTest-result').empty()
+        .append(`<span class="text-success">${message}</span>`);
+    }
+
     return this.getProfileTestButton('success')
       .prop('disabled', false)
       .find('.icon')

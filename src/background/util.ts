@@ -280,6 +280,9 @@ class Util {
 
       if (options.params || options.files || options.multipart) {
         if (method === 'GET') {
+          if (options.json) {
+            headers['Content-Type'] = 'application/json';
+          }
           // GET requests, pack everything in the URL
           for (const k in options.params) {
             search.set(k, String(options.params[k]));

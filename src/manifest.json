@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "NZB Unity",
-  "version": "1.17.4",
+  "version": "1.18.0-beta.0",
   "author": "tumblfeed@gmail.com",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "background": {
@@ -65,7 +65,7 @@
         "*://*.nzbking.com/*",
         "*://*.nzbserver.com/*",
         "*://*.nzb.su/*",
-        "*://*.omgwtfnzbs.me/*",
+        "*://*.omgwtfnzbs.org/*",
         "*://*.tabula-rasa.pw/*"
       ],
       "js": [
@@ -123,7 +123,7 @@
       "js": ["content/sites/nzbsu.js"]
     },
     {
-      "matches": ["*://*.omgwtfnzbs.org/*", "*://*.omgwtfnzbs.me/*"],
+      "matches": ["*://*.omgwtfnzbs.org/*"],
       "js": ["content/sites/omgwtfnzbs.js"]
     },
     {
