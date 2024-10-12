@@ -430,6 +430,22 @@ class Util {
     }
     return s.toLowerCase();
   }
+
+  static objDiff(a:Dictionary, b:Dictionary):Dictionary {
+    const diff:Dictionary = {};
+
+    for (const k in a) {
+      if (a[k] !== b[k]) {
+        diff[k] = a[k];
+      }
+    }
+
+    return diff;
+  }
+
+  static objDiffKeys(a:Dictionary, b:Dictionary):string[] {
+    return Object.keys(Util.objDiff(a, b));
+  }
 }
 
 class PageUtil {

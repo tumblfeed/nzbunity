@@ -9,6 +9,7 @@ class OptionsPage {
   public profileCurrent:JQuery<HTMLElement>;
   public profileButtons:JQuery<HTMLElement>;
   public profileInputs:JQuery<HTMLElement>;
+  public profileTestWarningBlock:JQuery<HTMLElement>;
 
   public providerInputs:JQuery<HTMLElement>;
 
@@ -24,6 +25,7 @@ class OptionsPage {
     this.profileInputs = $('#profile-container').find('input, select');
     this.interceptDownloads = $('#InterceptDownloads');
     this.interceptExclude = $('#InterceptExclude');
+    this.profileTestWarningBlock = $('#profileTestRequired');
 
     // Show version
     $('#Version').text(`v${chrome.runtime.getManifest().version}`);
@@ -103,6 +105,11 @@ class OptionsPage {
             this.sendMessage('resetOptions', true);
           }
         });
+
+        // Show test warning if needed
+        if (this.profileData.ProfileHost && !this.profileData.ProfileHostAsEntered) {
+          this.profileTestWarningBlock.show();
+        }
       });
 
     // Handle messages from the UI
@@ -156,22 +163,45 @@ class OptionsPage {
 
   /* HANDLERS */
 
-  handleStorageChanged(changes:{ string: chrome.storage.StorageChange }, area:string) {
+  handleStorageChanged(changes:Record<string, chrome.storage.StorageChange>, area:string) {
     // this.debug('[OptionsPage.handleStorageChanged] ',
     //     Object.keys(changes)
     //         .map((k) => { return `${k} -> ${changes[k].newValue}`; })
     //         .join(', ')
     // );
 
-    // If ProfileName has changed, we need to update the select field.
     if (changes['Profiles']) {
-      const profiles:Object = changes['Profiles'].newValue;
+      const profiles:Record<string, Partial<NZBUnityProfileOptions>> = changes['Profiles'].newValue;
+      const oldProfiles:Record<string, Partial<NZBUnityProfileOptions>> = changes['Profiles'].oldValue;
+
+      // If ProfileName has changed, we need to update the select field value(s).
       for (const [k, profile] of Object.entries(profiles)) {
         if (profile.ProfileName !== k) {
           this.profileNameChanged(k, profile.ProfileName);
         }
       }
 
+      // Currently showing profiles
+      const newCurrent = profiles[this.profileData.ProfileName];
+      const oldCurrent = oldProfiles[this.profileData.ProfileName];
+
+      // If ProfileHost is set and ProfileHostAsEntered is not set, we need to warn the user that they need to test the profile.
+      if (newCurrent?.ProfileHost && !newCurrent.ProfileHostAsEntered) {
+        this.profileTestWarningBlock.show();
+      } else {
+        this.profileTestWarningBlock.hide();
+      }
+
+      // if the current profile suddenly changed by only the host and as-entered fields,
+      // then it was the url finder that updated it and we shouldn't clear the test result.
+      if (newCurrent && oldCurrent) {
+        const delta = Util.objDiffKeys(newCurrent, oldCurrent);
+        if (delta.length === 2 && delta.includes('ProfileHost') && delta.includes('ProfileHostAsEntered')) {
+          return;
+        }
+      }
+
+      // Any other pro
       this.profileTestClear();
     }
   }
@@ -403,7 +433,7 @@ class OptionsPage {
       if (url) {
         this.debug('[OptionsPage.profileTest] Found API URL for', name, url);
         this.profileUpdate({ ProfileHost: url, ProfileHostAsEntered: true });
-        this.profileTestSuccess(`Found running ${this.profileData.ProfileType} at ${url}!<br>Settings updated.`);
+        this.profileTestSuccess(`Found running ${this.profileData.ProfileType} at "${url}"!<br>Settings updated.`);
       } else {
         this.debug('[OptionsPage.profileTest] Could not find API URL for', name);
         this.profileTestFailure('Could not find host URL');
@@ -521,8 +551,9 @@ class OptionsPage {
   }
 
   debugMessage(message:MessageEvent) {
-    for (let k in message) {
-      console.debug('[OptionsPage.debugMessage]', k, message[k]);
+    for (const [k, v] of Object.entries(message)) {
+      if (k === 'main.debug') continue;
+      console.debug('[OptionsPage.debugMessage]', k, v);
     }
   }
 }

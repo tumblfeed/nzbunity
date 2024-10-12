@@ -37,7 +37,7 @@ In order to use NZB Unity, at least one server profile must be defined. To get s
 * API Key -- **SABnzbd Only**. The full use API key for the SABnzbd server. Currently, NZB only API keys are unsupported as they do not give access to the queue.
 * Username -- **NZBGet Only**. Username for NZBGet API. Note that this can be a limited access user (NZB Unity does not access config).
 * Password -- **NZBGet Only**. Password for the NZBGet API.
-* "Open server" URL -- Optional, if specified the toolbar UI "Open server" button will open a tab to this URL instead of the profile Host.
+* "Open web UI" URL -- Optional, if specified the toolbar UI "Open web UI" button will open a tab to this URL instead of the profile Host.
 
 ### Other Options
 
@@ -69,7 +69,7 @@ The toolbar popup shows statistics and controls for the currently active profile
 * Queue -- Each queue item will contain the name of the NZB, the category, and the total size. The progress for each item is shown as a progress bar in the background of the queue item itself.
 * Controls
 	* Refresh -- Forces a refresh from the server and resets the refresh interval timer.
-	* Open Server -- Opens a new tab to the Web UI of the current profile.
+	* Open Web UI -- Opens a new tab to the Web UI of the current profile.
 	* Open Options -- Opens the NZB Unity options tab.
 
 ## 1-Click Site Downloads

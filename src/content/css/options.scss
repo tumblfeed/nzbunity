@@ -43,8 +43,18 @@ h3 {
 }
 
 .tooltip {
+  left: -65px !important;
+
   .tooltip-inner {
-    max-width: 350px;
+    max-width: 450px;
+
+    p {
+      margin: .75em 1em;
+      text-align: left;
+    }
+    br {
+      margin-bottom: .25em;
+    }
   }
 }
 
@@ -86,8 +96,7 @@ h3 {
   }
 
   #profileTest {
-    margin: 10px auto 0;
-    padding-bottom: 5px;
+    padding-bottom: .5em;
   }
 
   #profileTest-result {

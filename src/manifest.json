@@ -139,7 +139,7 @@
       "description": "Toggle queue"
     },
     "open-profile-page": {
-      "description": "Open server URL"
+      "description": "Open downloader web UI"
     }
   }
 }

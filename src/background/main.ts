@@ -550,7 +550,7 @@ class NZBUnity {
           }
 
           // Ensure protocol so the browser doesn't prefix the addon url
-          if (!/^[a-z]+:\/\//i.test(url)) {
+          if (!/^\w+:\/\//i.test(url)) {
             url = `http://${url}`;
           }
 
