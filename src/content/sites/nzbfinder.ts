@@ -33,7 +33,7 @@ class NZBUnityNzbfinder {
   }
 
   getNzbUrl(id: string): string {
-    return `${this.getMeta('root_url') ?? window.location.origin}/api/v1/getnzb?id=${id}&r=${this.apikey}`;
+    return `${this.getMeta('root_url') ?? window.location.origin}/api/v1/getnzb?id=${id}&r=${this.apikey}&utm_medium=nzbunity`;
   }
 
   isList(link: HTMLElement): boolean {
