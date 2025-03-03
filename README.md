@@ -2,6 +2,8 @@
 
 ## IMPORTANT! - NZB Unity no longer works in Chrome, as it is built on Manifest v2. It will continue to work in Firefox (via the AMO) and other browsers that support Manifest v2.
 
+**Update** - Apparently you can force the existing addon to load in Chrome by going to the chrome://extensions/ page, clicking the menu (3 dots) next to the extension and selecting "keep this extension" and ignoring the warning. The extension will continue to work until an update is released.
+
 Browsers that still support Manifest v2 (as of 2025-03-25):
 
 * Firefox
