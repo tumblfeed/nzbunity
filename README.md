@@ -1,5 +1,29 @@
 # NZB Unity
 
+## IMPORTANT! - NZB Unity no longer works in Chrome, as it is built on Manifest v2. It will continue to work in Firefox (via the AMO) and other browsers that support Manifest v2 using manual installation.
+
+Browsers that still support Manifest v2 (as of 2025-03-25):
+
+* Firefox
+* Brave
+* Vivaldi
+* Opera (?)
+* Edge
+
+To manually install NZB Unity in Chromium browsers:
+
+* Download the latest release ZIP file from the [releases page](https://github.com/tumblfeed/nzbunity/releases)
+  * Filename looks like `nzbunity-1.18.2.zip`
+* Extract the ZIP file to a directory, make note of the folder that contains the `manifest.json` file
+* Open the Extensions page (chrome://extensions/) Menu -> Extensions -> Manage Extensions
+* Enable Developer Mode (toggle in the top right)
+* Click "Load unpacked" and select the directory that contains the `manifest.json` file
+* NZB Unity should now be installed and working in your browser
+
+Unfortunately, it is not possible to settings from your previous Chrome Web Store installation. You will need to re-add your server profiles.
+
+## About
+
 Send and control NZB files directly with SABnzbd or NZBGet download clients. Allows monitoring and control of your download queue (pause, resume), optionally intercepts NZB downloads, and allows 1-click downloading from a handful of membership NZB sites. Tested in Chrome and Firefox, but should be compatible with any webextension compatible browser.
 
 * [Homepage](https://github.com/tumblfeed/nzbunity)
