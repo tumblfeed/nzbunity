@@ -1,6 +1,6 @@
 # NZB Unity
 
-## IMPORTANT! - NZB Unity no longer works in Chrome, as it is built on Manifest v2. It will continue to work in Firefox (via the AMO) and other browsers that support Manifest v2 using manual installation.
+## IMPORTANT! - NZB Unity no longer works in Chrome, as it is built on Manifest v2. It will continue to work in Firefox (via the AMO) and other browsers that support Manifest v2.
 
 Browsers that still support Manifest v2 (as of 2025-03-25):
 
@@ -10,7 +10,10 @@ Browsers that still support Manifest v2 (as of 2025-03-25):
 * Opera (?)
 * Edge
 
-To manually install NZB Unity in Chromium browsers:
+I have verified that NZB Unity can still be installed from the Chrome Web Store in Brave and Vivaldi.
+You should not need to manually install the extension in these browsers.
+
+If necessary, to manually install NZB Unity in Chromium browsers:
 
 * Download the latest release ZIP file from the [releases page](https://github.com/tumblfeed/nzbunity/releases)
   * Filename looks like `nzbunity-1.18.2.zip`
