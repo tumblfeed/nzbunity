@@ -95,8 +95,8 @@
       "js": ["sites/nzbsu.ts"]
     },
     {
-      "matches": ["*://*.omgwtfnzbs.me/*"],
-      "js": ["sites/omgwtfnzbs.ts"]
+      "matches": ["*://*.omgwtfnzbs.org/*"],
+      "js": ["sites/sites/omgwtfnzbs.js"]
     },
     {
       "matches": ["*://*.tabula-rasa.pw/*"],
@@ -111,7 +111,7 @@
       "description": "Toggle queue"
     },
     "open-profile-page": {
-      "description": "Open server URL"
+      "description": "Open downloader web UI"
     }
   }
 }

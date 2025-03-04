@@ -4,6 +4,18 @@ import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBPriority, NZBQueueItem, NZB
 export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class NZBGetHost extends NZBHost {
+  static getApiUrlSuggestions(host:string):string[] {
+    return super.getApiUrlSuggestions(host, ['6789'], ['', 'jsonrpc']);
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    const host = new NZBGetHost({
+      host: url, hostAsEntered: true,
+      username: profile.ProfileUsername, password: profile.ProfilePassword,
+    });
+    return host.test();
+  }
+
   name: string = 'NZBGet';
   username: string;
   password: string;

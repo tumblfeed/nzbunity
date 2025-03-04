@@ -4,6 +4,18 @@ import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBRes
 export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class SABnzbdHost extends NZBHost {
+  static getApiUrlSuggestions(host:string):string[] {
+    return super.getApiUrlSuggestions(host, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    const host = new SABnzbdHost({
+      host: url, hostAsEntered: true,
+      apikey: profile.ProfileApiKey,
+    });
+    return host.test();
+  }
+
   name: string = 'SABnzbd';
   apikey: string;
 
@@ -14,13 +26,15 @@ export class SABnzbdHost extends NZBHost {
     if (this.hostAsEntered) {
       this.apiUrl = this.host;
     } else {
-      // If path is empty and root is not allowed, default to /sabnzbd
-      let apiPath: string = '';
-      if (/^\/*$/i.test(this.hostParsed.pathname)) apiPath += 'sabnzbd';
-      if (!/api$/i.test(this.hostParsed.pathname)) apiPath += '/api';
+      // This is maintained for legacy compatibility, but the preferred method is to let the
+      // Options page test a list of suggested API URLs and lock in the correct one.
+      const parsed = Util.parseUrl(this.host);
+      // If path is empty ('' or '/'), default to /sabnzbd
+      if (/^\/*$/i.test(parsed.pathname)) parsed.pathname = '/sabnzbd';
+      // If path does not end in /api, add it
+      if (!/api$/i.test(parsed.pathname)) parsed.pathname += '/api';
 
-      const pathname = `${this.hostParsed.pathname}/${apiPath}`.replace(/\/+/g, '/');
-      this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
+      this.apiUrl = parsed.href;
     }
   }
 
@@ -28,6 +42,7 @@ export class SABnzbdHost extends NZBHost {
     const reqParams: RequestOptions = {
       method: 'GET',
       url: this.apiUrl,
+      json: true,
       params: {
         output: 'json',
         apikey: this.apikey,

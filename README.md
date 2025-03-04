@@ -1,5 +1,34 @@
 # NZB Unity
 
+## IMPORTANT! - NZB Unity no longer works in Chrome, as it is built on Manifest v2. It will continue to work in Firefox (via the AMO) and other browsers that support Manifest v2.
+
+**Update** - Apparently you can force the existing addon to load in Chrome by going to the chrome://extensions/ page, clicking the menu (3 dots) next to the extension and selecting "keep this extension" and ignoring the warning. The extension will continue to work until an update is released.
+
+Browsers that still support Manifest v2 (as of 2025-03-25):
+
+* Firefox
+* Brave
+* Vivaldi
+* Opera (?)
+* Edge
+
+I have verified that NZB Unity can still be installed from the Chrome Web Store in Brave and Vivaldi.
+You should not need to manually install the extension in these browsers.
+
+If necessary, to manually install NZB Unity in Chromium browsers:
+
+* Download the latest release ZIP file from the [releases page](https://github.com/tumblfeed/nzbunity/releases)
+  * Filename looks like `nzbunity-1.18.2.zip`
+* Extract the ZIP file to a directory, make note of the folder that contains the `manifest.json` file
+* Open the Extensions page (chrome://extensions/) Menu -> Extensions -> Manage Extensions
+* Enable Developer Mode (toggle in the top right)
+* Click "Load unpacked" and select the directory that contains the `manifest.json` file
+* NZB Unity should now be installed and working in your browser
+
+Unfortunately, it is not possible to settings from your previous Chrome Web Store installation. You will need to re-add your server profiles.
+
+## About
+
 Send and control NZB files directly with SABnzbd or NZBGet download clients. Allows monitoring and control of your download queue (pause, resume), optionally intercepts NZB downloads, and allows 1-click downloading from a handful of membership NZB sites. Tested in Chrome and Firefox, but should be compatible with any webextension compatible browser.
 
 * [Homepage](https://github.com/tumblfeed/nzbunity)
@@ -55,7 +84,7 @@ In order to use NZB Unity, at least one server profile must be defined. To get s
 * API Key -- **SABnzbd Only**. The full use API key for the SABnzbd server. Currently, NZB only API keys are unsupported as they do not give access to the queue.
 * Username -- **NZBGet Only**. Username for NZBGet API. Note that this can be a limited access user (NZB Unity does not access config).
 * Password -- **NZBGet Only**. Password for the NZBGet API.
-* "Open server" URL -- Optional, if specified the toolbar UI "Open server" button will open a tab to this URL instead of the profile Host.
+* "Open web UI" URL -- Optional, if specified the toolbar UI "Open web UI" button will open a tab to this URL instead of the profile Host.
 
 ### Other Options
 
@@ -87,12 +116,12 @@ The toolbar popup shows statistics and controls for the currently active profile
 * Queue -- Each queue item will contain the name of the NZB, the category, and the total size. The progress for each item is shown as a progress bar in the background of the queue item itself.
 * Controls
 	* Refresh -- Forces a refresh from the server and resets the refresh interval timer.
-	* Open Server -- Opens a new tab to the Web UI of the current profile.
+	* Open Web UI -- Opens a new tab to the Web UI of the current profile.
 	* Open Options -- Opens the NZB Unity options tab.
 
 ## 1-Click Site Downloads
 
-The following sites are currently supported for 1-click downloads: dognzb.cr, nzbgeek.info, and omgwtfnzbs.me. An icon identical to the toolbar icon will be shown next to any NZB that can be downloaded. More sites are currently planned, but please put in a feature request if your favorite site is not supported (or even better, build an adapter and submit it as a pull-request).
+For sites which have 1-click download enabled, a green NZB icon will be shown next to any NZB that can be downloaded. No more custom sites are currently planned, but please put in a feature request if your favorite site is not supported (or even better, build an adapter and submit it as a pull-request).
 
 ## Building
 

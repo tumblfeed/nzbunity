@@ -96,6 +96,9 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
   if (options.params || options.files || options.multipart) {
     if (method === 'GET') {
+      if (options.json) {
+        headers['Content-Type'] = 'application/json';
+      }
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params)) {
         search.set(k, String(v));
@@ -226,4 +229,20 @@ export function simplifyCategory(s: string): string {
     .split(/[^\w\d]+/i)
     .shift()
     .toLowerCase();
+}
+
+export function objDiff(a: Dictionary, b: Dictionary): Dictionary {
+  const diff: Dictionary = {};
+
+  for (const k in a) {
+    if (a[k] !== b[k]) {
+      diff[k] = a[k];
+    }
+  }
+
+  return diff;
+}
+
+export function objDiffKeys(a: Dictionary, b: Dictionary): string[] {
+  return Object.keys(objDiff(a, b));
 }
