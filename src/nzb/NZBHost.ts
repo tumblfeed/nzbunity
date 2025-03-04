@@ -86,6 +86,67 @@ export interface NZBAddUrlResult {
 }
 
 export abstract class NZBHost {
+  /**
+   * Given a host, return an array of possible URLs for the download API
+   * @param host The host to generate suggestions for (e.g. localhost:8080, http://localhost, etc)
+   * @param ports An array of ports to try (eg: ['8080', '9090'])
+   * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
+   * @returns An array of possible URLs for the download API
+   */
+  static getApiUrlSuggestions(host:string, ports: string[] = [''], paths: string[] = ['']):string[] {
+    const parsed = Util.parseUrl(host); // Will default to http if no protocol is present
+
+    // If host specifies a protocol only use that, otherwise use both http and https
+    const protocols = /^\w+:\/\//.test(host) ? [parsed.protocol] : ['http:', 'https:'];
+
+    // If host has a port only use that, otherwise use the default ports
+    if (parsed.port) {
+      ports = [parsed.port];
+    } else if (parsed.pathname.length > 1) {
+      // If no port is specified, but a path is, it's possible the port was left out intentionally
+      // so we'll try the default ports also
+      ports.unshift('');
+    }
+
+    // Generate suggestions
+    const suggestions:string[] = [];
+
+    for (const path of paths) {
+      for (const port of ports) {
+        for (const protocol of protocols) {
+          const sugg = new URL(parsed.href); // clone the parsed URL
+          // URL's rules for base URL relative paths are a little silly,
+          // so we're going to do it manually, gluing the paths together and removing extra slashes
+          sugg.pathname = `${sugg.pathname}/${path}`.replace(/\/+/g, '/');
+          sugg.port = port;
+          sugg.protocol = protocol;
+
+          suggestions.push(sugg.href);
+        }
+      }
+    }
+
+    return suggestions;
+  }
+
+  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+    return Promise.reject('Not implemented in base class');
+  }
+
+  static async findApiUrl(profile:NZBUnityProfileOptions):Promise<string> {
+    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
+    for (const url of urls) {
+      const r = await this.testApiUrl(url, profile);
+      if (r.success) return url;
+    }
+  }
+
+  static async findAllApiUrls(profile:NZBUnityProfileOptions):Promise<string[]> {
+    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
+    const results = await Promise.all(urls.map(url => this.testApiUrl(url, profile)));
+    return urls.filter((url, i) => results[i].success);
+  }
+
   name: string = 'NZBHost';
   displayName: string;
   host: string;
@@ -97,7 +158,7 @@ export abstract class NZBHost {
     this.displayName = displayName ?? this.name;
     this.host = host ?? 'localhost';
     this.hostParsed = parseUrl(this.host);
-    this.hostAsEntered = hostAsEntered ?? false;
+    this.hostAsEntered = hostAsEntered ?? true;
   }
 
   abstract call(operation: string, params: Record<string, unknown> | unknown[]): Promise<NZBResult>;

@@ -514,9 +514,10 @@ export class NZBUnity {
             providers[name].Enabled = opts.Providers[name].Enabled;
           }
         }
-      });
 
-      return Util.storage.set({ Providers: providers }).then(() => providers);
+        return Util.storage.set({ Providers: providers })
+          .then(() => providers);
+      });
     });
   }
 
