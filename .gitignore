@@ -6,8 +6,12 @@ stats-*.json
 .wxt
 web-ext.config.ts
 
-# env
+# Env
 .env*.local
+
+# Testing
+test/docker/nzbget/*
+test/docker/sabnzbd/*
 
 # Editor directories and files
 .vscode/*

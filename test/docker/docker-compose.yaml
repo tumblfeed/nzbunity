@@ -1,0 +1,38 @@
+# IMPORTANT: THIS FILE IS FOR TESTING CONVENIENCE ONLY!
+# IT IS NOT SECURE! DO NOT USE IT TO RUN THESE SERVICES ON YOUR MACHINE!
+#
+# It is not necessary to add an NNTP server to these services for testing; api endpoints will work fine.
+
+networks:
+  default:
+    driver: bridge
+
+services:
+  sabnzbd:
+    # https://docs.linuxserver.io/images/docker-sabnzbd/
+    # API Key can be found in the SABnzbd web interface under Config > General, or in the config file after the first run.
+    container_name: sabnzbd
+    image: lscr.io/linuxserver/sabnzbd:latest
+    restart: unless-stopped
+    ports:
+      - 7357:8080
+    volumes:
+      - ./sabnzbd:/config
+    environment:
+      - PUID=${UID:-1000}
+      - PGID=${GID:-1000}
+
+  nzbget:
+    # https://docs.linuxserver.io/images/docker-nzbget/
+    container_name: nzbget
+    image: lscr.io/linuxserver/nzbget:latest
+    restart: unless-stopped
+    ports:
+      - 7358:6789
+    volumes:
+      - ./nzbget:/config
+    environment:
+      - PUID=${UID:-1000}
+      - PGID=${GID:-1000}
+      - NZBGET_USER=${NZBGET_USER:-testnzbget}
+      - NZBGET_PASS=${NZBGET_PASS:-testnzbget}
