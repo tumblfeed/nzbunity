@@ -1,27 +1,7 @@
 {
-  "compileOnSave": false,
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "pretty": true,
-    "target": "ES2015",
-    "lib": [
-      "ES2020",
-      "DOM"
-    ],
-    "typeRoots": [
-      "@types",
-      "node_modules/@types",
-      "node_modules/web-ext-types",
-      "node_modules/webextension-polyfill-ts"
-    ]
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"]
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx"
+  }
 }

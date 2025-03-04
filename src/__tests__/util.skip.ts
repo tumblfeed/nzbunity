@@ -13,7 +13,7 @@ import {
   ucFirst,
   trunc,
   simplifyCategory,
-} from './util';
+} from '../util';
 
 describe('util/queryToObject', () => {
   it('Returns empty object for empty query', () => {

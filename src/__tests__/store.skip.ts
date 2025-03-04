@@ -17,7 +17,7 @@ import {
   getProvider,
   // watchOptions,
   // watchActiveProvider,
-} from './store';
+} from '../store';
 
 const testOptions: NZBUnityOptions = {
   Version: undefined,
