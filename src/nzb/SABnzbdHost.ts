@@ -1,4 +1,4 @@
-import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../util';
+import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../utils';
 import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
 
 export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };

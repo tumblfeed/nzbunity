@@ -8,6 +8,9 @@ function App() {
 
   return (
     <>
+      <pre>
+env: {JSON.stringify(import.meta.env, null, 2)}
+      </pre>
       <div>
         <a href="https://wxt.dev" target="_blank">
           <img src={wxtLogo} className="logo" alt="WXT logo" />

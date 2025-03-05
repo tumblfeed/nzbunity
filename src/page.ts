@@ -1,11 +1,10 @@
-import browser from 'webextension-polyfill';
-import { request, RequestOptions } from './util';
+import { request, RequestOptions } from '@/utils';
 export { request, RequestOptions };
 
-export const iconGreen: string = browser.runtime.getURL('content/images/nzb-16-green.png');
-export const iconGrey: string = browser.runtime.getURL('content/images/nzb-16-grey.png');
-export const iconOrange: string = browser.runtime.getURL('content/images/nzb-16-orange.png');
-export const iconRed: string = browser.runtime.getURL('content/images/nzb-16-red.png');
+export const iconGreen: string = browser.runtime.getURL('/icon/nzb-16-green.png');
+export const iconGrey: string = browser.runtime.getURL('/icon/nzb-16-grey.png');
+export const iconOrange: string = browser.runtime.getURL('/icon/nzb-16-orange.png');
+export const iconRed: string = browser.runtime.getURL('/icon/nzb-16-red.png');
 export const backgroundNormal: string = 'rgb(23, 162, 184)';
 export const backgroundPending: string = 'rgb(156, 166, 168)';
 
@@ -123,7 +122,7 @@ export function createButton(): HTMLElement {
   return btn;
 }
 
-export function createAddUrlLink(options: AddUrlOptions, adjacent: HTMLElement = null): HTMLElement {
+export function createAddUrlLink(options: AddUrlOptions, adjacent?: HTMLElement): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const a = bindAddUrl(options, createLink());
   a.setAttribute('href', options.url);
@@ -140,7 +139,7 @@ export function createAddUrlLink(options: AddUrlOptions, adjacent: HTMLElement =
   return a;
 }
 
-export function createAddUrlButton(options: AddUrlOptions, adjacent: HTMLElement = null): HTMLElement {
+export function createAddUrlButton(options: AddUrlOptions, adjacent?: HTMLElement): HTMLElement {
   // console.log('createAddUrlLink', url, category);
   const btn = bindAddUrl(options, createButton());
 

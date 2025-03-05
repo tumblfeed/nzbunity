@@ -1,22 +1,20 @@
-import browser from 'webextension-polyfill';
-
 const manifest = browser.runtime.getManifest();
 const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
 
 // Current version
-export interface ProfileOptions {
+export interface DownloaderOptions {
   Name: string;
-  Type: string;
-  Host: string;
-  ApiKey: string;
-  Username: string;
-  Password: string;
-  ServerUrl: string;
+  Type: string | null;
+  Host: string | null;
+  ApiKey: string | null;
+  Username: string | null;
+  Password: string | null;
+  ServerUrl: string | null;
   HostAsEntered: boolean;
 }
 
-export const DefaultProfileOptions: ProfileOptions = {
+export const DefaultDownloaderOptions: DownloaderOptions = {
   Name: 'Default',
   Type: null,
   Host: null,
@@ -27,7 +25,7 @@ export const DefaultProfileOptions: ProfileOptions = {
   HostAsEntered: false,
 };
 
-export interface ProviderOptions {
+export interface IndexerOptions {
   Enabled: boolean;
   Matches: string[];
   Js: string[];
@@ -37,12 +35,12 @@ export interface NZBUnityOptions {
   Initialized: boolean;
   Version: string;
   Debug: boolean;
-  Profiles: Record<string, ProfileOptions>;
-  ActiveProfile: string;
-  Providers: Record<string, ProviderOptions>;
-  ProviderNewznab: string;
-  ProviderEnabled: boolean;
-  ProviderDisplay: boolean;
+  Downloaders: Record<string, DownloaderOptions>;
+  ActiveDownloader: string | null;
+  Indexers: Record<string, IndexerOptions>;
+  IndexerNewznab: string;
+  IndexerEnabled: boolean;
+  IndexerDisplay: boolean;
   RefreshRate: number;
   InterceptDownloads: boolean;
   InterceptExclude: string;
@@ -50,8 +48,8 @@ export interface NZBUnityOptions {
   EnableNewznab: boolean;
   IgnoreCategories: boolean;
   SimplifyCategories: boolean;
-  DefaultCategory: string;
-  OverrideCategory: string;
+  DefaultCategory: string | null;
+  OverrideCategory: string | null;
   ReplaceLinks: boolean;
   UITheme: string;
 }
@@ -60,12 +58,12 @@ export const DefaultOptions: NZBUnityOptions = {
   Initialized: false,
   Version: manifest.version,
   Debug: false,
-  Profiles: {},
-  ActiveProfile: null,
-  Providers: {},
-  ProviderNewznab: '',
-  ProviderEnabled: true,
-  ProviderDisplay: true,
+  Downloaders: {},
+  ActiveDownloader: null,
+  Indexers: {},
+  IndexerNewznab: '',
+  IndexerEnabled: true,
+  IndexerDisplay: true,
   RefreshRate: 15,
   InterceptDownloads: true,
   InterceptExclude: '',
@@ -83,7 +81,7 @@ export async function getOptions(): Promise<NZBUnityOptions> {
   await runMigrations();
 
   const options = (await storageArea.get(DefaultOptions)) as NZBUnityOptions;
-  await updateProviders(options); // init providers
+  await updateIndexers(options); // init providers
   return options;
 }
 
@@ -94,40 +92,40 @@ export async function setOptions(options: NZBUnityOptions): Promise<NZBUnityOpti
 }
 
 // Profiles
-export async function getProfiles(): Promise<Record<string, ProfileOptions>> {
+export async function getDownloaders(): Promise<Record<string, DownloaderOptions>> {
   const options = await getOptions();
-  return options.Profiles;
+  return options.Downloaders;
 }
 
-export async function setProfiles(profiles: Record<string, ProfileOptions>): Promise<void> {
+export async function setDownloaders(downloaders: Record<string, DownloaderOptions>): Promise<void> {
   const options = await getOptions();
-  options.Profiles = profiles;
+  options.Downloaders = downloaders;
   await setOptions(options);
 }
 
-export async function getProfile(profileName: string): Promise<ProfileOptions> {
+export async function getDownloader(name: string): Promise<DownloaderOptions> {
   const options = await getOptions();
-  return options.Profiles[profileName] ?? ({} as ProfileOptions);
+  return options.Downloaders[name] ?? ({} as DownloaderOptions);
 }
 
-export async function getActiveProfile(): Promise<ProfileOptions> {
+export async function getActiveDownloader(): Promise<DownloaderOptions> {
   const options = await getOptions();
-  return options.Profiles[options.ActiveProfile] ?? ({} as ProfileOptions);
+  return options.Downloaders[options.ActiveDownloader ?? ''] ?? ({} as DownloaderOptions);
 }
 
-export async function setActiveProfile(profileName: string): Promise<void> {
+export async function setActiveDownloader(name: string): Promise<void> {
   const options = await getOptions();
-  options.ActiveProfile = profileName;
+  options.ActiveDownloader = name;
   await setOptions(options);
 }
 
-export async function getProfileCount(): Promise<number> {
-  const profiles = await getProfiles();
+export async function getDownloaderCount(): Promise<number> {
+  const profiles = await getDownloaders();
   return Object.keys(profiles).length;
 }
 
-export async function getDefaultProfile(): Promise<ProfileOptions> {
-  const profiles = await getProfiles();
+export async function getDefaultDownloader(): Promise<DownloaderOptions | undefined> {
+  const profiles = await getDownloaders();
   if (profiles['Default']) {
     return profiles['Default'];
   } else if (profiles['default']) {
@@ -135,66 +133,71 @@ export async function getDefaultProfile(): Promise<ProfileOptions> {
   } else if (Object.keys(profiles).length > 0) {
     return Object.values(profiles)[0];
   } else {
-    return null;
+    return undefined;
   }
 }
 
-// Providers
-export async function updateProviders(options: NZBUnityOptions): Promise<void> {
-  // Init providers from manifest
-  const providers = {} as Record<string, ProviderOptions>;
+// Indexers
+export async function updateIndexers(options: NZBUnityOptions): Promise<void> {
+  // Init indexers from manifest
+  const indexers = {} as Record<string, IndexerOptions>;
 
-  for (const script of manifest.content_scripts) {
-    const js: string = Array.isArray(script.js) && [...script.js].pop();
-    const [, name] = js ? js.match(/(\w+)\.js$/) : [];
+  for (const script of manifest.content_scripts ?? []) {
+    const Matches = [...(script.matches ?? [])];
+    const Js = [...(script.js ?? [])];
 
-    if (name && name !== 'util') {
-      providers[name] = {
-        Enabled: options.Providers[name]?.Enabled ?? true,
-        Matches: [...script.matches],
-        Js: [...script.js],
+    const first = [...Js].pop() ?? '';
+    const [, name] = first.match(/(\w+)\.[tj]s$/) ?? [];
+
+    if (name !== 'utils') {
+      indexers[name] = {
+        Enabled: options.Indexers[name]?.Enabled ?? true,
+        Matches,
+        Js,
       };
     }
   }
 
-  options.Providers = providers;
+  options.Indexers = indexers;
   await setOptions(options);
 }
 
-export async function getProviders(): Promise<Record<string, ProviderOptions>> {
+export async function getIndexers(): Promise<Record<string, IndexerOptions>> {
   const options = await getOptions();
-  return options.Providers;
+  return options.Indexers;
 }
 
-export async function getProvider(providerName: string): Promise<ProviderOptions> {
-  const providers = await getProviders();
-  return providers[providerName] ?? ({} as ProviderOptions);
+export async function getIndexer(providerName: string): Promise<IndexerOptions> {
+  const providers = await getIndexers();
+  return providers[providerName] ?? ({} as IndexerOptions);
 }
 
 // Watchers
 export function watchOptions(
-  watchers: { [key: string]: (newValue: unknown) => void } | ((newValue: unknown) => void),
+  watchers:
+    // Either named functions for individual options
+    Partial<{ [key in keyof NZBUnityOptions]: (newValue?: NZBUnityOptions[key], oldValue?: NZBUnityOptions[key]) => void | Promise<void> }>
+    // Or a single function for all options
+    | ((changes: { [key: string]: chrome.storage.StorageChange }) => void | Promise<void>),
 ): void {
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === storageAreaName) {
       if (typeof watchers === 'function') {
         watchers(changes);
       } else {
-        for (const [key, value] of Object.entries(changes)) {
-          if (watchers[key]) {
-            watchers[key](value?.newValue);
-          }
+        for (const [key, change] of Object.entries(changes)) {
+          watchers[key as keyof NZBUnityOptions]?.(change.newValue, change.oldValue);
         }
       }
     }
   });
 }
 
-export function watchActiveProvider(callback: (provider: ProviderOptions) => void): void {
+export function watchActiveDownloader(callback: (profile: DownloaderOptions) => void): void {
   watchOptions({
-    ActiveProfile: (newValue: string) => {
+    async ActiveDownloader(newValue?: string | null): Promise<void> {
       if (newValue) {
-        getProvider(newValue).then(callback);
+        callback(await getDownloader(newValue));
       }
     },
   });
@@ -248,45 +251,42 @@ export async function migrateV1(): Promise<void> {
   */
   const oldOptions = await browser.storage.local.get(null); // V1 always stored in local
 
-  // V1 options will Initialized but notversion set usually, but check if set to "1" just in case
+  // V1 options will have Initialized but not Version set, but check if Version is "1" just in case
   if (oldOptions.Initialized && (!oldOptions.Version || /^1\./.test(String(oldOptions.Version)))) {
     // Copy base options
-    const newOptions: NZBUnityOptions = {
-      ...DefaultOptions,
-      Version: manifest.version,
-    };
+    const newOptions: NZBUnityOptions = {...DefaultOptions};
 
     for (const [key, value] of Object.entries(oldOptions)) {
       if (key in newOptions) {
-        newOptions[key] = value;
+        // Need to use Object.assign because TS will throw a fit about string keys,
+        // even though we just checked that the key exists
+        Object.assign(newOptions, {[key]: value});
       }
     }
 
     // Copy profile options (including old base options)
     for (const [profileName, profile] of Object.entries(oldOptions.Profiles)) {
-      const newProfile = {
-        ...DefaultProfileOptions,
-      };
+      const downloader: DownloaderOptions = {...DefaultDownloaderOptions};
 
-      for (const [key, value] of Object.entries(profile)) {
-        if (key in newProfile) {
-          newProfile[key] = value;
+      for (const [key, value] of Object.entries(profile as Record<string, unknown>)) {
+        if (key in downloader) {
+          Object.assign(downloader, {[key]: value});
         }
       }
 
       for (const [key, value] of Object.entries(oldOptions)) {
-        if (key in newProfile) {
-          newProfile[key] = value;
+        if (key in downloader) {
+          Object.assign(downloader, {[key]: value});
         }
       }
 
-      newOptions.Profiles[profileName] = newProfile;
+      newOptions.Downloaders[profileName] = downloader;
     }
 
     // Copy provider options
     for (const [providerName, provider] of Object.entries(oldOptions.Providers)) {
-      newOptions.Providers[providerName] = {
-        ...(provider as ProviderOptions),
+      newOptions.Indexers[providerName] = {
+        ...(provider as IndexerOptions),
       };
     }
 

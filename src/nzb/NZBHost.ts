@@ -1,4 +1,4 @@
-import { parseUrl } from '../util';
+import { parseUrl } from '@/utils';
 
 export interface NZBHostOptions {
   displayName?: string;
@@ -93,8 +93,8 @@ export abstract class NZBHost {
    * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
    * @returns An array of possible URLs for the download API
    */
-  static getApiUrlSuggestions(host:string, ports: string[] = [''], paths: string[] = ['']):string[] {
-    const parsed = Util.parseUrl(host); // Will default to http if no protocol is present
+  static getApiUrlSuggestions(host: string, ports: string[] = [''], paths: string[] = ['']):string[] {
+    const parsed = parseUrl(host); // Will default to http if no protocol is present
 
     // If host specifies a protocol only use that, otherwise use both http and https
     const protocols = /^\w+:\/\//.test(host) ? [parsed.protocol] : ['http:', 'https:'];
@@ -109,7 +109,7 @@ export abstract class NZBHost {
     }
 
     // Generate suggestions
-    const suggestions:string[] = [];
+    const suggestions: string[] = [];
 
     for (const path of paths) {
       for (const port of ports) {
@@ -129,7 +129,7 @@ export abstract class NZBHost {
     return suggestions;
   }
 
-  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+  static testApiUrl(url:string, profile: NZBUnityProfileOptions):Promise<NZBResult> {
     return Promise.reject('Not implemented in base class');
   }
 

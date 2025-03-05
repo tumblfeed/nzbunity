@@ -1,11 +1,8 @@
-import browser from 'webextension-polyfill';
+import { PublicPath } from "wxt/browser";
 
-export interface RequestOptions {
+export interface RequestOptions extends RequestInit {
   url: string;
-  method?: string;
-  headers?: Record<string, string>;
   params?: Record<string, unknown>;
-  body?: string | FormData;
   username?: string;
   password?: string;
   json?: boolean;
@@ -17,15 +14,25 @@ export interface RequestOptions {
       content: any;
     };
   };
-  mode?: string;
-  cache?: string;
-  credentials?: string;
-  redirect?: string;
-  referrerPolicy?: string;
   debug?: boolean;
+  // From RequestInit
+  // method?: string
+  // keepalive?: boolean
+  // headers?: HeadersInit
+  // body?: BodyInit | null
+  // redirect?: RequestRedirect
+  // integrity?: string
+  // signal?: AbortSignal | null
+  // credentials?: RequestCredentials
+  // mode?: RequestMode
+  // referrer?: string
+  // referrerPolicy?: ReferrerPolicy
+  // window?: null
+  // dispatcher?: Dispatcher
+  // duplex?: RequestDuplex
 }
 
-export function setMenuIcon(color: string = 'green', status: string = null): Promise<void> {
+export function setMenuIcon(color: string = 'green', status?: string): Promise<void> {
   // TODO: Roadmap #8, allow either color by profile or badge, and color by type
   //       Green for NZBGet, Orange for SABnzbd
   color = color.toLowerCase();
@@ -42,26 +49,27 @@ export function setMenuIcon(color: string = 'green', status: string = null): Pro
   });
 
   const bySize = ['16', '32', '64'].reduce((set, size) => {
-    set[size] = browser.runtime.getURL(`content/images/nzb-${size}-${color}.png`);
+    set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
     return set;
-  }, {});
+  }, {} as Record<string, string>);
 
-  return browser.browserAction.setIcon({ path: bySize });
+  return new Promise(resolve => browser.browserAction.setIcon({ path: bySize }, resolve));
 }
 
 export function queryToObject(query: string = window.location.search): URLSearchParams {
   return new URLSearchParams(query);
 }
 
-export function getQueryParam(k: string, def: string = null, query: string = undefined): string | null {
-  return queryToObject(query).get(k) ?? def;
+export function getQueryParam(k: string, default_?: string, query?: string): string | undefined {
+  return queryToObject(query).get(k) ?? default_ ?? undefined;
 }
 
 export function objectToQuery(obj: Record<string, unknown>): string {
-  return Object.entries(obj)
-    .map(([k, v]) => [encodeURIComponent(k), encodeURIComponent(String(v))])
-    .map(([k, v]) => `${k}=${v}`)
-    .join('&');
+  const query = new URLSearchParams();
+  for (const [k, v] of Object.entries(obj)) {
+    query.set(k, String(v));
+  }
+  return query.toString();
 }
 
 /**
@@ -74,7 +82,7 @@ export function parseUrl(url: string): URL {
     url = `http://${url}`;
   }
 
-  return new URL(url, window.location.href);
+  return new URL(url, window?.location?.href);
 }
 
 /**
@@ -89,7 +97,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
   const method: string = String(options.method || 'GET').toUpperCase();
   const parsed: URL = parseUrl(options.url);
-  const headers: Record<string, string> = options.headers || {};
+  const headers: Headers = new Headers(options.headers ?? {});
 
   let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
   const search: URLSearchParams = parsed.searchParams;
@@ -97,17 +105,17 @@ export async function request(options: RequestOptions): Promise<unknown> {
   if (options.params || options.files || options.multipart) {
     if (method === 'GET') {
       if (options.json) {
-        headers['Content-Type'] = 'application/json';
+        headers.set('Content-Type', 'application/json');
       }
       // GET requests, pack everything in the URL
-      for (const [k, v] of Object.entries(options.params)) {
+      for (const [k, v] of Object.entries(options.params ?? {})) {
         search.set(k, String(v));
       }
     } else if (!options.body) {
       // Other types of requests, figure out content type if not specified
       // and build the request body if not provided.
       const type =
-        headers['Content-Type'] ||
+        headers.get('Content-Type') ||
         (options.json && 'json') ||
         (options.files && 'multipart') ||
         (options.multipart && 'multipart') ||
@@ -116,33 +124,34 @@ export async function request(options: RequestOptions): Promise<unknown> {
       switch (type) {
         case 'json':
         case 'application/json':
-          headers['Content-Type'] = 'application/json';
+          headers.set('Content-Type', 'application/json');
           options.body = JSON.stringify(options.params);
           break;
 
         case 'multipart':
         case 'multipart/form-data':
-          delete headers['Content-Type'];
+          headers.set('Content-Type', 'multipart/form-data');
           options.body = new FormData();
 
-          Object.keys(options.params ?? []).forEach(k => {
-            (options.body as FormData).append(k, options.params[k] as string);
-          });
+          for (const [k, v] of Object.entries(options.params ?? {})) {
+            (options.body as FormData).append(k, String(v));
+          }
 
-          Object.keys(options.files ?? []).forEach(k => {
+          for (const [k, v] of Object.entries(options.files ?? {})) {
             (options.body as FormData).append(
               k,
-              new Blob([options.files[k].content], { type: options.files[k].type }),
-              options.files[k].filename,
+              new Blob([v.content], { type: v.type }),
+              v.filename,
             );
-          });
+          }
+
           break;
 
         case 'form':
         case 'application/x-www-form-urlencoded':
         default:
-          headers['Content-Type'] = 'application/x-www-form-urlencoded';
-          options.body = objectToQuery(options.params);
+          headers.set('Content-Type', 'application/x-www-form-urlencoded');
+          options.body = objectToQuery(options.params ?? {});
       }
     }
   }
@@ -152,13 +161,13 @@ export async function request(options: RequestOptions): Promise<unknown> {
   }
 
   if (options.username && options.password) {
-    headers.Authorization = `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`;
+    headers.set('Authorization', `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`);
     options.credentials = 'include';
   }
 
   // Debug if requested
   if (options.debug) {
-    console.debug('util/request() -->', {
+    console.debug('utils/request() -->', {
       rawUrl: options.url,
       url,
       method,
@@ -172,7 +181,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
   // Debug if requested
   if (options.debug) {
-    console.debug('util/request() <--', `${response.status}: ${response.statusText}`);
+    console.debug('utils/request() <--', `${response.status}: ${response.statusText}`);
   }
 
   if (response.ok) {
@@ -225,16 +234,18 @@ export function trunc(s: string, n: number): string {
 export function simplifyCategory(s: string): string {
   // If category name contains any non-word characters (eg 'Lol > Wut')
   // just return the first word (eg 'lol')
-  return s
-    .split(/[^\w\d]+/i)
-    .shift()
-    .toLowerCase();
+  return (
+    s
+      ?.split(/[^\w\d]+/i)
+      ?.shift()
+      ?.toLowerCase()
+  ) ?? '';
 }
 
-export function objDiff(a: Dictionary, b: Dictionary): Dictionary {
-  const diff: Dictionary = {};
+export function objDiff(a: Record<string, unknown>, b: Record<string, unknown>): Record<string, unknown> {
+  const diff: Record<string, unknown> = {};
 
-  for (const k in a) {
+  for (const k of Object.keys(a)) {
     if (a[k] !== b[k]) {
       diff[k] = a[k];
     }
@@ -243,6 +254,6 @@ export function objDiff(a: Dictionary, b: Dictionary): Dictionary {
   return diff;
 }
 
-export function objDiffKeys(a: Dictionary, b: Dictionary): string[] {
+export function objDiffKeys(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
   return Object.keys(objDiff(a, b));
 }

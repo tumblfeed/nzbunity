@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import {
   queryToObject,
   getQueryParam,
@@ -13,9 +14,9 @@ import {
   ucFirst,
   trunc,
   simplifyCategory,
-} from '../util';
+} from '../utils';
 
-describe('util/queryToObject', () => {
+describe('utils/queryToObject', () => {
   it('Returns empty object for empty query', () => {
     const obj = queryToObject('');
     expect(typeof obj).toBe('object');
@@ -34,7 +35,7 @@ describe('util/queryToObject', () => {
   });
 });
 
-describe('util/getQueryParam', () => {
+describe('utils/getQueryParam', () => {
   it('Returns requested value from query string', () => {
     const val = getQueryParam('foo', 'lol', '?foo=1337');
     expect(val).toBe('1337');
@@ -46,7 +47,7 @@ describe('util/getQueryParam', () => {
   });
 });
 
-describe('util/objectToQuery', () => {
+describe('utils/objectToQuery', () => {
   it('Returns expected query string', () => {
     const query = objectToQuery({
       foo: 'lul & wut',
@@ -54,11 +55,11 @@ describe('util/objectToQuery', () => {
       bln: true,
       nil: null,
     });
-    expect(query).toBe('foo=lul%20%26%20wut&num=1&bln=true&nil=null');
+    expect(query).toBe('foo=lul+%26+wut&num=1&bln=true&nil=null');
   });
 });
 
-describe('util/parseUrl', () => {
+describe('utils/parseUrl', () => {
   it('Parses full url', () => {
     const parsed = parseUrl('https://google.com/lol');
     expect(parsed).toHaveProperty('protocol', 'https:');
@@ -74,7 +75,7 @@ describe('util/parseUrl', () => {
 
   it('Parses relative url', () => {
     const parsed = parseUrl('/lol');
-    expect(parsed).toHaveProperty('host', 'localhost');
+    expect(parsed).toHaveProperty('hostname', 'localhost');
     expect(parsed).toHaveProperty('pathname', '/lol');
   });
 
@@ -85,11 +86,11 @@ describe('util/parseUrl', () => {
   });
 });
 
-describe('util/request', () => {
+describe('utils/request', () => {
   it('Can make a simple GET request', async () => {
     expect.assertions(1);
     const response = await request({
-      url: 'https://jsonplaceholder.typicode.com/todos/1',
+      url: 'https://jsonplaceholder.org/comments/1',
     });
 
     expect(response).toMatchObject({ id: 1 });
@@ -101,12 +102,12 @@ describe('util/request', () => {
     try {
       await request({ url: '' });
     } catch (e) {
-      expect(e.toString()).toBe('Error: No URL provided');
+      expect(`${e}`).toBe('Error: No URL provided');
     }
   });
 });
 
-describe('util/humanSize', () => {
+describe('utils/humanSize', () => {
   it('Returns human readable strings that match size', () => {
     expect(humanSize(2 * Byte)).toBe('2 B');
     expect(humanSize(2 * Kilobyte)).toBe('2 kB');
@@ -115,21 +116,21 @@ describe('util/humanSize', () => {
   });
 });
 
-describe('util/humanSeconds', () => {
+describe('utils/humanSeconds', () => {
   it('Returns human readable time durations that match seconds', () => {
     expect(humanSeconds(12345)).toBe('3:25:45');
     expect(humanSeconds(3600 * 1.5)).toBe('1:30:00');
   });
 });
 
-describe('util/ucFirst', () => {
+describe('utils/ucFirst', () => {
   it('Returns uppercased first letter', () => {
     expect(ucFirst('lol')).toBe('Lol');
     expect(ucFirst('Lol')).toBe('Lol');
   });
 });
 
-describe('util/trunc', () => {
+describe('utils/trunc', () => {
   it('Truncates long strings', () => {
     expect(trunc('Really long string', 10)).toBe('Really lon&hellip;');
   });
@@ -139,7 +140,7 @@ describe('util/trunc', () => {
   });
 });
 
-describe('util/simplifyCategory', () => {
+describe('utils/simplifyCategory', () => {
   it('Simplifies multi-word categories', () => {
     expect(simplifyCategory('Movies')).toBe('movies');
     expect(simplifyCategory('Movies > New > Lol')).toBe('movies');

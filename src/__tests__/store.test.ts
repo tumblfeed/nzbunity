@@ -1,27 +1,30 @@
-import browser from 'webextension-polyfill';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   NZBUnityOptions,
   DefaultOptions,
-  DefaultProfileOptions,
+  DefaultDownloaderOptions,
   storageArea,
   getOptions,
   setOptions,
-  getProfiles,
-  setProfiles,
-  getProfile,
-  getActiveProfile,
-  setActiveProfile,
-  getProfileCount,
-  getDefaultProfile,
-  getProviders,
-  getProvider,
+  getDownloaders,
+  setDownloaders,
+  getDownloader,
+  getActiveDownloader,
+  setActiveDownloader,
+  getDownloaderCount,
+  getDefaultDownloader,
+  getIndexers,
+  getIndexer,
   // watchOptions,
   // watchActiveProvider,
 } from '../store';
 
-const testOptions: NZBUnityOptions = {
-  Version: undefined,
-  ActiveProfile: 'Local',
+
+const manifest = browser.runtime.getManifest();
+
+const testOptions: Partial<NZBUnityOptions> = {
+  Version: manifest.version,
+  ActiveDownloader: 'Local',
   Debug: true,
   DefaultCategory: null,
   EnableNewznab: true,
@@ -31,10 +34,10 @@ const testOptions: NZBUnityOptions = {
   InterceptDownloads: true,
   InterceptExclude: '',
   OverrideCategory: null,
-  Profiles: {
+  Downloaders: {
     Local: {
-      ApiKey: process.env.SABNZBD_APIKEY,
-      Host: process.env.SABNZBD_HOST,
+      ApiKey: import.meta.env.SABNZBD_APIKEY,
+      Host: import.meta.env.SABNZBD_HOST,
       HostAsEntered: false,
       Name: 'Local',
       Password: '',
@@ -43,17 +46,16 @@ const testOptions: NZBUnityOptions = {
       Username: '',
     },
   },
-  Providers: {},
-  ProviderDisplay: true,
-  ProviderEnabled: true,
-  ProviderNewznab: 'nzb.cat',
+  Indexers: {},
+  IndexerDisplay: true,
+  IndexerEnabled: true,
+  IndexerNewznab: 'nzb.cat',
   RefreshRate: 15,
   ReplaceLinks: false,
   SimplifyCategories: true,
   UITheme: '',
 };
 
-const manifest = browser.runtime.getManifest();
 
 beforeEach(async () => {
   await storageArea.clear();
@@ -65,14 +67,14 @@ describe('get & set', () => {
   it('should return default options when none set', async () => {
     await storageArea.clear();
     const options = await getOptions();
-    options.Providers = {}; // Providers is set from manifest and can vary
+    options.Indexers = {}; // Providers is set from manifest and can vary
     expect(options).toEqual({ ...DefaultOptions, Version: manifest.version });
   });
 
   it('should return the set options', async () => {
     // Options are set in beforeEach, manifest version should be set
     const options = await getOptions();
-    options.Providers = {}; // Providers is set from manifest and can vary
+    options.Indexers = {}; // Providers is set from manifest and can vary
     expect(options).toEqual({ ...testOptions, Version: manifest.version });
   });
 
@@ -90,96 +92,97 @@ describe('get & set', () => {
 describe('profiles', () => {
   it('default profiles should be empty', async () => {
     await storageArea.clear();
-    const profiles = await getProfiles();
+    const profiles = await getDownloaders();
     expect(profiles).toEqual({});
   });
 
   it('should return the set profiles', async () => {
-    const profiles = await getProfiles();
+    const profiles = await getDownloaders();
     expect(profiles.Local.Name).toBe('Local');
   });
 
   it('should persist profiles changes', async () => {
-    await setProfiles({
-      ...testOptions.Profiles,
+    await setDownloaders({
+      ...testOptions.Downloaders,
       test: {
-        ...DefaultProfileOptions,
+        ...DefaultDownloaderOptions,
         Name: 'test',
       },
     });
-    const profiles = await getProfiles();
+    const profiles = await getDownloaders();
     expect(profiles.test.Name).toBe('test');
   });
 
   it('should get a profile', async () => {
-    const profile = await getProfile('Local');
-    expect(profile).toEqual(testOptions.Profiles.Local);
+    const profile = await getDownloader('Local');
+    expect(profile).toEqual(testOptions.Downloaders?.Local);
   });
 
   it('should get the active profile', async () => {
-    const activeProfile = await getActiveProfile();
+    const activeProfile = await getActiveDownloader();
     expect(activeProfile.Name).toBe('Local');
   });
 
   it('should persist active profile change', async () => {
-    await setProfiles({
-      ...testOptions.Profiles,
+    await setDownloaders({
+      ...testOptions.Downloaders,
       test: {
-        ...DefaultProfileOptions,
+        ...DefaultDownloaderOptions,
         Name: 'test',
       },
     });
-    await setActiveProfile('test');
-    const activeProfile = await getActiveProfile();
+    await setActiveDownloader('test');
+    const activeProfile = await getActiveDownloader();
     expect(activeProfile.Name).toBe('test');
   });
 
   it('should count profiles', async () => {
-    const count = await getProfileCount();
+    const count = await getDownloaderCount();
     expect(count).toBe(1);
   });
 
   it('should get the default profile & count', async () => {
-    const defaultProfile = await getDefaultProfile();
-    expect(defaultProfile.Name).toBe('Local');
-    const defaultProfileCount = await getProfileCount();
+    const defaultProfile = await getDefaultDownloader();
+    expect(defaultProfile?.Name).toBe('Local');
+    const defaultProfileCount = await getDownloaderCount();
     expect(defaultProfileCount).toBe(1);
 
-    await setProfiles({});
-    const defaultProfile2 = await getDefaultProfile();
-    expect(defaultProfile2).toBe(null);
-    const defaultProfile2Count = await getProfileCount();
+    await setDownloaders({});
+    const defaultProfile2 = await getDefaultDownloader();
+    expect(defaultProfile2).toBeFalsy();
+    const defaultProfile2Count = await getDownloaderCount();
     expect(defaultProfile2Count).toBe(0);
 
-    await setProfiles({
+    await setDownloaders({
       test: {
-        ...DefaultProfileOptions,
+        ...DefaultDownloaderOptions,
         Name: 'test',
       },
       Default: {
-        ...DefaultProfileOptions,
+        ...DefaultDownloaderOptions,
         Name: 'Default',
       },
     });
-    const defaultProfile3 = await getDefaultProfile();
-    expect(defaultProfile3.Name).toBe('Default');
-    const defaultProfile3Count = await getProfileCount();
+    const defaultProfile3 = await getDefaultDownloader();
+    expect(defaultProfile3?.Name).toBe('Default');
+    const defaultProfile3Count = await getDownloaderCount();
     expect(defaultProfile3Count).toBe(2);
   });
 });
 
 // Providers
-describe('providers', () => {
-  it('providers should set from manifest', async () => {
+describe('indexers', () => {
+  it('indexers should set from manifest', async () => {
     await storageArea.clear();
-    const providers = await getProviders();
+    const indexers = await getIndexers();
     // should skip first entry (util)
-    expect(Object.values(providers).map(p => p.Matches)).toEqual(manifest.content_scripts.slice(1).map(p => p.matches));
+    expect(Object.values(indexers).map(p => p.Matches)).toEqual(manifest.content_scripts?.map(p => p.matches));
   });
 
-  it('should get a provider', async () => {
-    const provider = await getProvider('althub');
-    expect(provider.Matches).toEqual(manifest.content_scripts[1].matches);
+  it('should get a indexer', async () => {
+    const indexer = await getIndexer('althub');
+    // indexer matches should be in manifest
+    expect(manifest.content_scripts?.find(s => s.matches?.includes(indexer.Matches[0]))).toBeTruthy();
   });
 });
 
