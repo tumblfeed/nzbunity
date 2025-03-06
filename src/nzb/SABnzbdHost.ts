@@ -1,17 +1,22 @@
-import { request, RequestOptions, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '../utils';
-import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+import { request, parseUrl, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '@/utils';
+import { NZBHost, DefaultNZBQueue, DefaultNZBQueueItem } from './NZBHost';
 
-export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
+import type { DownloaderOptions } from '@/store';
+import type { RequestOptions } from '@/utils';
+
+import type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class SABnzbdHost extends NZBHost {
-  static getApiUrlSuggestions(host:string):string[] {
-    return super.getApiUrlSuggestions(host, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
+  static generateApiUrlSuggestions(host:string):string[] {
+    return super.generateApiUrlSuggestions(host, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
   }
 
-  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
+  static testApiUrl(url: string, downloader: DownloaderOptions): Promise<NZBResult> {
     const host = new SABnzbdHost({
-      host: url, hostAsEntered: true,
-      apikey: profile.ProfileApiKey,
+      host: url,
+      hostAsEntered: true,
+      apikey: downloader.ApiKey,
     });
     return host.test();
   }
@@ -28,7 +33,7 @@ export class SABnzbdHost extends NZBHost {
     } else {
       // This is maintained for legacy compatibility, but the preferred method is to let the
       // Options page test a list of suggested API URLs and lock in the correct one.
-      const parsed = Util.parseUrl(this.host);
+      const parsed = parseUrl(this.host);
       // If path is empty ('' or '/'), default to /sabnzbd
       if (/^\/*$/i.test(parsed.pathname)) parsed.pathname = '/sabnzbd';
       // If path does not end in /api, add it
@@ -39,7 +44,7 @@ export class SABnzbdHost extends NZBHost {
   }
 
   async call(operation: string, params: Record<string, unknown> = {}): Promise<NZBResult> {
-    const reqParams: RequestOptions = {
+    const req: RequestOptions = {
       method: 'GET',
       url: this.apiUrl,
       json: true,
@@ -52,34 +57,37 @@ export class SABnzbdHost extends NZBHost {
     };
 
     if (this.hostParsed.username) {
-      reqParams.username = this.hostParsed.username;
-      reqParams.password = this.hostParsed.password ?? undefined;
+      req.username = this.hostParsed.username;
+      req.password = this.hostParsed.password ?? undefined;
     }
 
-    Object.keys(params).forEach(k => (reqParams.params[k] = String(params[k])));
+    for (const [k, v] of Object.entries(params)) {
+      req.params![k] = String(v);
+    }
 
     try {
-      let result = await request(reqParams);
+      let result = await request(req);
 
       // check for error conditions
       if (typeof result === 'string') {
         throw Error('Invalid result from host');
       }
 
-      // Collapse single key result
-      if (Object.values(result).length === 1) {
-        result = Object.values(result)[0];
+      // SABnzbd returns an object with the operation as the key and the result as the value
+      // for most operations. Collapse these into just the value if there is only one key.
+      if (Object.values(result as object).length === 1) {
+        result = Object.values(result as object)[0];
       }
 
       return { success: true, operation, result };
     } catch (error) {
-      return { success: false, operation, error };
+      return { success: false, operation, error: `${error}` };
     }
   }
 
   async getCategories(): Promise<string[]> {
     const res = await this.call('get_cats');
-    return res.success ? (res.result as string[]).filter(i => i !== '*') : null;
+    return res.success ? (res.result as string[]).filter(i => i !== '*') : [];
   }
 
   async setMaxSpeed(bytes: number): Promise<NZBResult> {
@@ -98,59 +106,60 @@ export class SABnzbdHost extends NZBHost {
   }
 
   async getQueue(): Promise<NZBQueue> {
-    const res = await this.call('queue');
+    const nzbResult = await this.call('queue');
 
-    if (!res.success) return null;
+    if (!nzbResult.success) {
+      return { ...DefaultNZBQueue, status: 'Error' };
+    };
 
-    let speedBytes: number = null;
-    const speedMatch: string[] = res.result['speed'].match(/(\d+)\s+(\w+)/i);
+    const result = nzbResult.result! as Record<string, string>;
+
+    let speedBytes: number = 0;
+    const speedMatch = result.speed.match(/(\d+)\s+(\w+)/i);
     if (speedMatch) {
       speedBytes = parseInt(speedMatch[1]);
-
-      switch (speedMatch[2].toUpperCase()) {
-        case 'G':
-          speedBytes *= Gigabyte;
-          break;
-        case 'M':
-          speedBytes *= Megabyte;
-          break;
-        case 'K':
-          speedBytes *= Kilobyte;
-          break;
-      }
+      speedBytes *= ({
+        G: Gigabyte,
+        M: Megabyte,
+        K: Kilobyte,
+      }[speedMatch[2].toUpperCase()] || 1);
     }
 
-    const maxSpeedBytes: number = parseInt(res.result['speedlimit_abs']);
+    const maxSpeedBytes: number = parseInt(result.speedlimit_abs);
 
     const queue: NZBQueue = {
-      status: ucFirst(res.result['status']),
+      ...DefaultNZBQueue,
+      status: ucFirst(result.status),
       speed: humanSize(speedBytes) + '/s',
       speedBytes,
       maxSpeed: maxSpeedBytes ? humanSize(maxSpeedBytes) : '',
       maxSpeedBytes,
-      sizeRemaining: res.result['sizeleft'],
-      timeRemaining: speedBytes > 0 ? res.result['timeleft'] : '∞',
-      categories: null,
+      sizeRemaining: (result.sizeleft) || '∞',
+      timeRemaining: speedBytes > 0 ? result.timeleft : '∞',
+      categories: [],
       queue: [],
     };
 
-    queue.queue = res.result['slots'].map((slot: Record<string, string>) => {
+    const slots = result.slots as unknown as Record<string, string>[];
+
+    queue.queue = slots.map(slot => {
       // MB convert to Bytes
-      const sizeBytes: number = Math.floor(parseFloat(slot['mb']) * Megabyte);
-      const sizeRemainingBytes: number = Math.floor(parseFloat(slot['mbleft']) * Megabyte);
+      const sizeBytes: number = Math.floor(parseFloat(slot.mb) * Megabyte);
+      const sizeRemainingBytes: number = Math.floor(parseFloat(slot.mbleft) * Megabyte);
 
       return {
-        id: slot['nzo_id'],
-        status: ucFirst(slot['status']),
-        name: slot['filename'],
-        category: slot['cat'],
+        ...DefaultNZBQueueItem,
+        id: slot.nzo_id,
+        status: ucFirst(slot.status),
+        name: slot.filename,
+        category: slot.cat,
         size: humanSize(sizeBytes),
         sizeBytes,
         sizeRemaining: humanSize(sizeRemainingBytes),
         sizeRemainingBytes,
-        timeRemaining: speedBytes > 0 ? slot['timeleft'] : '∞',
+        timeRemaining: speedBytes > 0 ? slot.timeleft : '∞',
         percentage: Math.floor(((sizeBytes - sizeRemainingBytes) / sizeBytes) * 100),
-      } as NZBQueueItem;
+      };
     });
 
     queue.categories = await this.getCategories();
@@ -177,10 +186,9 @@ export class SABnzbdHost extends NZBHost {
 
   async addUrl(url: string, options: NZBAddOptions = {}): Promise<NZBAddUrlResult> {
     const params: Record<string, string> = { name: url };
-    let ids: string[];
 
-    Object.keys(options).forEach(k => {
-      const val = String(options[k]);
+    for (const [k, v] of Object.entries(options)) {
+      const val = String(v);
       switch (k) {
         case 'name':
           params.nzbname = val;
@@ -191,20 +199,21 @@ export class SABnzbdHost extends NZBHost {
         default:
           params[k] = val;
       }
-    });
+    }
 
-    const res = await this.call('addurl', params);
+    const nzbResult = await this.call('addurl', params);
 
-    if (res.success) {
-      ids = res.result['nzo_ids'];
-      res.result = ids.length ? ids[0] : null;
+    if (nzbResult.success) {
+      const result = nzbResult.result! as Record<string, unknown>;
+      const ids = result.nzo_ids as string[];
+      nzbResult.result = ids.length ? ids[0] : null;
 
       if (options.paused) {
         setTimeout(() => ids.forEach(id => this.pauseId(id)), 100);
       }
     }
 
-    return res as NZBAddUrlResult;
+    return nzbResult as NZBAddUrlResult;
   }
 
   async addFile(
@@ -218,10 +227,9 @@ export class SABnzbdHost extends NZBHost {
       nzbname: filename,
       output: 'json',
     };
-    let ids: string[];
 
-    Object.keys(options).forEach(k => {
-      const val = String(options[k]);
+    for (const [k, v] of Object.entries(options)) {
+      const val = String(v);
       switch (k) {
         case 'category':
           params.cat = val;
@@ -229,12 +237,10 @@ export class SABnzbdHost extends NZBHost {
         default:
           params[k] = val;
       }
-    });
+    }
 
     delete params.content;
     delete params.filename;
-
-    console.debug(params);
 
     const reqParams: RequestOptions = {
       method: 'POST',
@@ -251,27 +257,19 @@ export class SABnzbdHost extends NZBHost {
       debug: true,
     };
 
-    try {
-      let res = await request(reqParams);
+    const nzbResult = await this.call('addurl', params);
 
-      // Collapse single key result
-      if (Object.values(res).length === 1) {
-        res = Object.values(res)[0];
-      }
-
-      ids = res['nzo_ids'];
+    if (nzbResult.success) {
+      const result = nzbResult.result! as Record<string, unknown>;
+      const ids = result.nzo_ids as string[];
+      nzbResult.result = ids.length ? ids[0] : null;
 
       if (options.paused) {
         setTimeout(() => ids.forEach(id => this.pauseId(id)), 100);
       }
-
-      return {
-        success: true,
-        result: ids.length ? ids[0] : null,
-      } as NZBAddUrlResult;
-    } catch (error) {
-      return { success: false, error };
     }
+
+    return nzbResult as NZBAddUrlResult;
   }
 
   async removeId(value: string): Promise<NZBResult> {

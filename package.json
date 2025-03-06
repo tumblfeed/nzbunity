@@ -24,7 +24,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest --mode test",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

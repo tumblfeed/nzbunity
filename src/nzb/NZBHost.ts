@@ -1,5 +1,7 @@
 import { parseUrl } from '@/utils';
 
+import type { DownloaderOptions } from '@/store';
+
 export interface NZBHostOptions {
   displayName?: string;
   host?: string;
@@ -19,10 +21,10 @@ export interface NZBAddOptions {
 export enum NZBPriority {
   default = -100,
   paused = -2,
-  low,
-  normal,
-  high,
-  force,
+  low = -1,
+  normal = 0,
+  high = 1,
+  force = 2,
 }
 
 export enum NZBPostProcessing {
@@ -54,6 +56,12 @@ export interface NZBResult {
   error?: string;
 }
 
+export interface NZBAddUrlResult {
+  success: boolean;
+  result?: string;
+  error?: string;
+}
+
 export interface NZBQueue {
   status: string;
   speed: string;
@@ -79,11 +87,30 @@ export interface NZBQueueItem {
   percentage: number;
 }
 
-export interface NZBAddUrlResult {
-  success: boolean;
-  result?: string;
-  error?: string;
-}
+export const DefaultNZBQueue: NZBQueue = {
+  status: 'Unknown',
+  speed: '0 B/s',
+  speedBytes: 0,
+  maxSpeed: '',
+  maxSpeedBytes: 0,
+  sizeRemaining: '∞',
+  timeRemaining: '∞',
+  categories: [],
+  queue: [],
+};
+
+export const DefaultNZBQueueItem: NZBQueueItem = {
+  id: '',
+  status: 'Unknown',
+  name: '',
+  category: '',
+  size: '',
+  sizeBytes: 0,
+  sizeRemaining: '',
+  sizeRemainingBytes: 0,
+  timeRemaining: '',
+  percentage: 0,
+};
 
 export abstract class NZBHost {
   /**
@@ -93,7 +120,7 @@ export abstract class NZBHost {
    * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
    * @returns An array of possible URLs for the download API
    */
-  static getApiUrlSuggestions(host: string, ports: string[] = [''], paths: string[] = ['']):string[] {
+  static generateApiUrlSuggestions(host: string, ports: string[] = [''], paths: string[] = ['']): string[] {
     const parsed = parseUrl(host); // Will default to http if no protocol is present
 
     // If host specifies a protocol only use that, otherwise use both http and https
@@ -129,22 +156,38 @@ export abstract class NZBHost {
     return suggestions;
   }
 
-  static testApiUrl(url:string, profile: NZBUnityProfileOptions):Promise<NZBResult> {
+  /**
+   * Given a URL and a downloader, test if the URL is a valid API endpoint
+   * @abstract
+   */
+  static testApiUrl(url:string, downloader: DownloaderOptions): Promise<NZBResult> {
     return Promise.reject('Not implemented in base class');
   }
 
-  static async findApiUrl(profile:NZBUnityProfileOptions):Promise<string> {
-    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
-    for (const url of urls) {
-      const r = await this.testApiUrl(url, profile);
-      if (r.success) return url;
+  /**
+   * Given a downloader, attempt to find a valid API endpoint using generated suggestions
+   */
+  static async findApiUrl(downloader: DownloaderOptions): Promise<string | null> {
+    if (downloader.Host) {
+      const urls = this.generateApiUrlSuggestions(downloader.Host);
+      for (const url of urls) {
+        const r = await this.testApiUrl(url, downloader);
+        if (r.success) return url;
+      }
     }
+    return null;
   }
 
-  static async findAllApiUrls(profile:NZBUnityProfileOptions):Promise<string[]> {
-    const urls = this.getApiUrlSuggestions(profile.ProfileHost);
-    const results = await Promise.all(urls.map(url => this.testApiUrl(url, profile)));
-    return urls.filter((url, i) => results[i].success);
+  /**
+   * Given a downloader, attempt to find all valid API endpoints using generated suggestions
+   */
+  static async findAllApiUrls(downloader: DownloaderOptions): Promise<string[]> {
+    if (downloader.Host) {
+      const urls = this.generateApiUrlSuggestions(downloader.Host);
+      const results = await Promise.all(urls.map(url => this.testApiUrl(url, downloader)));
+      return urls.filter((url, i) => results[i].success);
+    }
+    return [];
   }
 
   name: string = 'NZBHost';
@@ -159,17 +202,18 @@ export abstract class NZBHost {
     this.host = host ?? 'localhost';
     this.hostParsed = parseUrl(this.host);
     this.hostAsEntered = hostAsEntered ?? true;
+    this.apiUrl = this.host;
   }
 
-  abstract call(operation: string, params: Record<string, unknown> | unknown[]): Promise<NZBResult>;
+  abstract call(operation: string, params?: Record<string, unknown>): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
-  abstract getHistory(options: Record<string, unknown>): Promise<NZBQueueItem[]>;
+  abstract getHistory(options?: Record<string, unknown>): Promise<NZBQueueItem[]>;
   abstract getQueue(): Promise<NZBQueue>;
   abstract pauseQueue(): Promise<NZBResult>;
   abstract resumeQueue(): Promise<NZBResult>;
-  abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-  abstract addFile(filename: string, content: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
+  abstract addUrl(url: string, options?: NZBAddOptions): Promise<NZBAddUrlResult>;
+  abstract addFile(filename: string, content: string, options?: NZBAddOptions): Promise<NZBAddUrlResult>;
   abstract removeId(id: string): Promise<NZBResult>;
   abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
   abstract pauseId(id: string): Promise<NZBResult>;

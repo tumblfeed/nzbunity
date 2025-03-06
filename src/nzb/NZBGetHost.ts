@@ -4,8 +4,8 @@ import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBPriority, NZBQueueItem, NZB
 export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class NZBGetHost extends NZBHost {
-  static getApiUrlSuggestions(host:string):string[] {
-    return super.getApiUrlSuggestions(host, ['6789'], ['', 'jsonrpc']);
+  static generateApiUrlSuggestions(host:string):string[] {
+    return super.generateApiUrlSuggestions(host, ['6789'], ['', 'jsonrpc']);
   }
 
   static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
