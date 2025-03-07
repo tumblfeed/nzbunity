@@ -1,12 +1,6 @@
 import { parseUrl } from '@/utils';
-
-import type { DownloaderOptions } from '@/store';
-
-export interface NZBHostOptions {
-  displayName?: string;
-  host?: string;
-  hostAsEntered?: boolean;
-}
+import { DownloaderType, type DownloaderOptions } from '@/store';
+export { DownloaderType, type DownloaderOptions };
 
 export interface NZBAddOptions {
   url?: string;
@@ -112,19 +106,20 @@ export const DefaultNZBQueueItem: NZBQueueItem = {
   percentage: 0,
 };
 
-export abstract class NZBHost {
+
+export abstract class Downloader {
   /**
    * Given a host, return an array of possible URLs for the download API
-   * @param host The host to generate suggestions for (e.g. localhost:8080, http://localhost, etc)
+   * @param url The (partial) url to generate suggestions for (e.g. localhost:8080, http://localhost, etc)
    * @param ports An array of ports to try (eg: ['8080', '9090'])
    * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
    * @returns An array of possible URLs for the download API
    */
-  static generateApiUrlSuggestions(host: string, ports: string[] = [''], paths: string[] = ['']): string[] {
-    const parsed = parseUrl(host); // Will default to http if no protocol is present
+  static generateApiUrlSuggestions(url: string, ports: string[] = [''], paths: string[] = ['']): string[] {
+    const parsed = parseUrl(url); // Will default to http if no protocol is present
 
     // If host specifies a protocol only use that, otherwise use both http and https
-    const protocols = /^\w+:\/\//.test(host) ? [parsed.protocol] : ['http:', 'https:'];
+    const protocols = /^\w+:\/\//.test(url) ? [parsed.protocol] : ['http:', 'https:'];
 
     // If host has a port only use that, otherwise use the default ports
     if (parsed.port) {
@@ -160,18 +155,18 @@ export abstract class NZBHost {
    * Given a URL and a downloader, test if the URL is a valid API endpoint
    * @abstract
    */
-  static testApiUrl(url:string, downloader: DownloaderOptions): Promise<NZBResult> {
+  static testApiUrl(url: string, options: DownloaderOptions): Promise<NZBResult> {
     return Promise.reject('Not implemented in base class');
   }
 
   /**
    * Given a downloader, attempt to find a valid API endpoint using generated suggestions
    */
-  static async findApiUrl(downloader: DownloaderOptions): Promise<string | null> {
-    if (downloader.Host) {
-      const urls = this.generateApiUrlSuggestions(downloader.Host);
+  static async findApiUrl(options: DownloaderOptions): Promise<string | null> {
+    if (options.ApiUrl) {
+      const urls = this.generateApiUrlSuggestions(options.ApiUrl);
       for (const url of urls) {
-        const r = await this.testApiUrl(url, downloader);
+        const r = await this.testApiUrl(url, options);
         if (r.success) return url;
       }
     }
@@ -181,31 +176,31 @@ export abstract class NZBHost {
   /**
    * Given a downloader, attempt to find all valid API endpoints using generated suggestions
    */
-  static async findAllApiUrls(downloader: DownloaderOptions): Promise<string[]> {
-    if (downloader.Host) {
-      const urls = this.generateApiUrlSuggestions(downloader.Host);
-      const results = await Promise.all(urls.map(url => this.testApiUrl(url, downloader)));
+  static async findAllApiUrls(options: DownloaderOptions): Promise<string[]> {
+    if (options.ApiUrl) {
+      const urls = this.generateApiUrlSuggestions(options.ApiUrl);
+      const results = await Promise.all(urls.map(url => this.testApiUrl(url, options)));
       return urls.filter((url, i) => results[i].success);
     }
     return [];
   }
 
-  name: string = 'NZBHost';
-  displayName: string;
-  host: string;
-  hostParsed: URL;
-  hostAsEntered: boolean;
-  apiUrl: string;
+  type?: DownloaderType;
+  options: DownloaderOptions;
+  name: string;
+  url: string;
+  urlParsed: URL;
 
-  constructor({ displayName, host, hostAsEntered }: NZBHostOptions) {
-    this.displayName = displayName ?? this.name;
-    this.host = host ?? 'localhost';
-    this.hostParsed = parseUrl(this.host);
-    this.hostAsEntered = hostAsEntered ?? true;
-    this.apiUrl = this.host;
+  constructor(options: DownloaderOptions) {
+    if (!options.ApiUrl) throw new Error('No API URL provided');
+
+    this.options = options;
+    this.name = options.Name ?? this.type!;
+    this.url = options.ApiUrl;
+    this.urlParsed = parseUrl(this.url);
   }
 
-  abstract call(operation: string, params?: Record<string, unknown>): Promise<NZBResult>;
+  abstract call(operation: string, params?: Record<string, unknown> | unknown[]): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
   abstract getHistory(options?: Record<string, unknown>): Promise<NZBQueueItem[]>;

@@ -1,8 +1,8 @@
-import { NZBHost } from './nzb/NZBHost';
+import { Downloader } from './downloader';
 
 export class Profile {
   #name: string;
-  #host: NZBHost;
+  #host: Downloader;
 
   constructor(name: string = null) {
     this.#name = name;

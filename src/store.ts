@@ -2,27 +2,30 @@ const manifest = browser.runtime.getManifest();
 const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
 
+export enum DownloaderType {
+  SABnzbd = 'SABnzbd',
+  NZBGet = 'NZBGet',
+}
+
 // Current version
 export interface DownloaderOptions {
   Name: string;
-  Type: string | null;
-  Host: string | null;
+  Type: DownloaderType | null;
+  ApiUrl: string | null;
   ApiKey: string | null;
   Username: string | null;
   Password: string | null;
-  ServerUrl: string | null;
-  HostAsEntered: boolean;
+  WebUrl: string | null;
 }
 
 export const DefaultDownloaderOptions: DownloaderOptions = {
   Name: 'Default',
   Type: null,
-  Host: null,
+  ApiUrl: null,
   ApiKey: null,
   Username: null,
   Password: null,
-  ServerUrl: null,
-  HostAsEntered: false,
+  WebUrl: null,
 };
 
 export interface IndexerOptions {
@@ -249,6 +252,9 @@ export async function migrateV1(): Promise<void> {
     UITheme: string;
   }
   */
+
+  // TODO: Define a field map
+
   const oldOptions = await browser.storage.local.get(null); // V1 always stored in local
 
   // V1 options will have Initialized but not Version set, but check if Version is "1" just in case
@@ -263,6 +269,9 @@ export async function migrateV1(): Promise<void> {
         Object.assign(newOptions, {[key]: value});
       }
     }
+
+    // TODO: Handle name changes
+
 
     // Copy profile options (including old base options)
     for (const [profileName, profile] of Object.entries(oldOptions.Profiles)) {
@@ -279,6 +288,8 @@ export async function migrateV1(): Promise<void> {
           Object.assign(downloader, {[key]: value});
         }
       }
+
+      // TODO: Handle name changes
 
       newOptions.Downloaders[profileName] = downloader;
     }

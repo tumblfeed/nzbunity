@@ -59,32 +59,35 @@ Heavily inspired by [SABconnect++](https://github.com/gboudreau/sabconnectpluspl
 
 ## Setup
 
-### Profiles
+### Download Clients
 
-In order to use NZB Unity, at least one server profile must be defined. To get started, click the "Create" button, and fill in the details.
+In order to use NZB Unity, at least one download client (SABnzbd or NZBGet) must be defined.
+To get started, click the "Create" button, and fill in the details.
 
-#### Profile Controls
+> Previous versions of NZB Unity referred to these as "Profiles".
 
-* Profile selector -- Loads the selected profile into the editing pane.
+#### Downloader Selection
+
+* Downloader selector -- Loads the selected profile into the editing pane.
 * Create -- Creates a new profile and selects it for editing.
 * Duplicate -- Duplicates the currently selected profile and selects the duplicate for editing.
 * Delete -- Deletes the currently selected profile.
 * Test Connection -- Tests the currently selected profile. **Note**: If you are using an HTTPS connection (recommended) with a self-signed certificate, you will get a connection error if you have not accepted the certificate in your browser yet. Simply make sure you can access your server at the secure address first.
 
-#### Profile Options
+#### Downloader Options
 
-* Profile Name -- Any name is accepted. On changing this name, the profile name in the selector will change as well.
+* Name -- Any name is accepted. On changing this name, the profile name in the selector will change as well.
 * Type -- Either SABnzbd or NZBGet are supported.
   * SABnzbd profiles *must* use API Key.
   * NZBGet profiles *must* use Username and Password.
-* Host -- Either protocol and host name or FQDN of the server to connect to.
-  * Protocol and path are optional, defaults will be used if not specified (eg, "https://myserver.com:8081", "http://myserver:8080", "https://myserver:8080/mysab", and "myserver:8080" are all valid).
-  * Protocol must be included if HTTPS connections are desired. Please also see note under Test Connection above.
-  * SABnzbd connections will default to the path "/sabnzbd", but you may specify a different path. Using the root path "/" is currently unsupported (it will use the default in this case).
+* API URL -- The full URL to the API endpoint of the download client.
+  * This should be the full URL including the protocol and port (if not standard). For example, `https://myserver.com:8080/sabnzbd/api` or `http://myserver.com:6789/jsonrpc`.
+  * You can enter a partial URL (eg, `https://myserver.com:8080`), and NZB Unity will attempt to find the API endpoint automatically and fill in the rest of the URL.
 * API Key -- **SABnzbd Only**. The full use API key for the SABnzbd server. Currently, NZB only API keys are unsupported as they do not give access to the queue.
 * Username -- **NZBGet Only**. Username for NZBGet API. Note that this can be a limited access user (NZB Unity does not access config).
 * Password -- **NZBGet Only**. Password for the NZBGet API.
-* "Open web UI" URL -- Optional, if specified the toolbar UI "Open web UI" button will open a tab to this URL instead of the profile Host.
+* "Open web UI" URL -- Optional, if specified the toolbar UI "Open web UI" button will open a tab to this URL.
+  * If not specified, the toolbar UI will attempt try the url with no path (eg, `https://myserver.com:8080`).
 
 ### Other Options
 

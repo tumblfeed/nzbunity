@@ -3,6 +3,7 @@ import {
   NZBUnityOptions,
   DefaultOptions,
   DefaultDownloaderOptions,
+  DownloaderType,
   storageArea,
   getOptions,
   setOptions,
@@ -36,13 +37,12 @@ const testOptions: Partial<NZBUnityOptions> = {
   OverrideCategory: null,
   Downloaders: {
     Local: {
-      ApiKey: import.meta.env.SABNZBD_APIKEY,
-      Host: import.meta.env.SABNZBD_HOST,
-      HostAsEntered: false,
+      Type: DownloaderType.SABnzbd,
+      ApiUrl: import.meta.env.VITE_SABNZBD_APIURL,
+      ApiKey: import.meta.env.VITE_SABNZBD_APIKEY,
       Name: 'Local',
       Password: '',
-      ServerUrl: '',
-      Type: 'SABnzbd',
+      WebUrl: '',
       Username: '',
     },
   },
@@ -219,14 +219,14 @@ describe('migrations', () => {
     OverrideCategory: null,
     Profiles: {
       Local: {
-        ApiKey: process.env.SABNZBD_APIKEY,
-        Host: process.env.SABNZBD_HOST,
-        HostAsEntered: false,
         Name: 'Local',
+        Type: 'SABnzbd',
+        Host: 'http://localhost:8080/sabnzbd',
+        ApiKey: 'deadbeefcafe',
+        Username: '',
         Password: '',
         ServerUrl: '',
-        Type: 'SABnzbd',
-        Username: '',
+        HostAsEntered: false,
       },
     },
     Providers: {},
@@ -239,6 +239,8 @@ describe('migrations', () => {
     UITheme: '',
   };
 
-  it.todo('should migrate v1 options');
+  it.fails('should migrate v1 options', async () => {
+    // Underlying migration is not complete
+  });
 });
 //export async function migrateV1(): Promise<void> {

@@ -1,9 +1,9 @@
 import browser from 'webextension-polyfill';
-import { NZBHost } from './nzb/NZBHost';
+import { Downloader } from './downloader';
 
 export class NZBUnity {
   optionsTab: chrome.tabs.Tab;
-  nzbHost: NZBHost;
+  nzbHost: Downloader;
   _debugMessages: string[] = [];
   _debugMessagesMax: number = 1000;
 
@@ -201,7 +201,7 @@ export class NZBUnity {
     this.showNotification(
       'addUrl',
       `${options.name || url} Added`,
-      `${options.name || url} sucessfully added to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
+      `${options.name || url} sucessfully added to ${this.nzbHost.name} (${this.nzbHost.type})`,
     );
     return result;
   }
@@ -228,7 +228,7 @@ export class NZBUnity {
     this.showNotification(
       'addUrl',
       `${filename} Added`,
-      `${filename} sucessfully uploaded to ${this.nzbHost.displayName} (${this.nzbHost.name})`,
+      `${filename} sucessfully uploaded to ${this.nzbHost.name} (${this.nzbHost.type})`,
     );
     return result;
   }

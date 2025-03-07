@@ -1,42 +1,34 @@
-import { request, RequestOptions, humanSeconds, humanSize, Kilobyte, Megabyte, ucFirst } from '../utils';
-import { NZBAddOptions, NZBAddUrlResult, NZBHost, NZBPriority, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+import { request, parseUrl, objectToQuery, humanSeconds, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '@/utils';
+import { Downloader, DownloaderType, DefaultNZBQueue, DefaultNZBQueueItem, NZBPriority } from '.';
 
-export { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
+import type { RequestOptions } from '@/utils';
+import type { DownloaderOptions, NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from '.';
+export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
-export class NZBGetHost extends NZBHost {
-  static generateApiUrlSuggestions(host:string):string[] {
-    return super.generateApiUrlSuggestions(host, ['6789'], ['', 'jsonrpc']);
+export class NZBGet extends Downloader {
+  static generateApiUrlSuggestions(url: string): string[] {
+    return super.generateApiUrlSuggestions(url, ['6789'], ['', 'jsonrpc']);
   }
 
-  static testApiUrl(url:string, profile:NZBUnityProfileOptions):Promise<NZBResult> {
-    const host = new NZBGetHost({
-      host: url, hostAsEntered: true,
-      username: profile.ProfileUsername, password: profile.ProfilePassword,
-    });
+  static testApiUrl(url:string, options: DownloaderOptions): Promise<NZBResult> {
+    const host = new NZBGet({ ...options, ApiUrl: url });
     return host.test();
   }
 
-  name: string = 'NZBGet';
+  type: DownloaderType = DownloaderType.NZBGet;
   username: string;
   password: string;
 
-  constructor(options: Record<string, unknown> = {}) {
+  constructor(options: DownloaderOptions) {
     super(options);
-    this.username = (options.username || '') as string;
-    this.password = (options.password || '') as string;
-
-    if (this.hostAsEntered) {
-      this.apiUrl = this.host;
-    } else {
-      const pathname = `${this.hostParsed.pathname}/jsonrpc`.replace(/\/+/g, '/');
-      this.apiUrl = `${this.hostParsed.protocol}//${this.hostParsed.hostname}:${this.hostParsed.port}${pathname}`;
-    }
+    this.username = options.Username ?? this.urlParsed.username ?? '';
+    this.password = options.Password ?? this.urlParsed.password ?? '';
   }
 
-  async call(operation: string, params: Array<any> = []): Promise<NZBResult> {
-    const reqParams: RequestOptions = {
+  async call(operation: string, params: unknown[] = []): Promise<NZBResult> {
+    const req: RequestOptions = {
       method: 'POST',
-      url: this.apiUrl,
+      url: this.url,
       username: this.username,
       password: this.password,
       json: true,
@@ -46,10 +38,9 @@ export class NZBGetHost extends NZBHost {
       },
     };
 
-    Object.keys(params).forEach(k => (reqParams.params[k] = String(params[k])));
-
     try {
-      const result = await request(reqParams);
+      const result = await request(req);
+
       // check for error conditions
       if (typeof result === 'string') {
         throw Error('Invalid result from host');
@@ -57,7 +48,7 @@ export class NZBGetHost extends NZBHost {
 
       return { success: true, operation, result };
     } catch (error) {
-      return { success: false, operation, error };
+      return { success: false, operation, error: `${error}` };
     }
   }
 
@@ -67,8 +58,10 @@ export class NZBGetHost extends NZBHost {
     const res = await this.call('config');
 
     return res.success
-      ? (res.result as Record<string, string>[]).filter(i => /Category\d+\.Name/i.test(i.Name)).map(i => i.Value)
-      : null;
+      ? (res.result as Record<string, string>[])
+        .filter(i => /Category\d+\.Name/i.test(i.Name))
+        .map(i => i.Value)
+      : [];
   }
 
   async setMaxSpeed(bytes: number): Promise<NZBResult> {
@@ -86,18 +79,22 @@ export class NZBGetHost extends NZBHost {
   }
 
   async getQueue(): Promise<NZBQueue> {
-    const res = await this.call('status');
+    const nzbResult = await this.call('status');
 
-    if (!res.success) return null;
+    if (!nzbResult.success) {
+      return { ...DefaultNZBQueue, status: 'Error' };
+    };
 
-    const serverStandBy: boolean = res.result['ServerStandBy']
-    const downloadPaused: boolean = res.result['DownloadPaused']
-    const status: string = (serverStandBy && downloadPaused) ? 'paused' : (serverStandBy) ? 'idle' : 'downloading'
+    const result = nzbResult.result! as Record<string, unknown>;
 
-    const speedBytes: number = res.result['DownloadRate']; // in Bytes / Second
-    const maxSpeedBytes: number = parseInt(res.result['DownloadLimit']);
-    const sizeRemaining: number = Math.floor(res.result['RemainingSizeMB'] * Megabyte); // MB convert to Bytes
-    const timeRemaining: number = Math.floor(sizeRemaining / speedBytes); // Seconds
+    const serverStandBy = result['ServerStandBy'] as boolean
+    const downloadPaused = result['DownloadPaused'] as boolean
+    const status = (serverStandBy && downloadPaused) ? 'paused' : (serverStandBy) ? 'idle' : 'downloading'
+
+    const speedBytes = result['DownloadRate'] as number; // in Bytes / Second
+    const maxSpeedBytes = result['DownloadLimit'] as number;
+    const sizeRemaining = (result['RemainingSizeMB'] as number) * Megabyte; // MB convert to Bytes
+    const timeRemaining = Math.floor(sizeRemaining / speedBytes); // Seconds
 
     const queue: NZBQueue = {
       status: ucFirst(status),
@@ -107,18 +104,22 @@ export class NZBGetHost extends NZBHost {
       maxSpeedBytes,
       sizeRemaining: humanSize(sizeRemaining),
       timeRemaining: speedBytes > 0 ? humanSeconds(timeRemaining) : '∞',
-      categories: null,
+      categories: [],
       queue: [],
     };
 
     const groups = await this.call('listgroups');
 
-    if (!(groups && groups.success)) return null;
+    if (!groups?.success) return queue;
 
-    queue.queue = (groups.result as Record<string, unknown>[]).map(slot => {
-      const sizeBytes: number = Math.floor(<number>slot['FileSizeMB'] * Megabyte); // MB convert to Bytes
-      const sizeRemainingBytes: number = Math.floor(<number>slot['RemainingSizeMB'] * Megabyte); // MB convert to Bytes
-      const timeRemaining: number = Math.floor(sizeRemainingBytes / queue.speedBytes); // Seconds
+    const slots = groups.result as Record<string, unknown>[];
+
+    queue.queue = slots.map(slot => {
+      // MB convert to Bytes
+      const sizeBytes: number = Math.floor(<number>slot['FileSizeMB'] * Megabyte);
+      const sizeRemainingBytes: number = Math.floor(<number>slot['RemainingSizeMB'] * Megabyte);
+      // Seconds
+      const timeRemaining: number = Math.floor(sizeRemainingBytes / queue.speedBytes);
 
       return {
         id: String(slot['NZBID']),

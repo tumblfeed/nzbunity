@@ -1,7 +1,7 @@
 // import { readFileSync } from 'fs';
-import { NZBQueueItem, NZBGetHost } from '../NZBGetHost';
+import { NZBQueueItem, NZBGet } from '../NZBGet';
 
-const host = new NZBGetHost({
+const host = new NZBGet({
   displayName: 'Test NZBGet',
   host: process.env.NZBGET_HOST,
   username: process.env.NZBGET_USERNAME,
@@ -10,12 +10,12 @@ const host = new NZBGetHost({
 
 describe('nzb/NZBGetHost::construct', () => {
   it('Constructor works', () => {
-    expect(host).toBeInstanceOf(NZBGetHost);
-    expect(host.name).toBe('NZBGet');
-    expect(host.displayName).toBe('Test NZBGet');
-    expect(host.host).toBe(process.env.NZBGET_HOST);
+    expect(host).toBeInstanceOf(NZBGet);
+    expect(host.type).toBe('NZBGet');
+    expect(host.name).toBe('Test NZBGet');
+    expect(host.url).toBe(process.env.NZBGET_HOST);
     expect(host.username).toBe(process.env.NZBGET_USERNAME);
-    expect(host.hostParsed).not.toBeNull();
+    expect(host.urlParsed).not.toBeNull();
   });
 });
 

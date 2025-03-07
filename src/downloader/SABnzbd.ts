@@ -1,64 +1,44 @@
 import { request, parseUrl, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '@/utils';
-import { NZBHost, DefaultNZBQueue, DefaultNZBQueueItem } from './NZBHost';
+import { Downloader, DownloaderType, DefaultNZBQueue, DefaultNZBQueueItem } from '.';
 
-import type { DownloaderOptions } from '@/store';
 import type { RequestOptions } from '@/utils';
-
-import type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from './NZBHost';
+import type { DownloaderOptions, NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from '.';
 export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
-export class SABnzbdHost extends NZBHost {
-  static generateApiUrlSuggestions(host:string):string[] {
-    return super.generateApiUrlSuggestions(host, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
+export class SABnzbd extends Downloader {
+  static generateApiUrlSuggestions(url: string): string[] {
+    return super.generateApiUrlSuggestions(url, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
   }
 
-  static testApiUrl(url: string, downloader: DownloaderOptions): Promise<NZBResult> {
-    const host = new SABnzbdHost({
-      host: url,
-      hostAsEntered: true,
-      apikey: downloader.ApiKey,
-    });
+  static testApiUrl(url: string, options: DownloaderOptions): Promise<NZBResult> {
+    const host = new SABnzbd({ ...options, ApiUrl: url });
     return host.test();
   }
 
-  name: string = 'SABnzbd';
-  apikey: string;
+  type: DownloaderType = DownloaderType.SABnzbd;
+  key: string;
 
-  constructor(options: Record<string, unknown> = {}) {
+  constructor(options: DownloaderOptions) {
     super(options);
-    this.apikey = (options.apikey || '') as string;
-
-    if (this.hostAsEntered) {
-      this.apiUrl = this.host;
-    } else {
-      // This is maintained for legacy compatibility, but the preferred method is to let the
-      // Options page test a list of suggested API URLs and lock in the correct one.
-      const parsed = parseUrl(this.host);
-      // If path is empty ('' or '/'), default to /sabnzbd
-      if (/^\/*$/i.test(parsed.pathname)) parsed.pathname = '/sabnzbd';
-      // If path does not end in /api, add it
-      if (!/api$/i.test(parsed.pathname)) parsed.pathname += '/api';
-
-      this.apiUrl = parsed.href;
-    }
+    this.key = options.ApiKey ?? '';
   }
 
   async call(operation: string, params: Record<string, unknown> = {}): Promise<NZBResult> {
     const req: RequestOptions = {
       method: 'GET',
-      url: this.apiUrl,
+      url: this.url,
       json: true,
       params: {
         output: 'json',
-        apikey: this.apikey,
+        apikey: this.key,
         mode: operation,
       },
       debug: Boolean(params.debug),
     };
 
-    if (this.hostParsed.username) {
-      req.username = this.hostParsed.username;
-      req.password = this.hostParsed.password ?? undefined;
+    if (this.urlParsed.username) {
+      req.username = this.urlParsed.username;
+      req.password = this.urlParsed.password ?? undefined;
     }
 
     for (const [k, v] of Object.entries(params)) {
@@ -222,7 +202,7 @@ export class SABnzbdHost extends NZBHost {
     options: NZBAddOptions = {},
   ): Promise<NZBAddUrlResult> {
     const params: Record<string, string> = {
-      apikey: this.apikey,
+      apikey: this.key,
       mode: 'addfile',
       nzbname: filename,
       output: 'json',
@@ -242,10 +222,10 @@ export class SABnzbdHost extends NZBHost {
     delete params.content;
     delete params.filename;
 
-    const reqParams: RequestOptions = {
+    const req: RequestOptions = {
       method: 'POST',
       multipart: true,
-      url: `${this.apiUrl}?${objectToQuery(params)}`,
+      url: `${this.url}?${objectToQuery(params)}`,
       params,
       files: {
         name: {
@@ -257,19 +237,26 @@ export class SABnzbdHost extends NZBHost {
       debug: true,
     };
 
-    const nzbResult = await this.call('addurl', params);
+    try {
+      let result = await request(req);
 
-    if (nzbResult.success) {
-      const result = nzbResult.result! as Record<string, unknown>;
-      const ids = result.nzo_ids as string[];
-      nzbResult.result = ids.length ? ids[0] : null;
-
-      if (options.paused) {
-        setTimeout(() => ids.forEach(id => this.pauseId(id)), 100);
+      // check for error conditions
+      if (typeof result === 'string') {
+        throw Error('Invalid result from host');
       }
-    }
 
-    return nzbResult as NZBAddUrlResult;
+      // SABnzbd returns an object with the operation as the key and the result as the value
+      // for most operations. Collapse these into just the value if there is only one key.
+      if (Object.values(result as object).length === 1) {
+        result = Object.values(result as object)[0];
+      }
+
+      const ids = (result as Record<string, string[]>).nzo_ids;
+
+      return { success: true, result: ids.length ? ids[0] : undefined };
+    } catch (error) {
+      return { success: false, error: `${error}` };
+    }
   }
 
   async removeId(value: string): Promise<NZBResult> {
