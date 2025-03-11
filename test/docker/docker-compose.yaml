@@ -34,5 +34,5 @@ services:
     environment:
       - PUID=${UID:-1000}
       - PGID=${GID:-1000}
-      - NZBGET_USER=${NZBGET_USER:-testnzbget}
+      - NZBGET_USER=${NZBGET_USER:-nzbget}
       - NZBGET_PASS=${NZBGET_PASS:-testnzbget}

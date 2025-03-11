@@ -171,7 +171,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
       rawUrl: options.url,
       url,
       method,
-      headers,
+      headers: Object.fromEntries(headers),
       body: options.body,
     });
   }

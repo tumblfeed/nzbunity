@@ -36,6 +36,7 @@ export class NZBGet extends Downloader {
         method: operation,
         params: params,
       },
+      debug: import.meta.env.DEV,
     };
 
     try {

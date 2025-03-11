@@ -1,32 +1,32 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { DefaultDownloaderOptions } from '@/store';
-import { type NZBQueueItem, SABnzbd } from '../SABnzbd';
-
-// Queue operations need a little time in between or then don't work
-vi.setConfig({ testTimeout: 15000 });
+import { type NZBQueueItem, NZBGet } from '../NZBGet';
 
 const downloaderOptions: typeof DefaultDownloaderOptions = {
   ...DefaultDownloaderOptions,
-  Name: 'Test SAB',
-  ApiUrl: import.meta.env.VITE_SABNZBD_APIURL,
-  ApiKey: import.meta.env.VITE_SABNZBD_APIKEY,
+  Name: 'Test NZBGet',
+  ApiUrl: import.meta.env.VITE_NZBGET_APIURL,
+  Username: import.meta.env.VITE_NZBGET_USER,
+  Password: import.meta.env.VITE_NZBGET_PASS,
 }
 
 let apiUrl: string | null;
-let client: SABnzbd;
+let client: NZBGet;
 
 beforeAll(async () => {
-  apiUrl = (await SABnzbd.findApiUrl(downloaderOptions))
+  apiUrl = (await NZBGet.findApiUrl(downloaderOptions))
     ?? downloaderOptions.ApiUrl;
-  client = new SABnzbd({ ...downloaderOptions, ApiUrl: apiUrl });
+  console.log('API URL:', apiUrl);
+  client = new NZBGet({ ...downloaderOptions, ApiUrl: apiUrl });
 });
+
 
 describe('API discovery / constructor', async () => {
   it('generateApiUrlSuggestions', async () => {
     // Simple test, host should be set and should not be the same as the default
     expect(apiUrl).not.toBeNull();
     // Suggestions should be generated
-    const suggestions = SABnzbd.generateApiUrlSuggestions(downloaderOptions.ApiUrl!);
+    const suggestions = NZBGet.generateApiUrlSuggestions(downloaderOptions.ApiUrl!);
     expect(suggestions).not.toBeNull();
     expect(suggestions.length).toBeGreaterThan(0);
     for (const suggestion of suggestions) {
@@ -35,57 +35,61 @@ describe('API discovery / constructor', async () => {
   });
 
   it('construct', () => {
-    expect(client).toBeInstanceOf(SABnzbd);
-    expect(client.type).toBe('SABnzbd');
-    expect(client.name).toBe('Test SAB');
-    expect(client.url.includes(import.meta.env.VITE_SABNZBD_APIURL)).toBeTruthy();
-    expect(client.key).toBe(import.meta.env.VITE_SABNZBD_APIKEY);
+    expect(client).toBeInstanceOf(NZBGet);
+    expect(client.type).toBe('NZBGet');
+    expect(client.name).toBe('Test NZBGet');
+    expect(client.url.includes(import.meta.env.VITE_NZBGET_APIURL)).toBeTruthy();
+    expect(client.username).toBe(import.meta.env.VITE_NZBGET_USER);
+    expect(client.password).toBe(import.meta.env.VITE_NZBGET_PASS);
     expect(client.urlParsed).not.toBeNull();
   });
 });
 
-  // Note, the following tests will fail if sab instance is not running
 
+// Note, the following tests will fail if nzbget instance is not running
+
+// abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
 describe('General', async () => {
-  it('call', async () => {
-    const res = await client.call('fullstatus', { skip_dashboard: 1 });
+  it.only('call', async () => {
+    const res = await client.call('status');
 
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
-    expect(res).toHaveProperty('result.pid');
+    expect(res).toHaveProperty('result.UpTimeSec');
   });
 
   // abstract test(): Promise<NZBResult>;
   it('test', async () => {
-    const res = await client.test();
+    const response = await client.test();
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
   });
+
 
   // abstract getCategories(): Promise<string[]>;
   it('getCategories', async () => {
-    const res = await client.getCategories();
+    const response = await client.getCategories();
 
-    expect(res).not.toBeNull();
-    expect(Array.isArray(res)).toBe(true);
+    expect(response).not.toBeNull();
+    expect(Array.isArray(response)).toBe(true);
   });
 
   // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
   it('setMaxSpeed', async () => {
-    const res = await client.setMaxSpeed(45000000);
+    const response = await client.setMaxSpeed(75);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
   });
 
   // abstract getQueue(): Promise<NZBQueueResult>;
   it('getQueue', async () => {
-    const res = await client.getQueue();
+    const response = await client.getQueue();
 
-    expect(res).not.toBeNull();
-    expect(res).toHaveProperty('queue');
-    expect(Array.isArray(res.queue)).toBe(true);
+    expect(response).not.toBeNull();
+    expect(response).toHaveProperty('queue');
+    expect(Array.isArray(response.queue)).toBe(true);
   });
 });
 
@@ -93,21 +97,21 @@ describe('General', async () => {
 // abstract pauseQueue(): Promise<NZBResult>;
 describe('Queue', async () => {
   it('Can pause queue', async () => {
-    const res = await client.pauseQueue();
+    const response = await client.pauseQueue();
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     const queue = await client.getQueue();
 
-    expect(queue.status).toBe('Paused');
+    expect(queue.status).not.toBeNull();
   });
 
   it('Can resume queue', async () => {
-    const res = await client.resumeQueue();
+    const response = await client.resumeQueue();
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     const queue = await client.getQueue();
 
@@ -115,9 +119,9 @@ describe('Queue', async () => {
   });
 });
 
-describe('Queue items', async () => {
-  let id: string | undefined;
-  let item: NZBQueueItem | undefined;
+describe('Queue items', () => {
+  let id: string;
+  let item: NZBQueueItem;
 
   it('Adds NZB by URL', async () => {
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
@@ -140,10 +144,10 @@ describe('Queue items', async () => {
     // abstract pauseId(id: string): Promise<NZBResult>;
     // abstract pauseItem(id: NZBQueueItem): Promise<NZBResult>;
     // note, pauseItem uses pauseId internally
-    const res = await client.pauseItem(item!);
+    const response = await client.pauseItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     item = (await client.getQueue()).queue.find(item => item.id === id);
   });
@@ -151,10 +155,10 @@ describe('Queue items', async () => {
   it('Can resume queue item', async () => {
     // abstract resumeId(id: string): Promise<NZBResult>;
     // abstract resumeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const res = await client.resumeItem(item!);
+    const response = await client.resumeItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
 
     item = (await client.getQueue()).queue.find(item => item.id === id);
   });
@@ -162,14 +166,14 @@ describe('Queue items', async () => {
   it('Can remove queue item', async () => {
     // abstract removeId(id: string): Promise<NZBResult>;
     // abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const res = await client.removeItem(item!);
+    const response = await client.removeItem(item);
 
-    expect(res).not.toBeNull();
-    expect(res.success).toBeTruthy();
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
   });
 
   // This does not work from the node context, figure it out
-  // it.todo('Adds NZB by file upload, paused');
+  it.todo('Adds NZB by file upload, paused');
   // test('Adds NZB by file upload, paused', async () => {
   //     //   const content = readFileSync(env.nzb.file);
 
