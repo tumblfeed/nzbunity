@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { DefaultDownloaderOptions } from '@/store';
 import { type NZBQueueItem, NZBGet } from '../NZBGet';
 
+import { request } from '@/utils';
+
 const downloaderOptions: typeof DefaultDownloaderOptions = {
   ...DefaultDownloaderOptions,
   Name: 'Test NZBGet',
@@ -16,7 +18,6 @@ let client: NZBGet;
 beforeAll(async () => {
   apiUrl = (await NZBGet.findApiUrl(downloaderOptions))
     ?? downloaderOptions.ApiUrl;
-  console.log('API URL:', apiUrl);
   client = new NZBGet({ ...downloaderOptions, ApiUrl: apiUrl });
 });
 
@@ -50,9 +51,8 @@ describe('API discovery / constructor', async () => {
 
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
 describe('General', async () => {
-  it.only('call', async () => {
+  it('call', async () => {
     const res = await client.call('status');
-
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
     expect(res).toHaveProperty('result.UpTimeSec');
@@ -60,36 +60,36 @@ describe('General', async () => {
 
   // abstract test(): Promise<NZBResult>;
   it('test', async () => {
-    const response = await client.test();
+    const res = await client.test();
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
   });
 
 
   // abstract getCategories(): Promise<string[]>;
   it('getCategories', async () => {
-    const response = await client.getCategories();
+    const res = await client.getCategories();
 
-    expect(response).not.toBeNull();
-    expect(Array.isArray(response)).toBe(true);
+    expect(res).not.toBeNull();
+    expect(Array.isArray(res)).toBe(true);
   });
 
   // abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
   it('setMaxSpeed', async () => {
-    const response = await client.setMaxSpeed(75);
+    const res = await client.setMaxSpeed(75);
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
   });
 
   // abstract getQueue(): Promise<NZBQueueResult>;
   it('getQueue', async () => {
-    const response = await client.getQueue();
+    const res = await client.getQueue();
 
-    expect(response).not.toBeNull();
-    expect(response).toHaveProperty('queue');
-    expect(Array.isArray(response.queue)).toBe(true);
+    expect(res).not.toBeNull();
+    expect(res).toHaveProperty('queue');
+    expect(Array.isArray(res.queue)).toBe(true);
   });
 });
 
@@ -97,10 +97,10 @@ describe('General', async () => {
 // abstract pauseQueue(): Promise<NZBResult>;
 describe('Queue', async () => {
   it('Can pause queue', async () => {
-    const response = await client.pauseQueue();
+    const res = await client.pauseQueue();
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
 
     const queue = await client.getQueue();
 
@@ -108,10 +108,10 @@ describe('Queue', async () => {
   });
 
   it('Can resume queue', async () => {
-    const response = await client.resumeQueue();
+    const res = await client.resumeQueue();
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
 
     const queue = await client.getQueue();
 
@@ -134,7 +134,7 @@ describe('Queue items', () => {
     );
 
     id = res.result as string;
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find(item => item.id === id)!;
 
     expect(res).not.toBeNull();
     expect(id.length).toBeTruthy();
@@ -144,32 +144,32 @@ describe('Queue items', () => {
     // abstract pauseId(id: string): Promise<NZBResult>;
     // abstract pauseItem(id: NZBQueueItem): Promise<NZBResult>;
     // note, pauseItem uses pauseId internally
-    const response = await client.pauseItem(item);
+    const res = await client.pauseItem(item);
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find(item => item.id === id)!;
   });
 
   it('Can resume queue item', async () => {
     // abstract resumeId(id: string): Promise<NZBResult>;
     // abstract resumeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const response = await client.resumeItem(item);
+    const res = await client.resumeItem(item);
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find(item => item.id === id)!;
   });
 
   it('Can remove queue item', async () => {
     // abstract removeId(id: string): Promise<NZBResult>;
     // abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
-    const response = await client.removeItem(item);
+    const res = await client.removeItem(item);
 
-    expect(response).not.toBeNull();
-    expect(response.success).toBeTruthy();
+    expect(res).not.toBeNull();
+    expect(res.success).toBeTruthy();
   });
 
   // This does not work from the node context, figure it out

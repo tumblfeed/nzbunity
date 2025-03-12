@@ -95,27 +95,25 @@ export async function request(options: RequestOptions): Promise<unknown> {
     throw Error('No URL provided');
   }
 
-  const method: string = String(options.method || 'GET').toUpperCase();
-  const parsed: URL = parseUrl(options.url);
-  const headers: Headers = new Headers(options.headers ?? {});
+  const url: URL = parseUrl(options.url);
 
-  let url: string = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
-  const search: URLSearchParams = parsed.searchParams;
+  options.method = String(options.method || 'GET').toUpperCase();
+  options.headers = new Headers(options.headers ?? {});
 
   if (options.params || options.files || options.multipart) {
-    if (method === 'GET') {
+    if (options.method === 'GET') {
       if (options.json) {
-        headers.set('Content-Type', 'application/json');
+        options.headers.set('Content-Type', 'application/json');
       }
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params ?? {})) {
-        search.set(k, String(v));
+        url.searchParams.set(k, String(v));
       }
     } else if (!options.body) {
       // Other types of requests, figure out content type if not specified
       // and build the request body if not provided.
       const type =
-        headers.get('Content-Type') ||
+        options.headers.get('Content-Type') ||
         (options.json && 'json') ||
         (options.files && 'multipart') ||
         (options.multipart && 'multipart') ||
@@ -124,13 +122,13 @@ export async function request(options: RequestOptions): Promise<unknown> {
       switch (type) {
         case 'json':
         case 'application/json':
-          headers.set('Content-Type', 'application/json');
+          options.headers.set('Content-Type', 'application/json');
           options.body = JSON.stringify(options.params);
           break;
 
         case 'multipart':
         case 'multipart/form-data':
-          headers.set('Content-Type', 'multipart/form-data');
+          options.headers.set('Content-Type', 'multipart/form-data');
           options.body = new FormData();
 
           for (const [k, v] of Object.entries(options.params ?? {})) {
@@ -150,28 +148,24 @@ export async function request(options: RequestOptions): Promise<unknown> {
         case 'form':
         case 'application/x-www-form-urlencoded':
         default:
-          headers.set('Content-Type', 'application/x-www-form-urlencoded');
+          options.headers.set('Content-Type', 'application/x-www-form-urlencoded');
           options.body = objectToQuery(options.params ?? {});
       }
     }
   }
 
-  if (search.toString()) {
-    url = `${url}?${search.toString()}`;
-  }
-
   if (options.username && options.password) {
-    headers.set('Authorization', `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`);
-    options.credentials = 'include';
+    options.headers.set('Authorization', `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`);
+    // options.credentials = 'include';
   }
 
   // Debug if requested
   if (options.debug) {
     console.debug('utils/request() -->', {
       rawUrl: options.url,
-      url,
-      method,
-      headers: Object.fromEntries(headers),
+      url: url.href,
+      method: options.method,
+      headers: Object.fromEntries(options.headers),
       body: options.body,
     });
   }

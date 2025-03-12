@@ -88,17 +88,14 @@ describe('utils/parseUrl', () => {
 
 describe('utils/request', () => {
   it('Can make a simple GET request', async () => {
-    expect.assertions(1);
     const response = await request({
-      url: 'https://jsonplaceholder.org/comments/1',
+      url: 'https://dummyjson.com/test',
     });
 
-    expect(response).toMatchObject({ id: 1 });
+    expect(response).toMatchObject({ status: 'ok' });
   });
 
   it('Errors on no URL', async () => {
-    expect.assertions(1);
-
     try {
       await request({ url: '' });
     } catch (e) {

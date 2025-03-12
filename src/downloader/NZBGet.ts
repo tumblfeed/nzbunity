@@ -5,6 +5,10 @@ import type { RequestOptions } from '@/utils';
 import type { DownloaderOptions, NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from '.';
 export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
+export interface NZBGetResult extends NZBResult {
+  version?: string;
+}
+
 export class NZBGet extends Downloader {
   static generateApiUrlSuggestions(url: string): string[] {
     return super.generateApiUrlSuggestions(url, ['6789'], ['', 'jsonrpc']);
@@ -25,7 +29,7 @@ export class NZBGet extends Downloader {
     this.password = options.Password ?? this.urlParsed.password ?? '';
   }
 
-  async call(operation: string, params: unknown[] = []): Promise<NZBResult> {
+  async call(operation: string, params: unknown[] = []): Promise<NZBGetResult> {
     const req: RequestOptions = {
       method: 'POST',
       url: this.url,
@@ -36,7 +40,7 @@ export class NZBGet extends Downloader {
         method: operation,
         params: params,
       },
-      debug: import.meta.env.DEV,
+      debug: import.meta.env.VITE_DEBUG ?? false,
     };
 
     try {
@@ -47,7 +51,10 @@ export class NZBGet extends Downloader {
         throw Error('Invalid result from host');
       }
 
-      return { success: true, operation, result };
+      // Collapse the nested result
+      const { version, result: data } = result as { version: string, result: unknown };
+
+      return { success: true, operation, version, result: data };
     } catch (error) {
       return { success: false, operation, error: `${error}` };
     }
