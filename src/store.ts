@@ -125,15 +125,14 @@ export async function getDownloaderCount(): Promise<number> {
 
 export async function getDefaultDownloader(): Promise<DownloaderOptions | undefined> {
   const profiles = await getDownloaders();
-  if (profiles['Default']) {
-    return profiles['Default'];
-  } else if (profiles['default']) {
-    return profiles['default'];
-  } else if (Object.keys(profiles).length > 0) {
-    return Object.values(profiles)[0];
-  } else {
-    return undefined;
-  }
+  return (
+    // Return any profile named default
+    profiles.Default ?? profiles.default
+    // Or the first profile
+    ?? Object.keys(profiles).length > 0
+      ? Object.values(profiles)[0]
+      : undefined
+  );
 }
 
 // Indexers

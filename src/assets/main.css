@@ -1,0 +1,103 @@
+:root {
+  --middle-dark: #3a3a3a;
+  --dark: #222;
+  --darker: #1c1c1c; /* darken(#222, 15%) */
+  --light: #ddd;
+  --lighter: #eee;
+  --blue: #17a2b8;
+  --dark-blue: #148a9e; /* darken(#17a2b8, 15%) */
+  --light-blue: #1ab8d4; /* lighten(#17a2b8, 15%) */
+
+  --custom-select-background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23ddd' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
+
+  --color-background: var(--dark);
+  --color-text: var(--light);
+  --color-input: white;
+  --color-input-background: black;
+  --colot-input-border: var(--dark-blue);
+
+  --color-bar-gradient-from: rgba(58,58,80,1);
+  --color-bar-gradient-to: rgba(30,30,40,1);
+  --color-bar-gradient: linear-gradient(to left, var(--color-bar-gradient-from) 0%, var(--color-bar-gradient-to) 100%);
+
+  color-scheme: light dark;
+  color: var(--color-text);
+  background-color: var(--color-background);
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.custom-select {
+  /* background: var(--color-input-background) var(--custom-select-background-image) no-repeat right 2px center; */
+  background: var(--color-input-background);
+  background-size: 8px 10px;
+  border-color: var(--dark-blue);
+  color: var(--color-input);
+  height: 20px;
+  padding: 0px 22px 0px 3px;
+}
+
+.flex-row {
+  align-items: center;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-evenly;
+}
+
+.tooltip .tooltip-inner {
+  background: var(--dark);
+  font-size: .85em;
+  max-width: 250px;
+  padding: 5px 8px;
+  /* width: 250px; */
+}
+
+body {
+  background: var(--dark);
+  color: var(--light);
+  font-size: 16px;
+
+  input, select, .btn {
+    background: var(--darker);
+    color: var(--light);
+    border: 1px solid var(--dark-blue);
+    border-radius: 3px;
+
+    font-size: 1rem;
+    height: 1.25em;
+    line-height: 1em;
+    padding: .2em .375em;
+  }
+}
+
+
+/* Light mode styles */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-background: var(--light);
+    --color-text: var(--dark);
+    --color-input: var(--middle-dark);
+    --color-input-background: white;
+
+    --color-bar-gradient-from: var(--blue);
+    --color-bar-gradient-to: var(--light-blue);
+
+  }
+
+  body {
+    background: var(--lighter);
+    color: var(--dark);
+
+    input {
+      background: white;
+      color: var(--darker);
+    }
+  }
+}
