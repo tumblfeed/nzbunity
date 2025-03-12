@@ -5,8 +5,8 @@ Object.defineProperty(browser.runtime, 'getManifest', {
     version: '2.0.0-test.0',
     content_scripts: [
       {
-        "matches": ["*://*.althub.co.za/*"],
-        "js": ["sites/althub.ts"]
+        "matches": ["*://*.example.com/*"],
+        "js": ["sites/example.ts"]
       },
       {
         "matches": ["*://*.lol.lmao/*"],

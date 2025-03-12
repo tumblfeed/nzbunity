@@ -1,3 +1,5 @@
+import { version } from "react";
+
 const manifest = browser.runtime.getManifest();
 const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
@@ -45,8 +47,6 @@ export interface NZBUnityOptions {
   IndexerEnabled: boolean;
   IndexerDisplay: boolean;
   RefreshRate: number;
-  InterceptDownloads: boolean;
-  InterceptExclude: string;
   EnableNotifications: boolean;
   EnableNewznab: boolean;
   IgnoreCategories: boolean;
@@ -54,7 +54,6 @@ export interface NZBUnityOptions {
   DefaultCategory: string | null;
   OverrideCategory: string | null;
   ReplaceLinks: boolean;
-  UITheme: string;
 }
 
 export const DefaultOptions: NZBUnityOptions = {
@@ -68,8 +67,6 @@ export const DefaultOptions: NZBUnityOptions = {
   IndexerEnabled: true,
   IndexerDisplay: true,
   RefreshRate: 15,
-  InterceptDownloads: true,
-  InterceptExclude: '',
   EnableNotifications: false,
   EnableNewznab: true,
   IgnoreCategories: false,
@@ -77,7 +74,6 @@ export const DefaultOptions: NZBUnityOptions = {
   DefaultCategory: null,
   OverrideCategory: null,
   ReplaceLinks: false,
-  UITheme: '',
 };
 
 export async function getOptions(): Promise<NZBUnityOptions> {
@@ -211,97 +207,133 @@ async function runMigrations(): Promise<void> {
   await migrateV1();
 }
 
+/**
+ * V1 options
+ */
+interface NZBUnityOptionsV1 {
+  Version?: string;
+  Initialized: boolean;
+  Debug: boolean;
+  Profiles: {
+    [key: string]: {
+      ProfileName: string;
+      ProfileType: string;
+      ProfileHost: string;
+      ProfileApiKey: string;
+      ProfileUsername: string;
+      ProfilePassword: string;
+      ProfileServerUrl: string;
+      ProfileHostAsEntered: boolean;
+    };
+  };
+  ActiveProfile: string;
+  Providers: {
+    [key: string]: {
+      Enabled: boolean;
+      Matches: string[];
+      Js: string[];
+    };
+  };
+  ProviderNewznab: string;
+  ProviderEnabled: boolean;
+  ProviderDisplay: boolean;
+  RefreshRate: number;
+  InterceptDownloads: boolean;
+  InterceptExclude: string;
+  EnableNotifications: boolean;
+  EnableNewznab: boolean;
+  IgnoreCategories: boolean;
+  SimplifyCategories: boolean;
+  DefaultCategory: string;
+  OverrideCategory: string;
+  ReplaceLinks: boolean;
+  UITheme: string;
+}
+
 export async function migrateV1(): Promise<void> {
-  /*
-  interface NZBUnityOptionsV1 {
-    Initialized: boolean;
-    Debug: boolean;
-    Profiles: {
-      [key: string]: {
-        ProfileName: string;
-        ProfileType: string;
-        ProfileHost: string;
-        ProfileApiKey: string;
-        ProfileUsername: string;
-        ProfilePassword: string;
-        ProfileServerUrl: string;
-        ProfileHostAsEntered: boolean;
-      };
-    };
-    ActiveProfile: string;
-    Providers: {
-      [key: string]: {
-        Enabled: boolean;
-        Matches: string[];
-        Js: string[];
-      };
-    };
-    ProviderNewznab: string;
-    ProviderEnabled: boolean;
-    ProviderDisplay: boolean;
-    RefreshRate: number;
-    InterceptDownloads: boolean;
-    InterceptExclude: string;
-    EnableNotifications: boolean;
-    EnableNewznab: boolean;
-    IgnoreCategories: boolean;
-    SimplifyCategories: boolean;
-    DefaultCategory: string;
-    OverrideCategory: string;
-    ReplaceLinks: boolean;
-    UITheme: string;
-  }
-  */
-
-  // TODO: Define a field map
-
-  const oldOptions = await browser.storage.local.get(null); // V1 always stored in local
-
+  const oldOptions = await browser.storage.local.get<NZBUnityOptionsV1>(null); // V1 always stored in local
   // V1 options will have Initialized but not Version set, but check if Version is "1" just in case
   if (oldOptions.Initialized && (!oldOptions.Version || /^1\./.test(String(oldOptions.Version)))) {
-    // Copy base options
-    const newOptions: NZBUnityOptions = {...DefaultOptions};
-
-    for (const [key, value] of Object.entries(oldOptions)) {
-      if (key in newOptions) {
-        // Need to use Object.assign because TS will throw a fit about string keys,
-        // even though we just checked that the key exists
-        Object.assign(newOptions, {[key]: value});
-      }
-    }
-
-    // TODO: Handle name changes
-
-
-    // Copy profile options (including old base options)
-    for (const [profileName, profile] of Object.entries(oldOptions.Profiles)) {
-      const downloader: DownloaderOptions = {...DefaultDownloaderOptions};
-
-      for (const [key, value] of Object.entries(profile as Record<string, unknown>)) {
-        if (key in downloader) {
-          Object.assign(downloader, {[key]: value});
-        }
-      }
-
-      for (const [key, value] of Object.entries(oldOptions)) {
-        if (key in downloader) {
-          Object.assign(downloader, {[key]: value});
-        }
-      }
-
-      // TODO: Handle name changes
-
-      newOptions.Downloaders[profileName] = downloader;
-    }
-
-    // Copy provider options
-    for (const [providerName, provider] of Object.entries(oldOptions.Providers)) {
-      newOptions.Indexers[providerName] = {
-        ...(provider as IndexerOptions),
-      };
-    }
-
-    // Save
+    const newOptions = await translateV1(oldOptions as NZBUnityOptionsV1);
+    // Clear old options
+    await browser.storage.local.clear();
+    // Set new options
     await setOptions(newOptions);
   }
+}
+
+export async function translateV1(oldOptions: NZBUnityOptionsV1): Promise<NZBUnityOptions> {
+  const mapV1ToV2 = {
+    Version: 'Version',
+    Initialized: 'Initialized',
+    Debug: 'Debug',
+    // Profiles: 'Downloaders', // Skip, these need to be mapped
+    ActiveProfile: 'ActiveDownloader',
+    Providers: 'Indexers',
+    ProviderNewznab: 'IndexerNewznab',
+    ProviderEnabled: 'IndexerEnabled',
+    ProviderDisplay: 'IndexerDisplay',
+    RefreshRate: 'RefreshRate',
+    InterceptDownloads: undefined, // Feature removed
+    InterceptExclude: undefined, // Feature removed
+    EnableNotifications: 'EnableNotifications',
+    EnableNewznab: 'EnableNewznab',
+    IgnoreCategories: 'IgnoreCategories',
+    SimplifyCategories: 'SimplifyCategories',
+    DefaultCategory: 'DefaultCategory',
+    OverrideCategory: 'OverrideCategory',
+    ReplaceLinks: 'ReplaceLinks',
+    UITheme: undefined, // Theme set by browser
+  };
+
+  const mapProfilesToDownloaders = {
+    ProfileName: 'Name',
+    ProfileType: 'Type',
+    ProfileHost: 'ApiUrl',
+    ProfileApiKey: 'ApiKey',
+    ProfileUsername: 'Username',
+    ProfilePassword: 'Password',
+    ProfileServerUrl: 'WebUrl',
+    ProfileHostAsEntered: undefined, // Now always true
+  };
+
+  // Not needed, keys are the same
+  // const mapProvidersToIndexers = {};
+
+  // Clone old options to avoid modifying the original
+  oldOptions = structuredClone(oldOptions);
+
+  // Create base options
+  const newOptions: NZBUnityOptions = {...DefaultOptions};
+
+  // Copy root options
+  for (const [oldKey, newKey] of Object.entries(mapV1ToV2) as [keyof NZBUnityOptionsV1, keyof NZBUnityOptions | undefined][]) {
+    if (newKey && oldOptions[oldKey] !== undefined) {
+      // Need to use Object.assign so TS doesn't complain about... who knows what
+      Object.assign(newOptions, {[newKey]: oldOptions[oldKey]});
+    }
+  }
+  // Adjust defaut types
+  if (oldOptions.ActiveProfile === '') newOptions.ActiveDownloader = null;
+  if (oldOptions.DefaultCategory === '') newOptions.DefaultCategory = null;
+  if (oldOptions.OverrideCategory === '') newOptions.OverrideCategory = null;
+
+  // Copy downloaders
+  newOptions.Downloaders = {};
+
+  for (const [name, profile] of Object.entries(oldOptions.Profiles)) {
+    const downloader: DownloaderOptions = {...DefaultDownloaderOptions};
+
+    for (const [oldKey, newKey] of Object.entries(mapProfilesToDownloaders) as [keyof typeof mapProfilesToDownloaders, keyof DownloaderOptions | undefined][]) {
+      if (newKey && profile[oldKey] !== undefined) {
+        Object.assign(downloader, {[newKey]: profile[oldKey]});
+      }
+    }
+
+    newOptions.Downloaders[name] = downloader;
+  }
+
+  // Don't need to copy providers, they have not changed
+
+  return newOptions;
 }
