@@ -105,6 +105,7 @@ export class NZBGet extends Downloader {
     const timeRemaining = Math.floor(sizeRemaining / speedBytes); // Seconds
 
     const queue: NZBQueue = {
+      ...DefaultNZBQueue,
       status: ucFirst(status),
       speed: humanSize(speedBytes) + '/s',
       speedBytes,
@@ -130,6 +131,7 @@ export class NZBGet extends Downloader {
       const timeRemaining: number = Math.floor(sizeRemainingBytes / queue.speedBytes);
 
       return {
+        ...DefaultNZBQueueItem,
         id: String(slot['NZBID']),
         status: ucFirst(slot['Status'] as string),
         name: slot['NZBNicename'] as string,

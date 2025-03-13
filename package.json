@@ -17,6 +17,7 @@
   },
   "type": "module",
   "scripts": {
+    "start": "npm run dev",
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
     "build": "wxt build",

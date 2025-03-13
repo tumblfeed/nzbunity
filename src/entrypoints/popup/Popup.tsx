@@ -1,18 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useOptions, useDownloader } from '@/service';
 import './Popup.css';
 
+console.log('Popup loaded');
+
 function Popup() {
-  const [count, setCount] = useState(0);
+  const [options, setOptions] = useOptions();
+  const [
+    downloader, setDownloader,
+    categories,
+  ] = useDownloader();
 
   return (
     <>
       <div id="head">
-        <div id="Version"></div>
+        <div id="Version">{options?.Version}</div>
         <div id="errors"></div>
 
         <div id="profile">
-          <span>Active Profile:</span>
-          <select id="ProfileCurrent" className="custom-select"></select>
+          <span>Active Downloader:</span>
+          <select
+            id="ActiveDownloader"
+            className="custom-select"
+            value={downloader?.name}
+            onChange={(e) => setDownloader(e.target.value)}
+          >
+            {Object.keys(options?.Downloaders || {}).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -40,7 +58,18 @@ function Popup() {
       <div id="controls">
         <div id="override">
           <span>Override Category</span>
-          <select id="OverrideCategory" className="custom-select"></select>
+          <select
+            id="OverrideCategory"
+            className="custom-select"
+            value={options?.OverrideCategory ?? ''}
+            onChange={(e) => setOptions({ OverrideCategory: e.target.value })}
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div id="max-speed">
@@ -56,7 +85,8 @@ function Popup() {
       </div>
 
       <div id="debug" className="show pre">
-        env: {JSON.stringify(import.meta.env, null, 2)}
+        options: {JSON.stringify(options, null, 2)}
+        downloader: {JSON.stringify(downloader, null, 2)}
       </div>
 
       <nav id="menu">

@@ -2,9 +2,6 @@ import { parseUrl } from '@/utils';
 import { DownloaderType, type DownloaderOptions } from '@/store';
 export { DownloaderType, type DownloaderOptions };
 
-export { SABnzbd } from './SABnzbd';
-export { NZBGet } from './NZBGet';
-
 export interface NZBAddOptions {
   url?: string;
   name?: string;
