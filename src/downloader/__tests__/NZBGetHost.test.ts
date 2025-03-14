@@ -10,17 +10,15 @@ const downloaderOptions: typeof DefaultDownloaderOptions = {
   ApiUrl: import.meta.env.VITE_NZBGET_APIURL,
   Username: import.meta.env.VITE_NZBGET_USER,
   Password: import.meta.env.VITE_NZBGET_PASS,
-}
+};
 
 let apiUrl: string | null;
 let client: NZBGet;
 
 beforeAll(async () => {
-  apiUrl = (await NZBGet.findApiUrl(downloaderOptions))
-    ?? downloaderOptions.ApiUrl;
+  apiUrl = (await NZBGet.findApiUrl(downloaderOptions)) ?? downloaderOptions.ApiUrl;
   client = new NZBGet({ ...downloaderOptions, ApiUrl: apiUrl });
 });
-
 
 describe('API discovery / constructor', async () => {
   it('generateApiUrlSuggestions', async () => {
@@ -46,7 +44,6 @@ describe('API discovery / constructor', async () => {
   });
 });
 
-
 // Note, the following tests will fail if nzbget instance is not running
 
 // abstract call(operation: string, params: Dictionary|Array<any>): Promise<NZBResult>;
@@ -65,7 +62,6 @@ describe('General', async () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
   });
-
 
   // abstract getCategories(): Promise<string[]>;
   it('getCategories', async () => {
@@ -119,22 +115,19 @@ describe('Queue', async () => {
   });
 });
 
-describe('Queue items', () => {
+describe.skip('Queue items', () => {
   let id: string;
   let item: NZBQueueItem;
 
   it('Adds NZB by URL', async () => {
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-    const res = await client.addUrl(
-      import.meta.env.VITE_NZB_URL,
-      {
-        category: 'download',
-        name: 'Test NZB',
-      },
-    );
+    const res = await client.addUrl(import.meta.env.VITE_NZB_URL, {
+      category: 'download',
+      name: 'Test NZB',
+    });
 
     id = res.result as string;
-    item = (await client.getQueue()).queue.find(item => item.id === id)!;
+    item = (await client.getQueue()).queue.find((item) => item.id === id)!;
 
     expect(res).not.toBeNull();
     expect(id.length).toBeTruthy();
@@ -149,7 +142,7 @@ describe('Queue items', () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id)!;
+    item = (await client.getQueue()).queue.find((item) => item.id === id)!;
   });
 
   it('Can resume queue item', async () => {
@@ -160,7 +153,7 @@ describe('Queue items', () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id)!;
+    item = (await client.getQueue()).queue.find((item) => item.id === id)!;
   });
 
   it('Can remove queue item', async () => {

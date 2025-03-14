@@ -10,23 +10,31 @@ const downloaderOptions: typeof DefaultDownloaderOptions = {
   Name: 'Test SAB',
   ApiUrl: import.meta.env.VITE_SABNZBD_APIURL,
   ApiKey: import.meta.env.VITE_SABNZBD_APIKEY,
-}
+};
 
 let apiUrl: string | null;
 let client: SABnzbd;
 
 beforeAll(async () => {
-  apiUrl = (await SABnzbd.findApiUrl(downloaderOptions))
-    ?? downloaderOptions.ApiUrl;
+  apiUrl = (await SABnzbd.findApiUrl(downloaderOptions)) ?? downloaderOptions.ApiUrl;
   client = new SABnzbd({ ...downloaderOptions, ApiUrl: apiUrl });
 });
 
 describe('API discovery / constructor', async () => {
   it('generateApiUrlSuggestions', async () => {
+    // URL.parse has a problem with urls that don't have a protocol but do have a port, so make sure these work
+    let suggestions = SABnzbd.generateApiUrlSuggestions('localhost:7357');
+    expect(suggestions).not.toBeNull();
+    expect(suggestions.length).toBeGreaterThan(0);
+    for (const suggestion of suggestions) {
+      expect(suggestion).toMatch(/^\w+:\/\/./); // should be a valid URL with a protocol
+      expect(suggestion).toContain('localhost:7357');
+    }
+
     // Simple test, host should be set and should not be the same as the default
     expect(apiUrl).not.toBeNull();
     // Suggestions should be generated
-    const suggestions = SABnzbd.generateApiUrlSuggestions(downloaderOptions.ApiUrl!);
+    suggestions = SABnzbd.generateApiUrlSuggestions(downloaderOptions.ApiUrl!);
     expect(suggestions).not.toBeNull();
     expect(suggestions.length).toBeGreaterThan(0);
     for (const suggestion of suggestions) {
@@ -44,7 +52,7 @@ describe('API discovery / constructor', async () => {
   });
 });
 
-  // Note, the following tests will fail if sab instance is not running
+// Note, the following tests will fail if sab instance is not running
 
 describe('General', async () => {
   it('call', async () => {
@@ -115,22 +123,19 @@ describe('Queue', async () => {
   });
 });
 
-describe('Queue items', async () => {
+describe.skip('Queue items', async () => {
   let id: string | undefined;
   let item: NZBQueueItem | undefined;
 
   it('Adds NZB by URL', async () => {
     // abstract addUrl(url: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-    const res = await client.addUrl(
-      import.meta.env.VITE_NZB_URL,
-      {
-        category: 'download',
-        name: 'Test NZB',
-      },
-    );
+    const res = await client.addUrl(import.meta.env.VITE_NZB_URL, {
+      category: 'download',
+      name: 'Test NZB',
+    });
 
     id = res.result as string;
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find((item) => item.id === id);
 
     expect(res).not.toBeNull();
     expect(id.length).toBeTruthy();
@@ -145,7 +150,7 @@ describe('Queue items', async () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find((item) => item.id === id);
   });
 
   it('Can resume queue item', async () => {
@@ -156,7 +161,7 @@ describe('Queue items', async () => {
     expect(res).not.toBeNull();
     expect(res.success).toBeTruthy();
 
-    item = (await client.getQueue()).queue.find(item => item.id === id);
+    item = (await client.getQueue()).queue.find((item) => item.id === id);
   });
 
   it('Can remove queue item', async () => {

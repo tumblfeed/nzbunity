@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { type Downloader } from "./downloader";
-import { SABnzbd } from "./downloader/SABnzbd";
-import { NZBGet } from "./downloader/NZBGet";
+import { useState, useEffect } from 'react';
+import { NZBQueue, type Downloader } from './downloader';
+import { SABnzbd } from './downloader/SABnzbd';
+import { NZBGet } from './downloader/NZBGet';
 import {
   getOptions,
   setOptions,
@@ -14,7 +14,10 @@ import {
   watchActiveDownloader,
   type DownloaderOptions,
   type NZBUnityOptions,
-} from "./store";
+} from './store';
+
+import { Logger } from './logger';
+const logger = new Logger('service');
 
 export const downloaders = {
   [DownloaderType.SABnzbd]: SABnzbd,
@@ -29,12 +32,12 @@ export const newDownloader = (opts?: DownloaderOptions) => {
 
 await (async () => {
   if (import.meta.env.DEV) {
-    console.log("Service loaded, setting up default options...");
+    await Logger.clear();
+    logger.debug('Service loaded, setting up default options...');
     const opts = await getOptions();
 
-    if (Object.keys(opts.Downloaders).length === 0) {
-      console.log("No downloaders found, setting up default options...");
-      await setDownloaders([
+    if (import.meta.env.WXT_RESET_OPTS || Object.keys(opts.Downloaders).length === 0) {
+      const dlopts = [
         {
           Name: 'Default',
           Type: DownloaderType.SABnzbd,
@@ -53,7 +56,19 @@ await (async () => {
           Password: import.meta.env.WXT_NZBGET_PASS,
           WebUrl: null,
         },
-      ]);
+      ];
+
+      await Promise.all(
+        dlopts.map(
+          async (dlopt) =>
+            (dlopt.ApiUrl =
+              (await downloaders[dlopt.Type].findApiUrl(dlopt)) ?? dlopt.ApiUrl),
+        ),
+      );
+
+      logger.skip('No downloaders found, setting up default options...', dlopts);
+
+      await setDownloaders(dlopts);
     }
   }
 })();
@@ -61,7 +76,7 @@ await (async () => {
 /**
  * Hook to get the options from the store
  */
-export function useOptions(): [ NZBUnityOptions | undefined, typeof setOptions ] {
+export function useOptions(): [NZBUnityOptions | undefined, typeof setOptions] {
   const [options, setOptionsState] = useState<NZBUnityOptions | undefined>(undefined);
 
   const initOptions = async () => {
@@ -71,8 +86,10 @@ export function useOptions(): [ NZBUnityOptions | undefined, typeof setOptions ]
 
   // Watch options to set state
   // Calls to the store's setOptions will trigger then chain to this state
-  const handleOptionsChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
-    setOptionsState(prev => {
+  const handleOptionsChange = (changes: {
+    [key: string]: chrome.storage.StorageChange;
+  }) => {
+    setOptionsState((prev) => {
       if (!prev) return prev;
 
       const newOptions: NZBUnityOptions = { ...prev };
@@ -92,19 +109,25 @@ export function useOptions(): [ NZBUnityOptions | undefined, typeof setOptions ]
     };
   }, []);
 
-  return [
-    options,
-    setOptions,
-  ];
+  return [options, setOptions];
 }
 
 /**
  * Hook to get the active downloader
  */
-export function useDownloader(): [ Downloader | undefined, typeof setActiveDownloader, string[] ] {
+export function useDownloader(): [
+  {
+    client: Downloader | undefined;
+    categories: string[];
+    queue: NZBQueue | undefined;
+  },
+  typeof setActiveDownloader,
+] {
+  const [options] = useOptions();
+
   // Downloader: state, init, and watcher
 
-  const [downloader, setDownloader] = useState<Downloader | undefined>(undefined);
+  const [client, setDownloader] = useState<Downloader | undefined>(undefined);
 
   const initDownloader = async () => {
     setDownloader(newDownloader(await getActiveDownloader()));
@@ -113,7 +136,7 @@ export function useDownloader(): [ Downloader | undefined, typeof setActiveDownl
   useEffect(() => {
     initDownloader();
 
-    const watcher = watchActiveDownloader(opts => {
+    const watcher = watchActiveDownloader((opts) => {
       setDownloader(newDownloader(opts));
     });
 
@@ -126,19 +149,45 @@ export function useDownloader(): [ Downloader | undefined, typeof setActiveDownl
 
   const [categories, setCategories] = useState<string[]>([]);
 
+  const getCategories = async () => {
+    const res = await client?.getCategories();
+    logger.skip('getCategories', res);
+    setCategories(res || []);
+  };
+
   useEffect(() => {
-    downloader?.getCategories().then(setCategories);
-  }, [downloader]);
+    getCategories();
+  }, [client]);
 
+  // Queue
 
+  const [queue, setQueue] = useState<NZBQueue | undefined>(undefined);
 
+  const getQueue = async () => {
+    const res = await client?.getQueue();
+    logger.skip('getQueue', client, res);
+    setQueue(res);
+  };
 
+  let timer: NodeJS.Timeout | undefined = undefined;
+  useEffect(() => {
+    getQueue();
 
+    // Update queue every on a timer (default 10s)
+    if (timer) clearInterval(timer);
+    timer = setInterval(getQueue, (options?.RefreshRate || 10) * 1000);
 
+    return () => {
+      clearInterval(timer);
+    };
+  }, [client, options]);
 
   return [
-    downloader,
+    {
+      client,
+      categories,
+      queue,
+    },
     setActiveDownloader,
-    categories,
   ];
 }

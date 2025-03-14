@@ -1,8 +1,25 @@
-import { request, parseUrl, objectToQuery, humanSeconds, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '@/utils';
+import {
+  request,
+  parseUrl,
+  objectToQuery,
+  humanSeconds,
+  humanSize,
+  Kilobyte,
+  Megabyte,
+  Gigabyte,
+  ucFirst,
+} from '@/utils';
 import { Downloader, DownloaderType, DefaultNZBQueue, DefaultNZBQueueItem, NZBPriority } from '.';
 
 import type { RequestOptions } from '@/utils';
-import type { DownloaderOptions, NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from '.';
+import type {
+  DownloaderOptions,
+  NZBAddOptions,
+  NZBAddUrlResult,
+  NZBQueueItem,
+  NZBQueue,
+  NZBResult,
+} from '.';
 export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export interface NZBGetResult extends NZBResult {
@@ -14,7 +31,7 @@ export class NZBGet extends Downloader {
     return super.generateApiUrlSuggestions(url, ['6789'], ['', 'jsonrpc']);
   }
 
-  static testApiUrl(url:string, options: DownloaderOptions): Promise<NZBResult> {
+  static testApiUrl(url: string, options: DownloaderOptions): Promise<NZBResult> {
     const host = new NZBGet({ ...options, ApiUrl: url });
     return host.test();
   }
@@ -52,7 +69,7 @@ export class NZBGet extends Downloader {
       }
 
       // Collapse the nested result
-      const { version, result: data } = result as { version: string, result: unknown };
+      const { version, result: data } = result as { version: string; result: unknown };
 
       return { success: true, operation, version, result: data };
     } catch (error) {
@@ -67,8 +84,8 @@ export class NZBGet extends Downloader {
 
     return res.success
       ? (res.result as Record<string, string>[])
-        .filter(i => /Category\d+\.Name/i.test(i.Name))
-        .map(i => i.Value)
+          .filter((i) => /Category\d+\.Name/i.test(i.Name))
+          .map((i) => i.Value)
       : [];
   }
 
@@ -91,13 +108,14 @@ export class NZBGet extends Downloader {
 
     if (!nzbResult.success) {
       return { ...DefaultNZBQueue, status: 'Error' };
-    };
+    }
 
     const result = nzbResult.result! as Record<string, unknown>;
 
-    const serverStandBy = result['ServerStandBy'] as boolean
-    const downloadPaused = result['DownloadPaused'] as boolean
-    const status = (serverStandBy && downloadPaused) ? 'paused' : (serverStandBy) ? 'idle' : 'downloading'
+    const serverStandBy = result['ServerStandBy'] as boolean;
+    const downloadPaused = result['DownloadPaused'] as boolean;
+    const status =
+      serverStandBy && downloadPaused ? 'paused' : serverStandBy ? 'idle' : 'downloading';
 
     const speedBytes = result['DownloadRate'] as number; // in Bytes / Second
     const maxSpeedBytes = result['DownloadLimit'] as number;
@@ -123,7 +141,7 @@ export class NZBGet extends Downloader {
 
     const slots = groups.result as Record<string, unknown>[];
 
-    queue.queue = slots.map(slot => {
+    queue.queue = slots.map((slot) => {
       // MB convert to Bytes
       const sizeBytes: number = Math.floor(<number>slot['FileSizeMB'] * Megabyte);
       const sizeRemainingBytes: number = Math.floor(<number>slot['RemainingSizeMB'] * Megabyte);
@@ -189,7 +207,11 @@ export class NZBGet extends Downloader {
     return res as NZBAddUrlResult;
   }
 
-  async addFile(filename: string, content: string, options: NZBAddOptions = {}): Promise<NZBAddUrlResult> {
+  async addFile(
+    filename: string,
+    content: string,
+    options: NZBAddOptions = {},
+  ): Promise<NZBAddUrlResult> {
     const params: Array<any> = [
       filename, // NZBFilename,
       btoa(content), // NZBContent,

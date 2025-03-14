@@ -1,3 +1,6 @@
+import { Logger } from './logger';
+const logger = new Logger('store');
+
 const manifest = browser.runtime.getManifest();
 const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
@@ -96,9 +99,14 @@ export async function getOptions(): Promise<NZBUnityOptions> {
   return await getOptionsRaw();
 }
 
-export async function setOptions(options: Partial<NZBUnityOptions>): Promise<NZBUnityOptions> {
-  console.log('Setting options', options);
-  console.trace();
+export async function setOptions(
+  options: Partial<NZBUnityOptions>,
+): Promise<NZBUnityOptions> {
+  logger.debug(
+    `Setting options: ${Object.keys(options).join(', ')}`,
+    options,
+    // console.trace,
+  );
   await storageArea.set<NZBUnityOptions>({
     ...options,
     Version: manifest.version, // Always set the last version used
@@ -113,24 +121,43 @@ export async function getDownloaders(): Promise<Record<string, DownloaderOptions
   return options.Downloaders;
 }
 
-export async function setDownloaders(downloaders: Record<string, DownloaderOptions> | DownloaderOptions[]): Promise<void> {
+export async function setDownloaders(
+  downloaders: Record<string, DownloaderOptions> | DownloaderOptions[],
+): Promise<void> {
   if (Array.isArray(downloaders)) {
-    downloaders = downloaders.reduce((acc, downloader) => {
-      acc[downloader.Name] = downloader;
-      return acc;
-    }, {} as Record<string, DownloaderOptions>);
+    downloaders = downloaders.reduce(
+      (acc, downloader) => {
+        acc[downloader.Name] = downloader;
+        return acc;
+      },
+      {} as Record<string, DownloaderOptions>,
+    );
   }
   await setOptions({ Downloaders: downloaders });
 }
 
-export async function getDownloader(name: string): Promise<DownloaderOptions | undefined> {
+export async function getDownloader(
+  name: string,
+): Promise<DownloaderOptions | undefined> {
   const options = await getOptions();
   return options.Downloaders[name] ?? undefined;
 }
 
 export async function getActiveDownloader(): Promise<DownloaderOptions | undefined> {
   const options = await getOptions();
-  return options.Downloaders[options.ActiveDownloader ?? ''] ?? undefined;
+  if (options.Downloaders?.[options?.ActiveDownloader!]) {
+    return options.Downloaders[options.ActiveDownloader!];
+  }
+
+  // If the active downloader is not found, set the default
+  const defaultDownloader = await getDefaultDownloader();
+  if (defaultDownloader) {
+    await setActiveDownloader(defaultDownloader.Name);
+    return defaultDownloader;
+  }
+
+  // No default downloader (probably none available)
+  return undefined;
 }
 
 export async function setActiveDownloader(name: string): Promise<void> {
@@ -146,9 +173,10 @@ export async function getDefaultDownloader(): Promise<DownloaderOptions | undefi
   const downloaders = await getDownloaders();
   return (
     // Return any profile named default
-    downloaders.Default ?? downloaders.default
-    // Or the first profile
-    ?? Object.keys(downloaders).length > 0
+    (downloaders.Default ??
+      downloaders.default ??
+      // Or the first profile
+      Object.keys(downloaders).length > 0)
       ? Object.values(downloaders)[0]
       : undefined
   );
@@ -160,10 +188,10 @@ export async function updateIndexers(): Promise<void> {
   const options = await getOptionsRaw();
   // Only update if there are no indexers or the version has changed
   if (
-    Object.keys(options.Indexers).length === 0
-    && options.Version !== manifest.version
+    Object.keys(options.Indexers).length === 0 &&
+    options.Version !== manifest.version
   ) {
-    const indexers = {...options.Indexers};
+    const indexers = { ...options.Indexers };
 
     // Init indexers from manifest
     for (const script of manifest.content_scripts ?? []) {
@@ -201,11 +229,17 @@ export async function getIndexer(providerName: string): Promise<IndexerOptions> 
 type Watcher = Parameters<typeof browser.storage.onChanged.addListener>[0];
 
 export function watchOptions(
-  watchers:
-    // Either named functions for individual options
-    Partial<{ [key in keyof NZBUnityOptions]: (newValue?: NZBUnityOptions[key], oldValue?: NZBUnityOptions[key]) => void | Promise<void> }>
+  watchers: // Either named functions for individual options
+  | Partial<{
+        [key in keyof NZBUnityOptions]: (
+          newValue?: NZBUnityOptions[key],
+          oldValue?: NZBUnityOptions[key],
+        ) => void | Promise<void>;
+      }>
     // Or a single function for all options
-    | ((changes: { [key: string]: chrome.storage.StorageChange }) => void | Promise<void>),
+    | ((changes: {
+        [key: string]: chrome.storage.StorageChange;
+      }) => void | Promise<void>),
   areaName = storageAreaName, // Allow watching different storage areas
 ): Watcher {
   const listener: Watcher = (changes, changesAreaName) => {
@@ -223,7 +257,9 @@ export function watchOptions(
   return listener;
 }
 
-export function watchActiveDownloader(callback: (downloader: DownloaderOptions | undefined) => void): Watcher {
+export function watchActiveDownloader(
+  callback: (downloader: DownloaderOptions | undefined) => void,
+): Watcher {
   return watchOptions({
     async ActiveDownloader(newValue?: string | null): Promise<void> {
       if (newValue) {
@@ -290,7 +326,10 @@ interface NZBUnityOptionsV1 {
 export async function migrateV1(): Promise<void> {
   const oldOptions = await browser.storage.local.get<NZBUnityOptionsV1>(null); // V1 always stored in local
   // V1 options will have Initialized but not Version set, but check if Version is "1" just in case
-  if (oldOptions.Initialized && (!oldOptions.Version || /^1\./.test(String(oldOptions.Version)))) {
+  if (
+    oldOptions.Initialized &&
+    (!oldOptions.Version || /^1\./.test(String(oldOptions.Version)))
+  ) {
     const newOptions = await translateV1(oldOptions as NZBUnityOptionsV1);
     // Clear old options
     await browser.storage.local.clear();
@@ -299,7 +338,9 @@ export async function migrateV1(): Promise<void> {
   }
 }
 
-export async function translateV1(oldOptions: NZBUnityOptionsV1): Promise<NZBUnityOptions> {
+export async function translateV1(
+  oldOptions: NZBUnityOptionsV1,
+): Promise<NZBUnityOptions> {
   const mapV1ToV2 = {
     Version: 'Version',
     Initialized: 'Initialized',
@@ -341,13 +382,16 @@ export async function translateV1(oldOptions: NZBUnityOptionsV1): Promise<NZBUni
   oldOptions = structuredClone(oldOptions);
 
   // Create base options
-  const newOptions: NZBUnityOptions = {...DefaultOptions};
+  const newOptions: NZBUnityOptions = { ...DefaultOptions };
 
   // Copy root options
-  for (const [oldKey, newKey] of Object.entries(mapV1ToV2) as [keyof NZBUnityOptionsV1, keyof NZBUnityOptions | undefined][]) {
+  for (const [oldKey, newKey] of Object.entries(mapV1ToV2) as [
+    keyof NZBUnityOptionsV1,
+    keyof NZBUnityOptions | undefined,
+  ][]) {
     if (newKey && oldOptions[oldKey] !== undefined) {
       // Need to use Object.assign so TS doesn't complain about... who knows what
-      Object.assign(newOptions, {[newKey]: oldOptions[oldKey]});
+      Object.assign(newOptions, { [newKey]: oldOptions[oldKey] });
     }
   }
   // Adjust defaut types
@@ -359,11 +403,14 @@ export async function translateV1(oldOptions: NZBUnityOptionsV1): Promise<NZBUni
   newOptions.Downloaders = {};
 
   for (const [name, profile] of Object.entries(oldOptions.Profiles)) {
-    const downloader: DownloaderOptions = {...DefaultDownloaderOptions};
+    const downloader: DownloaderOptions = { ...DefaultDownloaderOptions };
 
-    for (const [oldKey, newKey] of Object.entries(mapProfilesToDownloaders) as [keyof typeof mapProfilesToDownloaders, keyof DownloaderOptions | undefined][]) {
+    for (const [oldKey, newKey] of Object.entries(mapProfilesToDownloaders) as [
+      keyof typeof mapProfilesToDownloaders,
+      keyof DownloaderOptions | undefined,
+    ][]) {
       if (newKey && profile[oldKey] !== undefined) {
-        Object.assign(downloader, {[newKey]: profile[oldKey]});
+        Object.assign(downloader, { [newKey]: profile[oldKey] });
       }
     }
 

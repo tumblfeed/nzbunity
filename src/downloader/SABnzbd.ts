@@ -1,13 +1,33 @@
-import { request, parseUrl, objectToQuery, humanSize, Kilobyte, Megabyte, Gigabyte, ucFirst } from '@/utils';
+import {
+  request,
+  parseUrl,
+  objectToQuery,
+  humanSize,
+  Kilobyte,
+  Megabyte,
+  Gigabyte,
+  ucFirst,
+} from '@/utils';
 import { Downloader, DownloaderType, DefaultNZBQueue, DefaultNZBQueueItem } from '.';
 
 import type { RequestOptions } from '@/utils';
-import type { DownloaderOptions, NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult } from '.';
+import type {
+  DownloaderOptions,
+  NZBAddOptions,
+  NZBAddUrlResult,
+  NZBQueueItem,
+  NZBQueue,
+  NZBResult,
+} from '.';
 export type { NZBAddOptions, NZBAddUrlResult, NZBQueueItem, NZBQueue, NZBResult };
 
 export class SABnzbd extends Downloader {
   static generateApiUrlSuggestions(url: string): string[] {
-    return super.generateApiUrlSuggestions(url, ['8080', '9090'], ['', 'api', 'sabnzbd', 'sabnzbd/api']);
+    return super.generateApiUrlSuggestions(
+      url,
+      ['8080', '9090'],
+      ['', 'api', 'sabnzbd', 'sabnzbd/api'],
+    );
   }
 
   static testApiUrl(url: string, options: DownloaderOptions): Promise<NZBResult> {
@@ -23,7 +43,10 @@ export class SABnzbd extends Downloader {
     this.key = options.ApiKey ?? '';
   }
 
-  async call(operation: string, params: Record<string, unknown> = {}): Promise<NZBResult> {
+  async call(
+    operation: string,
+    params: Record<string, unknown> = {},
+  ): Promise<NZBResult> {
     const req: RequestOptions = {
       method: 'GET',
       url: this.url,
@@ -67,7 +90,7 @@ export class SABnzbd extends Downloader {
 
   async getCategories(): Promise<string[]> {
     const res = await this.call('get_cats');
-    return res.success ? (res.result as string[]).filter(i => i !== '*') : [];
+    return res.success ? (res.result as string[]).filter((i) => i !== '*') : [];
   }
 
   async setMaxSpeed(bytes: number): Promise<NZBResult> {
@@ -90,7 +113,7 @@ export class SABnzbd extends Downloader {
 
     if (!nzbResult.success) {
       return { ...DefaultNZBQueue, status: 'Error' };
-    };
+    }
 
     const result = nzbResult.result! as Record<string, string>;
 
@@ -98,11 +121,12 @@ export class SABnzbd extends Downloader {
     const speedMatch = result.speed.match(/(\d+)\s+(\w+)/i);
     if (speedMatch) {
       speedBytes = parseInt(speedMatch[1]);
-      speedBytes *= ({
-        G: Gigabyte,
-        M: Megabyte,
-        K: Kilobyte,
-      }[speedMatch[2].toUpperCase()] || 1);
+      speedBytes *=
+        {
+          G: Gigabyte,
+          M: Megabyte,
+          K: Kilobyte,
+        }[speedMatch[2].toUpperCase()] || 1;
     }
 
     const maxSpeedBytes: number = parseInt(result.speedlimit_abs);
@@ -114,7 +138,7 @@ export class SABnzbd extends Downloader {
       speedBytes,
       maxSpeed: maxSpeedBytes ? humanSize(maxSpeedBytes) : '',
       maxSpeedBytes,
-      sizeRemaining: (result.sizeleft) || '∞',
+      sizeRemaining: result.sizeleft || '∞',
       timeRemaining: speedBytes > 0 ? result.timeleft : '∞',
       categories: [],
       queue: [],
@@ -122,7 +146,7 @@ export class SABnzbd extends Downloader {
 
     const slots = result.slots as unknown as Record<string, string>[];
 
-    queue.queue = slots.map(slot => {
+    queue.queue = slots.map((slot) => {
       // MB convert to Bytes
       const sizeBytes: number = Math.floor(parseFloat(slot.mb) * Megabyte);
       const sizeRemainingBytes: number = Math.floor(parseFloat(slot.mbleft) * Megabyte);
@@ -189,7 +213,7 @@ export class SABnzbd extends Downloader {
       nzbResult.result = ids.length ? ids[0] : null;
 
       if (options.paused) {
-        setTimeout(() => ids.forEach(id => this.pauseId(id)), 100);
+        setTimeout(() => ids.forEach((id) => this.pauseId(id)), 100);
       }
     }
 

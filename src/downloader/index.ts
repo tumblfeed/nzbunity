@@ -2,16 +2,6 @@ import { parseUrl } from '@/utils';
 import { DownloaderType, type DownloaderOptions } from '@/store';
 export { DownloaderType, type DownloaderOptions };
 
-export interface NZBAddOptions {
-  url?: string;
-  name?: string;
-  category?: string;
-  script?: string;
-  priority?: NZBPriority;
-  pp?: NZBPostProcessing;
-  paused?: boolean;
-}
-
 export enum NZBPriority {
   default = -100,
   paused = -2,
@@ -27,6 +17,16 @@ export enum NZBPostProcessing {
   repair,
   repair_unpack,
   repair_unpack_delete,
+}
+
+export interface NZBAddOptions {
+  url?: string;
+  name?: string;
+  category?: string;
+  script?: string;
+  priority?: NZBPriority;
+  pp?: NZBPostProcessing;
+  paused?: boolean;
 }
 
 export interface DirectNZB {
@@ -106,7 +106,6 @@ export const DefaultNZBQueueItem: NZBQueueItem = {
   percentage: 0,
 };
 
-
 export abstract class Downloader {
   /**
    * Given a host, return an array of possible URLs for the download API
@@ -115,11 +114,25 @@ export abstract class Downloader {
    * @param paths An array of paths to try without leadind slashes (eg: ['', 'api', 'sabnzbd', 'sabnzbd/api'])
    * @returns An array of possible URLs for the download API
    */
-  static generateApiUrlSuggestions(url: string, ports: string[] = [''], paths: string[] = ['']): string[] {
-    const parsed = parseUrl(url); // Will default to http if no protocol is present
+  static generateApiUrlSuggestions(
+    url: string,
+    ports: string[] = [''],
+    paths: string[] = [''],
+  ): string[] {
+    let protocols: string[] = [];
+
+    // URL.parse() will shit its pants on URLs that have no protocol, but do have a port (eg "localhost:7357")
+    // If no protocol is specified, prepend http to url before parsing but add both protocols to the check list
+    if (!/^\w+:\/\//.test(url)) {
+      url = `http://${url}`;
+      protocols = ['http:', 'https:'];
+    }
+
+    const parsed = parseUrl(url);
 
     // If host specifies a protocol only use that, otherwise use both http and https
-    const protocols = /^\w+:\/\//.test(url) ? [parsed.protocol] : ['http:', 'https:'];
+    if (!protocols.length)
+      protocols = parsed.protocol ? [parsed.protocol] : ['http:', 'https:'];
 
     // If host has a port only use that, otherwise use the default ports
     if (parsed.port) {
@@ -179,7 +192,7 @@ export abstract class Downloader {
   static async findAllApiUrls(options: DownloaderOptions): Promise<string[]> {
     if (options.ApiUrl) {
       const urls = this.generateApiUrlSuggestions(options.ApiUrl);
-      const results = await Promise.all(urls.map(url => this.testApiUrl(url, options)));
+      const results = await Promise.all(urls.map((url) => this.testApiUrl(url, options)));
       return urls.filter((url, i) => results[i].success);
     }
     return [];
@@ -200,7 +213,10 @@ export abstract class Downloader {
     this.urlParsed = parseUrl(this.url);
   }
 
-  abstract call(operation: string, params?: Record<string, unknown> | unknown[]): Promise<NZBResult>;
+  abstract call(
+    operation: string,
+    params?: Record<string, unknown> | unknown[],
+  ): Promise<NZBResult>;
   abstract getCategories(): Promise<string[]>;
   abstract setMaxSpeed(bytes: number): Promise<NZBResult>;
   abstract getHistory(options?: Record<string, unknown>): Promise<NZBQueueItem[]>;
@@ -208,7 +224,11 @@ export abstract class Downloader {
   abstract pauseQueue(): Promise<NZBResult>;
   abstract resumeQueue(): Promise<NZBResult>;
   abstract addUrl(url: string, options?: NZBAddOptions): Promise<NZBAddUrlResult>;
-  abstract addFile(filename: string, content: string, options?: NZBAddOptions): Promise<NZBAddUrlResult>;
+  abstract addFile(
+    filename: string,
+    content: string,
+    options?: NZBAddOptions,
+  ): Promise<NZBAddUrlResult>;
   abstract removeId(id: string): Promise<NZBResult>;
   abstract removeItem(id: NZBQueueItem): Promise<NZBResult>;
   abstract pauseId(id: string): Promise<NZBResult>;

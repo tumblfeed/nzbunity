@@ -16,9 +16,13 @@
   --color-input-background: black;
   --colot-input-border: var(--dark-blue);
 
-  --color-bar-gradient-from: rgba(58,58,80,1);
-  --color-bar-gradient-to: rgba(30,30,40,1);
-  --color-bar-gradient: linear-gradient(to left, var(--color-bar-gradient-from) 0%, var(--color-bar-gradient-to) 100%);
+  --color-bar-gradient-from: rgba(87, 87, 147, 1);
+  --color-bar-gradient-to: rgba(30, 30, 40, 1);
+  --color-bar-gradient: linear-gradient(
+    to left,
+    var(--color-bar-gradient-from) 0%,
+    var(--color-bar-gradient-to) 100%
+  );
 
   color-scheme: light dark;
   color: var(--color-text);
@@ -53,7 +57,7 @@
 
 .tooltip .tooltip-inner {
   background: var(--dark);
-  font-size: .85em;
+  font-size: 0.85em;
   max-width: 250px;
   padding: 5px 8px;
   /* width: 250px; */
@@ -64,7 +68,9 @@ body {
   color: var(--light);
   font-size: 16px;
 
-  input, select, .btn {
+  input,
+  select,
+  .btn {
     background: var(--darker);
     color: var(--light);
     border: 1px solid var(--dark-blue);
@@ -73,10 +79,9 @@ body {
     font-size: 1rem;
     height: 1.25em;
     line-height: 1em;
-    padding: .2em .375em;
+    padding: 0.2em 0.375em;
   }
 }
-
 
 /* Light mode styles */
 @media (prefers-color-scheme: light) {
@@ -88,7 +93,6 @@ body {
 
     --color-bar-gradient-from: var(--blue);
     --color-bar-gradient-to: var(--light-blue);
-
   }
 
   body {
