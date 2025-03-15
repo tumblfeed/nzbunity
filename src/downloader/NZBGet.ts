@@ -9,7 +9,13 @@ import {
   Gigabyte,
   ucFirst,
 } from '@/utils';
-import { Downloader, DownloaderType, DefaultNZBQueue, DefaultNZBQueueItem, NZBPriority } from '.';
+import {
+  Downloader,
+  DownloaderType,
+  DefaultNZBQueue,
+  DefaultNZBQueueItem,
+  NZBPriority,
+} from '.';
 
 import type { RequestOptions } from '@/utils';
 import type {
@@ -36,7 +42,6 @@ export class NZBGet extends Downloader {
     return host.test();
   }
 
-  type: DownloaderType = DownloaderType.NZBGet;
   username: string;
   password: string;
 
@@ -90,7 +95,7 @@ export class NZBGet extends Downloader {
   }
 
   async setMaxSpeed(bytes: number): Promise<NZBResult> {
-    const speed = bytes ? bytes / Kilobyte : 0;
+    const speed = bytes ? bytes / Kilobyte : 0; // 0 is no limit
     const res = await this.call('rate', [speed]);
 
     if (res.success) {
@@ -144,7 +149,9 @@ export class NZBGet extends Downloader {
     queue.queue = slots.map((slot) => {
       // MB convert to Bytes
       const sizeBytes: number = Math.floor(<number>slot['FileSizeMB'] * Megabyte);
-      const sizeRemainingBytes: number = Math.floor(<number>slot['RemainingSizeMB'] * Megabyte);
+      const sizeRemainingBytes: number = Math.floor(
+        <number>slot['RemainingSizeMB'] * Megabyte,
+      );
       // Seconds
       const timeRemaining: number = Math.floor(sizeRemainingBytes / queue.speedBytes);
 

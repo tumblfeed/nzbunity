@@ -1,4 +1,4 @@
-import { PublicPath } from "wxt/browser";
+import { PublicPath } from 'wxt/browser';
 
 export interface RequestOptions extends RequestInit {
   url: string;
@@ -48,19 +48,28 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
     title: 'NZB Unity' + (status ? ` - ${status}` : ''),
   });
 
-  const bySize = ['16', '32', '64'].reduce((set, size) => {
-    set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
-    return set;
-  }, {} as Record<string, string>);
+  const bySize = ['16', '32', '64'].reduce(
+    (set, size) => {
+      set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
+      return set;
+    },
+    {} as Record<string, string>,
+  );
 
-  return new Promise(resolve => browser.browserAction.setIcon({ path: bySize }, resolve));
+  return new Promise((resolve) =>
+    browser.browserAction.setIcon({ path: bySize }, resolve),
+  );
 }
 
 export function queryToObject(query: string = window.location.search): URLSearchParams {
   return new URLSearchParams(query);
 }
 
-export function getQueryParam(k: string, default_?: string, query?: string): string | undefined {
+export function getQueryParam(
+  k: string,
+  default_?: string,
+  query?: string,
+): string | undefined {
   return queryToObject(query).get(k) ?? default_ ?? undefined;
 }
 
@@ -155,7 +164,10 @@ export async function request(options: RequestOptions): Promise<unknown> {
   }
 
   if (options.username && options.password) {
-    options.headers.set('Authorization', `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`);
+    options.headers.set(
+      'Authorization',
+      `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`,
+    );
     // options.credentials = 'include';
   }
 
@@ -189,7 +201,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
   }
 }
 
-const thousand = 1000;
+const thousand = 1024;
 export const Byte = Math.pow(thousand, 0);
 export const Kilobyte = Math.pow(thousand, 1);
 export const Megabyte = Math.pow(thousand, 2);
@@ -232,11 +244,14 @@ export function simplifyCategory(s: string): string {
     s
       ?.split(/[^\w\d]+/i)
       ?.shift()
-      ?.toLowerCase()
-  ) ?? '';
+      ?.toLowerCase() ?? ''
+  );
 }
 
-export function objDiff(a: Record<string, unknown>, b: Record<string, unknown>): Record<string, unknown> {
+export function objDiff(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): Record<string, unknown> {
   const diff: Record<string, unknown> = {};
 
   for (const k of Object.keys(a)) {
@@ -248,6 +263,56 @@ export function objDiff(a: Record<string, unknown>, b: Record<string, unknown>):
   return diff;
 }
 
-export function objDiffKeys(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
+export function objDiffKeys(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): string[] {
   return Object.keys(objDiff(a, b));
+}
+
+/**
+ * Given a function and time in ms, returns a wrapped function that will execute the given function
+ * after the given time has passed. If the function is called again before the time has passed, the
+ * previous call will be cancelled and the timer will start over.
+ *
+ * Returns a promise that resolves to the result of the function call, which allows the function to be
+ * used in async contexts without having to use a side effect.
+ *
+ * Useful for debouncing user input, eg to prevent too many events when the user is typing.
+ * @see throttle()
+ */
+export function debounce<T extends unknown[], R>(
+  fn: (...args: T) => R | Promise<R>,
+  timeout: number,
+): (...args: T) => Promise<R> {
+  let timer: NodeJS.Timeout;
+
+  // Close on the promise and resolve function so we can always return the same promise
+  // for a given debounce interval. Each interval will have its own promise.
+  let promise: Promise<R>;
+  let resolver: (value: R | Promise<R>) => void;
+
+  // Reset the promise and pull the resolver so we can resolve inside the function
+  const resetPromise = () => {
+    promise = new Promise<R>((resolve) => {
+      resolver = resolve;
+    });
+  };
+
+  // Initialize the promise
+  resetPromise();
+
+  // Debounce the function as normal, but also resolve on the final value
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      // On final call, resolve the promise on the result of the function
+      resolver(fn(...args));
+      // Reset the closed promise so the next call gets a new one
+      resetPromise();
+    }, timeout);
+
+    // Always return the same promise
+    return promise;
+  };
 }

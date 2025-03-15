@@ -118,8 +118,8 @@ export function useOptions(): [NZBUnityOptions | undefined, typeof setOptions] {
 export function useDownloader(): [
   {
     client: Downloader | undefined;
-    categories: string[];
     queue: NZBQueue | undefined;
+    getQueue: () => Promise<void>;
   },
   typeof setActiveDownloader,
 ] {
@@ -127,37 +127,23 @@ export function useDownloader(): [
 
   // Downloader: state, init, and watcher
 
-  const [client, setDownloader] = useState<Downloader | undefined>(undefined);
+  const [client, setClient] = useState<Downloader | undefined>(undefined);
 
   const initDownloader = async () => {
-    setDownloader(newDownloader(await getActiveDownloader()));
+    setClient(newDownloader(await getActiveDownloader()));
   };
 
   useEffect(() => {
     initDownloader();
 
     const watcher = watchActiveDownloader((opts) => {
-      setDownloader(newDownloader(opts));
+      setClient(newDownloader(opts));
     });
 
     return () => {
       removeWatcher(watcher);
     };
   }, []);
-
-  // Categories
-
-  const [categories, setCategories] = useState<string[]>([]);
-
-  const getCategories = async () => {
-    const res = await client?.getCategories();
-    logger.skip('getCategories', res);
-    setCategories(res || []);
-  };
-
-  useEffect(() => {
-    getCategories();
-  }, [client]);
 
   // Queue
 
@@ -185,8 +171,8 @@ export function useDownloader(): [
   return [
     {
       client,
-      categories,
       queue,
+      getQueue,
     },
     setActiveDownloader,
   ];

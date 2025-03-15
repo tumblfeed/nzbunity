@@ -35,7 +35,6 @@ export class SABnzbd extends Downloader {
     return host.test();
   }
 
-  type: DownloaderType = DownloaderType.SABnzbd;
   key: string;
 
   constructor(options: DownloaderOptions) {
@@ -71,6 +70,8 @@ export class SABnzbd extends Downloader {
     try {
       let result = await request(req);
 
+      this.logger.debug(`SABnzbd.call ${operation}`, params, result);
+
       // check for error conditions
       if (typeof result === 'string') {
         throw Error('Invalid result from host');
@@ -94,7 +95,7 @@ export class SABnzbd extends Downloader {
   }
 
   async setMaxSpeed(bytes: number): Promise<NZBResult> {
-    const value = bytes ? bytes / Kilobyte : 100;
+    const value = bytes ? `${bytes / Kilobyte}K` : 0;
     const res = await this.call('config', { name: 'speedlimit', value });
 
     if (res.success) {

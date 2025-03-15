@@ -1,3 +1,4 @@
+import { Logger } from '@/logger';
 import { parseUrl } from '@/utils';
 import { DownloaderType, type DownloaderOptions } from '@/store';
 export { DownloaderType, type DownloaderOptions };
@@ -198,19 +199,26 @@ export abstract class Downloader {
     return [];
   }
 
-  type?: DownloaderType;
+  // type?: DownloaderType;
   options: DownloaderOptions;
   name: string;
   url: string;
   urlParsed: URL;
+  logger: Logger;
+
+  get type(): DownloaderType {
+    return this.constructor.name as DownloaderType;
+  }
 
   constructor(options: DownloaderOptions) {
     if (!options.ApiUrl) throw new Error('No API URL provided');
 
     this.options = options;
-    this.name = options.Name ?? this.type!;
+    this.name = options.Name ?? this.type;
     this.url = options.ApiUrl;
     this.urlParsed = parseUrl(this.url);
+
+    this.logger = new Logger(`downloader/${this.type} (${this.name})`);
   }
 
   abstract call(

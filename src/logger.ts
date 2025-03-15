@@ -110,7 +110,10 @@ export default Logger;
 /**
  * Hook to use the logger with reactive entries, formatted entries, and log methods
  */
-export function useLogger(group?: string): {
+export function useLogger(
+  group?: string,
+  refresh: number = 5,
+): {
   entries: LogEntries;
   group: LogEntries;
   log: Logger['log'];
@@ -137,7 +140,7 @@ export function useLogger(group?: string): {
     updateEntries();
 
     if (timer) clearInterval(timer);
-    timer = setInterval(updateEntries, 5000);
+    timer = setInterval(updateEntries, refresh * 1000);
 
     return () => {
       clearInterval(timer);
@@ -150,6 +153,6 @@ export function useLogger(group?: string): {
     log: (message: string, ...dump: unknown[]) => logger.log(message, ...dump),
     debug: (message: string, ...dump: unknown[]) => logger.debug(message, ...dump),
     error: (message: string, ...dump: unknown[]) => logger.error(message, ...dump),
-    skip: (messages: string, ...dump: unknown[]) => logger.skip(message, ...dump),
+    skip: (message: string, ...dump: unknown[]) => logger.skip(message, ...dump),
   };
 }
