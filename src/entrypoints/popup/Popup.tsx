@@ -1,39 +1,36 @@
 import { useEffect, useMemo } from 'react';
+import {
+  PiPlayCircleDuotone as PlayCircle,
+  PiPauseCircleDuotone as PauseCircle,
+} from 'react-icons/pi';
+
 import { type NZBQueue, type Downloader } from '@/downloader';
 import { useLogger } from '@/logger';
-import { useOptions, useDownloader } from '@/service';
+import { useOptions, useClient } from '@/service';
 import { Megabyte, trunc, debounce } from '@/utils';
 import './Popup.css';
 
 function Popup() {
   const logger = useLogger('Popup', 1);
   const [options, setOptions] = useOptions();
-  const [{ client, queue, getQueue }, setDownloader] = useDownloader();
+  const [client, setDownloader] = useClient();
 
-  // Max Speed
+  // Max Speed - Sync with the server and debounce
   const [maxSpeed, _setMaxSpeed] = useState<string>('');
-  const setMaxSpeed = debounce(async (val: string) => {
-    let mb = parseFloat(val);
+  const updateMaxSpeed = debounce(async () => {
+    let mb = parseFloat(maxSpeed || '0');
     if (mb < 1.0) mb = 0;
-    logger.debug(`setMaxSpeed ${val} ${mb * Megabyte}`);
+    logger.debug(`setMaxSpeed ${maxSpeed} ${mb * Megabyte}`);
     await client?.setMaxSpeed(mb * Megabyte);
-    getQueue();
-    _setMaxSpeed(val);
   }, 500);
+  const setMaxSpeed = (val: string) => {
+    _setMaxSpeed(val);
+    updateMaxSpeed();
+  };
 
   useEffect(() => {
-    console.debug('popup client', client);
+    logger.debug('popup queue', client);
   }, [client]);
-
-  useEffect(() => {
-    console.debug('popup queue', queue);
-
-    if ((queue?.maxSpeedBytes ?? 0) > 0) {
-      _setMaxSpeed((queue!.maxSpeedBytes / Megabyte).toFixed(1));
-    }
-  }, [queue]);
-
-  // TODO: This isn't working
 
   return (
     <>
@@ -60,22 +57,24 @@ function Popup() {
 
       <div id="summary">
         <span id="QueuePause">
-          <span className="icon fa-stack">
-            <i className="fa fa-circle fa-stack-2x"></i>
-            <i className="icon-glyph fa fa-play fa-stack-1x fa-inverse"></i>
-          </span>
-
-          <span id="QueueStatus">{queue?.status || 'Unknown'}</span>
+          {client?.status?.toLowerCase() === 'downloading' && (
+            <PauseCircle className="icon" onClick={() => client?.pauseQueue()} />
+          )}
+          {client?.status?.toLowerCase() === 'paused' && (
+            <PlayCircle className="icon" onClick={() => client?.resumeQueue()} />
+          )}
+          <PlayCircle className="icon" onClick={() => console.log('Play clicked')} />
+          <span id="QueueStatus">{client?.status || 'Unknown'}</span>
         </span>
 
         <span>
-          <span id="QueueSpeed">{queue?.speed || '0 B/s'}</span>
-          <span id="QueueMaxSpeed">({queue?.maxSpeed || '0'})</span>
+          <span id="QueueSpeed">{client?.speed || '0 B/s'}</span>
+          <span id="QueueMaxSpeed">({client?.maxSpeed || '0'})</span>
         </span>
 
         <span>
-          <span id="QueueSizeRemaining">{queue?.sizeRemaining || '0 B'}</span>
-          <span id="QueueTimeRemaining">({queue?.timeRemaining || '∞'})</span>
+          <span id="QueueSizeRemaining">{client?.sizeRemaining || '0 B'}</span>
+          <span id="QueueTimeRemaining">({client?.timeRemaining || '∞'})</span>
         </span>
       </div>
 
@@ -90,7 +89,7 @@ function Popup() {
             disabled={!client}
           >
             <option key="" value=""></option>
-            {queue?.categories.map((category) => (
+            {client?.categories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
@@ -115,8 +114,8 @@ function Popup() {
       </div>
 
       <div id="queue">
-        {queue?.queue?.length ? (
-          queue.queue.map((item) => (
+        {client?.queue?.length ? (
+          client.queue.map((item) => (
             <div key={item.id} className="nzb">
               <span className="name" title={item.name}>
                 {trunc(item.name, 30)}

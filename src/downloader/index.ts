@@ -199,7 +199,6 @@ export abstract class Downloader {
     return [];
   }
 
-  // type?: DownloaderType;
   options: DownloaderOptions;
   name: string;
   url: string;

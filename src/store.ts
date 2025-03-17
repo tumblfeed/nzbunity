@@ -1,7 +1,7 @@
 import { Logger } from './logger';
 const logger = new Logger('store');
 
-const manifest = browser.runtime.getManifest();
+const manifest = () => browser.runtime.getManifest();
 const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
 
@@ -59,7 +59,8 @@ export interface NZBUnityOptions {
 
 export const DefaultOptions: NZBUnityOptions = {
   Initialized: false,
-  Version: manifest.version,
+  // Version: manifest.version,
+  Version: '0.0.0',
   Debug: false,
   Downloaders: {},
   ActiveDownloader: null,
@@ -109,7 +110,7 @@ export async function setOptions(
   );
   await storageArea.set<NZBUnityOptions>({
     ...options,
-    Version: manifest.version, // Always set the last version used
+    Version: manifest().version, // Always set the last version used
   });
   return await getOptionsRaw();
 }
@@ -189,12 +190,12 @@ export async function updateIndexers(): Promise<void> {
   // Only update if there are no indexers or the version has changed
   if (
     Object.keys(options.Indexers).length === 0 &&
-    options.Version !== manifest.version
+    options.Version !== manifest().version
   ) {
     const indexers = { ...options.Indexers };
 
     // Init indexers from manifest
-    for (const script of manifest.content_scripts ?? []) {
+    for (const script of manifest().content_scripts ?? []) {
       const Matches = [...(script.matches ?? [])];
       const Js = [...(script.js ?? [])];
 
@@ -226,7 +227,7 @@ export async function getIndexer(providerName: string): Promise<IndexerOptions> 
 
 // Watchers
 
-type Watcher = Parameters<typeof browser.storage.onChanged.addListener>[0];
+export type Watcher = Parameters<typeof browser.storage.onChanged.addListener>[0];
 
 export function watchOptions(
   watchers: // Either named functions for individual options

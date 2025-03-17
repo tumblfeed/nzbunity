@@ -29,6 +29,14 @@ export class Logger {
   }
 
   static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
+    // If WXT_LOG_LEVEL is not debug, skip debug logs
+    if (
+      entry.level === 'debug' &&
+      import.meta.env.WXT_LOG_LEVEL?.toLowerCase() !== 'debug'
+    ) {
+      return await this.get();
+    }
+
     // Get the current entries, remove formatting, add the new entry
     let entries = (await this.get())
       .map((entry) => {
