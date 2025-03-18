@@ -1,40 +1,57 @@
 import { useEffect, useMemo } from 'react';
 import {
-  PiPlayCircleDuotone as PlayCircle,
-  PiPauseCircleDuotone as PauseCircle,
+  PiClockClockwiseDuotone as Refreshing,
+  PiDownloadDuotone as Downloading,
+  PiPauseDuotone as Paused,
+  PiQueueDuotone as Queued,
+  PiPlayCircleDuotone as Play,
+  PiPauseCircleDuotone as Pause,
+  PiXCircleDuotone as Cancel,
+  PiArrowClockwiseBold as Refresh,
+  PiArrowSquareOutDuotone as OpenUI,
+  PiGearDuotone as Options,
 } from 'react-icons/pi';
 
+import { Client } from '@/Client';
 import { type NZBQueue, type Downloader } from '@/downloader';
 import { useLogger } from '@/logger';
-import { useOptions, useClient } from '@/service';
+import { useIsFirstRender, useOptions } from '@/service';
 import { Megabyte, trunc, debounce } from '@/utils';
 import './Popup.css';
 
 function Popup() {
   const logger = useLogger('Popup', 1);
-  const [options, setOptions] = useOptions();
-  const [client, setDownloader] = useClient();
+  const isFirstRender = useIsFirstRender();
+  const [options, setOptions, setDownloader] = useOptions();
+
+  const client = useMemo(() => Client.getInstance(), []);
 
   // Max Speed - Sync with the server and debounce
-  const [maxSpeed, _setMaxSpeed] = useState<string>('');
-  const updateMaxSpeed = debounce(async () => {
-    let mb = parseFloat(maxSpeed || '0');
+  const updateMaxSpeed = debounce(async (val: string) => {
+    let mb = parseFloat(val || '0');
     if (mb < 1.0) mb = 0;
-    logger.debug(`setMaxSpeed ${maxSpeed} ${mb * Megabyte}`);
+    logger.debug(`updateMaxSpeed ${maxSpeed} ${mb * Megabyte}`);
     await client?.setMaxSpeed(mb * Megabyte);
   }, 500);
-  const setMaxSpeed = (val: string) => {
-    _setMaxSpeed(val);
-    updateMaxSpeed();
+  // local state for the input
+  const [maxSpeed, setMaxSpeed] = useState<string>('');
+  useEffect(() => {
+    if (!isFirstRender) updateMaxSpeed(maxSpeed);
+  }, [maxSpeed]);
+
+  // Open options page
+  const openOptions = () => {
+    chrome.runtime.openOptionsPage();
   };
 
   useEffect(() => {
-    logger.debug('popup queue', client);
+    logger.debug('popup client', client);
   }, [client]);
 
   return (
     <>
       <div id="head">
+        <div id="Refreshing">{client?.refreshing && <Refreshing className="icon" />}</div>
         <div id="Version">{options?.Version}</div>
         <div id="errors"></div>
 
@@ -57,13 +74,12 @@ function Popup() {
 
       <div id="summary">
         <span id="QueuePause">
-          {client?.status?.toLowerCase() === 'downloading' && (
-            <PauseCircle className="icon" onClick={() => client?.pauseQueue()} />
+          {client.isDownloading() && (
+            <Pause className="icon" onClick={() => client?.pauseQueue()} />
           )}
-          {client?.status?.toLowerCase() === 'paused' && (
-            <PlayCircle className="icon" onClick={() => client?.resumeQueue()} />
+          {client.isPaused() && (
+            <Play className="icon" onClick={() => client?.resumeQueue()} />
           )}
-          <PlayCircle className="icon" onClick={() => console.log('Play clicked')} />
           <span id="QueueStatus">{client?.status || 'Unknown'}</span>
         </span>
 
@@ -117,11 +133,38 @@ function Popup() {
         {client?.queue?.length ? (
           client.queue.map((item) => (
             <div key={item.id} className="nzb">
-              <span className="name" title={item.name}>
+              <span className="status">
+                {client.isDownloading(item) && <Downloading className="icon" />}
+                {client.isPaused(item) && <Paused className="icon" />}
+                {client.isQueued(item) && <Queued className="icon" />}
+              </span>
+              <span className="name" title={`${item.name} [${item.id}]`}>
                 {trunc(item.name, 30)}
               </span>
               <span className="category">{item.category || ''}</span>
               <span className="size">{item.size || ''}</span>
+              {/* <span className="progress">{item.percentage || ''}</span> */}
+              <span className="actions">
+                {client.isDownloading(item) && (
+                  <Pause
+                    className="icon"
+                    title="Pause Download"
+                    onClick={() => client?.pauseId(item.id)}
+                  />
+                )}
+                {client.isPaused(item) && (
+                  <Play
+                    className="icon"
+                    title="Resume Download"
+                    onClick={() => client?.resumeId(item.id)}
+                  />
+                )}
+                <Cancel
+                  className="icon"
+                  title="Cancel & Remove NZB"
+                  onClick={() => confirm('Are you sure?') && client?.removeId(item.id)}
+                />
+              </span>
               <span className="bar" style={{ width: `${item.percentage}%` }}></span>
             </div>
           ))
@@ -142,18 +185,24 @@ function Popup() {
       </div>
 
       <nav id="menu">
-        <a id="btn-refresh" className="btn btn-info disabled" title="Refresh">
-          <i className="icon fa fa-refresh"></i>
+        <a
+          id="MenuRefresh"
+          className="btn"
+          title="Refresh"
+          onClick={() => client?.refresh()}
+        >
+          <Refresh className="icon" />
         </a>
         <a
-          id="btn-server"
-          className="btn btn-info disabled"
+          id="MenuOpenUI"
+          className="btn"
           title="Open downloader web UI"
+          onClick={() => client?.openWebUI()}
         >
-          <i className="icon fa fa-server"></i>
+          <OpenUI className="icon" />
         </a>
-        <a id="btn-options" className="btn btn-info" title="Open options">
-          <i className="icon fa fa-gear"></i>
+        <a id="MenuOptions" className="btn" title="Open options" onClick={openOptions}>
+          <Options className="icon" />
         </a>
       </nav>
     </>

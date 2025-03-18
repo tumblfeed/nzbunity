@@ -28,9 +28,17 @@
   color: var(--color-text);
   background-color: var(--color-background);
 
+  --font-size-base: 16px;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -57,16 +65,20 @@
 
 .tooltip .tooltip-inner {
   background: var(--dark);
-  font-size: 0.85em;
+  font-size: var(--font-size-xs);
   max-width: 250px;
   padding: 5px 8px;
   /* width: 250px; */
 }
 
+html {
+  font-size: var(--font-size-base) !important;
+}
+
 body {
   background: var(--dark);
   color: var(--light);
-  font-size: 16px;
+  font-size: var(--font-size-md);
 
   input,
   select,
@@ -76,7 +88,7 @@ body {
     border: 1px solid var(--dark-blue);
     border-radius: 3px;
 
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     height: 1.25em;
     line-height: 1em;
     padding: 0.2em 0.375em;

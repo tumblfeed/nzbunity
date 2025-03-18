@@ -1,7 +1,8 @@
+// TODO: Remove this file when the options page is ready
 import '@/dev';
+// END TODO
 
 import { useState, useEffect } from 'react';
-import { Client } from '@/Client';
 import {
   getOptions,
   setOptions,
@@ -15,9 +16,13 @@ import { Logger } from '@/logger';
 const logger = new Logger('Service');
 
 /**
- * Hook to get the options from the store
+ * Hook to get a reactive set of options from the store.
  */
-export function useOptions(): [NZBUnityOptions | undefined, typeof setOptions] {
+export function useOptions(): [
+  NZBUnityOptions | undefined,
+  typeof setOptions,
+  typeof setActiveDownloader,
+] {
   const [options, setOptionsState] = useState<NZBUnityOptions | undefined>(undefined);
 
   const initOptions = async () => {
@@ -50,32 +55,19 @@ export function useOptions(): [NZBUnityOptions | undefined, typeof setOptions] {
     };
   }, []);
 
-  return [options, setOptions];
+  return [options, setOptions, setActiveDownloader];
 }
 
 /**
- * Hook to get the active downloader
+ * Hook with boolean to check if the component is the first render.
+ * Useful to skip useEffect effects on the first render.
  */
-export function useClient(): [Client | undefined, typeof setActiveDownloader] {
-  // const [options] = useOptions();
-
-  const [client, setClient] = useState<Client | undefined>(undefined);
-
-  const initClient = async () => {
-    const q = new Client();
-    await q.ready;
-    setClient(q);
-  };
+export function useIsFirstRender() {
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    logger.log('initQueue useEffect');
-    initClient();
-
-    return () => {
-      logger.log('initQueue cleanup');
-      client?.removeWatcher();
-    };
+    isFirstRender.current = false;
   }, []);
 
-  return [client, setActiveDownloader];
+  return isFirstRender.current;
 }
