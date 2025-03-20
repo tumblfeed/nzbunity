@@ -45,11 +45,11 @@ export interface NZBUnityOptions {
   ActiveDownloader: string | null;
   Indexers: Record<string, IndexerOptions>;
   IndexerNewznab: string;
-  IndexerEnabled: boolean;
-  IndexerDisplay: boolean;
+  IndexerEnabled: boolean; // Default value for new indexers
+  IndexerDisplay: boolean; // Default value for new indexers
   RefreshRate: number;
   EnableNotifications: boolean;
-  EnableNewznab: boolean;
+  EnableNewznab: boolean; // For enabling/disabling Newznab detection; will be disabled in v2, but keep in case we can add it back
   IgnoreCategories: boolean;
   SimplifyCategories: boolean;
   DefaultCategory: string | null;
@@ -126,13 +126,10 @@ export async function setDownloaders(
   downloaders: Record<string, DownloaderOptions> | DownloaderOptions[],
 ): Promise<void> {
   if (Array.isArray(downloaders)) {
-    downloaders = downloaders.reduce(
-      (acc, downloader) => {
-        acc[downloader.Name] = downloader;
-        return acc;
-      },
-      {} as Record<string, DownloaderOptions>,
-    );
+    downloaders = downloaders.reduce((acc, downloader) => {
+      acc[downloader.Name] = downloader;
+      return acc;
+    }, {} as Record<string, DownloaderOptions>);
   }
   await setOptions({ Downloaders: downloaders });
 }
@@ -174,10 +171,10 @@ export async function getDefaultDownloader(): Promise<DownloaderOptions | undefi
   const downloaders = await getDownloaders();
   return (
     // Return any profile named default
-    (downloaders.Default ??
+    downloaders.Default ??
       downloaders.default ??
       // Or the first profile
-      Object.keys(downloaders).length > 0)
+      Object.keys(downloaders).length > 0
       ? Object.values(downloaders)[0]
       : undefined
   );

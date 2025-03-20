@@ -1,202 +1,74 @@
-#head {
-  border-bottom: 1px solid var(--dark-blue);
-  padding: 10px 15px 10px;
+@import '@/assets/main.css';
+@import '@/assets/tooltip.css';
 
-  #Refreshing {
-    color: var(--dark-blue);
-    font-size: var(--font-size-sm);
-    position: absolute;
-    top: 5px;
-    left: 10px;
-  }
+/* Options Page Styles */
 
-  #Version {
-    color: var(--dark-blue);
-    font-size: var(--font-size-xs);
-    position: absolute;
-    top: 5px;
-    right: 10px;
-  }
-
-  #profile {
-    text-align: center;
-
-    select {
-      height: 24px;
-      margin-left: 5px;
-      width: 125px;
-    }
-  }
+:root {
+  --tooltip-width: 400px;
+  --tooltip-left: 10px;
 }
 
-#summary {
-  display: flex;
-  align-items: center;
-  flex-flow: row nowrap;
-  justify-content: space-evenly;
-  padding: 5px 0 5px;
-
-  #QueuePause {
-    cursor: pointer;
-    line-height: 21px;
-
-    .icon {
-      color: var(--blue);
-      font-size: var(--font-size-sm);
-      margin: -3px 0 0 0;
-
-      .fa-play {
-        left: 1px;
-        top: 1px;
-      }
-
-      .fa-pause {
-        left: 0;
-        top: 0;
-      }
-    }
-  }
+body {
+  padding: 0.5em;
 }
 
-#controls {
-  display: flex;
-  align-items: center;
-  flex-flow: row nowrap;
-  justify-content: space-evenly;
-  flex-wrap: wrap;
-  padding: 3px 0 10px;
-
-  & > div {
-    display: flex;
-    align-items: flex-start;
-    flex-direction: column;
-
-    & > :first-child {
-      margin-bottom: 3px;
-    }
-  }
-
-  #OverrideCategory {
-    width: 125px;
-  }
-
-  #MaxSpeed {
-    text-align: right;
-    width: 65px;
-  }
-}
-
-#queue {
+section {
   background: var(--darker);
-  padding: 0;
-  max-height: 300px;
-  min-height: 25px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  border: 1px solid black;
+  border-radius: 6px;
+  margin: 0 auto 1em;
+  padding: 1em;
 
-  .empty {
-    font-size: var(--font-size-sm);
-    font-style: italic;
-    margin-top: 3px;
-    text-align: center;
+  > h1,
+  > h2 {
+    margin-top: 0;
   }
+}
 
-  .nzb {
-    align-items: center;
-    border-bottom: 1px solid var(--dark-blue);
-    display: flex;
-    flex-flow: row nowrap;
-    font-size: var(--font-size-sm);
-    height: 25px;
-    position: relative;
-    width: 100%;
+h1 {
+  font-size: var(--font-size-xl);
+  text-align: center;
+}
 
-    &:first-child {
-      border-top: 1px solid var(--dark-blue);
-    }
+h2 {
+  font-size: var(--font-size-lg);
+  margin: 35px 0 17px;
+}
 
-    span {
-      display: block;
-      flex: 0 0 auto;
-      order: 1;
+.custom-select.form-control-sm {
+  padding-top: 0.2rem;
+}
+
+.tooltiplol {
+  /* TODO */
+  left: -65px !important;
+
+  .tooltip-inner {
+    max-width: 450px;
+
+    p {
+      margin: 0.75em 1em;
       text-align: left;
-      width: 65px;
-      z-index: 100;
     }
-
-    .name {
-      flex-grow: 1;
-      margin-left: 5px;
-    }
-
-    .size {
-      margin-right: 5px;
-      text-align: right;
-    }
-
-    .bar {
-      background: var(--middle-dark);
-      background: var(--color-bar-gradient);
-      height: 100%;
-      position: absolute;
-      z-index: 0;
+    br {
+      margin-bottom: 0.25em;
     }
   }
 }
 
-#debug {
-  display: none;
-  background: #333;
-  color: #eee;
-  font-family: monospace;
-  font-size: var(--font-size-xs);
-  line-height: var(--font-size-sm);
-  max-height: 220px;
-  min-height: 120px;
-  overflow: scroll;
-  padding: 5px;
-  white-space: nowrap;
-
-  &.show {
-    display: block;
-  }
-  &.pre {
-    white-space: pre-wrap;
-  }
-
-  .green {
-    color: #6e6;
-  }
+#Version {
+  font-size: var(--font-size-md);
+  position: absolute;
+  right: 10px;
+  top: 10px;
 }
 
-#menu {
-  display: flex;
-  align-items: center;
-  flex-flow: row nowrap;
-  justify-content: space-evenly;
-  padding: 10px 0;
+@media (min-width: 576px) {
+}
 
-  .btn {
-    flex-grow: 0;
-    height: 25px;
-    line-height: 18px;
-    width: 90px;
-
-    .icon {
-      font-size: var(--font-size-xl);
-    }
-  }
+@media (min-width: 768px) {
 }
 
 /* Light theme */
 @media (prefers-color-scheme: light) {
-  #queue {
-    background: var(--light);
-    color: var(--darker);
-
-    .bar {
-      background: var(--light-blue);
-      background: var(--color-bar-gradient);
-    }
-  }
 }

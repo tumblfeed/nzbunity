@@ -175,35 +175,41 @@ function Popup() {
         )}
       </div>
 
-      <div id="debug" className="show">
-        {(options?.Debug || true) &&
-          logger.entries.toReversed().map((entry, i) => (
+      {options?.Debug && (
+        <div id="debug" className="show">
+          {logger.entries.toReversed().map((entry, i) => (
             <div key={i} className={`${entry.level} green`} title={entry.formatted}>
               {entry.formatted}
             </div>
           ))}
-      </div>
+        </div>
+      )}
 
       <nav id="menu">
-        <a
+        <button
           id="MenuRefresh"
           className="btn"
           title="Refresh"
           onClick={() => client?.refresh()}
         >
           <Refresh className="icon" />
-        </a>
-        <a
+        </button>
+        <button
           id="MenuOpenUI"
           className="btn"
           title="Open downloader web UI"
           onClick={() => client?.openWebUI()}
         >
           <OpenUI className="icon" />
-        </a>
-        <a id="MenuOptions" className="btn" title="Open options" onClick={openOptions}>
+        </button>
+        <button
+          id="MenuOptions"
+          className="btn"
+          title="Open options"
+          onClick={openOptions}
+        >
           <Options className="icon" />
-        </a>
+        </button>
       </nav>
     </>
   );

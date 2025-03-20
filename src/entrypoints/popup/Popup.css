@@ -1,3 +1,23 @@
+@import '@/assets/main.css';
+
+body {
+  font-size: var(--font-size-sm);
+  overflow-x: hidden;
+  width: 460px;
+
+  select,
+  input,
+  .btn {
+    /* font-size: var(--font-size-xs); */
+  }
+
+  input [type='number'] {
+    height: 20px;
+    padding: 0 1px 0 6px;
+    width: 40px;
+  }
+}
+
 #head {
   border-bottom: 1px solid var(--dark-blue);
   padding: 10px 15px 10px;
@@ -174,13 +194,12 @@
   align-items: center;
   flex-flow: row nowrap;
   justify-content: space-evenly;
-  padding: 10px 0;
+  padding: 15px 0 5px;
 
-  .btn {
+  button {
     flex-grow: 0;
-    height: 25px;
-    line-height: 18px;
-    width: 90px;
+    height: calc(var(--font-size-xl) + 0.75em);
+    width: 100px;
 
     .icon {
       font-size: var(--font-size-xl);

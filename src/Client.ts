@@ -19,11 +19,15 @@ export const downloaders = {
   [DownloaderType.NZBGet]: NZBGet,
 };
 
-export const createDownloader = (opts?: DownloaderOptions) => {
+export function createDownloader(opts?: DownloaderOptions) {
   return opts?.Type && downloaders[opts.Type]
     ? new downloaders[opts.Type](opts)
     : undefined;
-};
+}
+
+export function findApiUrl(opts?: DownloaderOptions): Promise<string | null> {
+  return downloaders[opts?.Type!]?.findApiUrl(opts!) ?? null;
+}
 
 export class Client {
   static #instance: Client | undefined;
