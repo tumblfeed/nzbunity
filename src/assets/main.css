@@ -1,27 +1,27 @@
+@import '@/assets/catppuccin.css';
+
 :root {
-  --middle-dark: #3a3a3a;
-  --dark: #222;
-  --darker: #1c1c1c; /* darken(#222, 15%) */
-  --light: #ddd;
-  --lighter: #eee;
-  --blue: #17a2b8;
-  --dark-blue: #148a9e; /* darken(#17a2b8, 15%) */
-  --light-blue: #1ab8d4; /* lighten(#17a2b8, 15%) */
+  --color-text: var(--text);
+  --color-background: var(--base);
+  --color-background-alt: var(--mantle);
+  --color-border: var(--crust);
 
-  --custom-select-background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23ddd' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
+  --color-input: var(--subtext1);
+  --color-input-background: var(--crust);
+  --color-input-border: var(--highlight);
 
-  --color-background: var(--dark);
-  --color-text: var(--light);
-  --color-input: white;
-  --color-input-background: black;
-  --colot-input-border: var(--dark-blue);
+  --highlight-more: hsl(from var(--highlight) h s calc(l * 1.15) / 1);
+  --highlight-less: hsl(from var(--highlight) h s calc(l * 0.85) / 1);
 
-  --color-bar-gradient-from: rgba(87, 87, 147, 1);
-  --color-bar-gradient-to: rgba(30, 30, 40, 1);
+  --color-active: var(--flamingo);
+  --color-active-background: var(--crust);
+  --color-active-border: var(--rosewater);
+
   --color-bar-gradient: linear-gradient(
-    to left,
-    var(--color-bar-gradient-from) 0%,
-    var(--color-bar-gradient-to) 100%
+    to right,
+    var(--crust) 0%,
+    rgb(from var(--highlight) r g b / 0.2) 85%,
+    rgb(from var(--highlight) r g b / 0.4) 100%
   );
 
   color-scheme: light dark;
@@ -29,11 +29,13 @@
   background-color: var(--color-background);
 
   --font-size-base: 16px;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
+  --font-size-xxs: 0.7rem;
+  --font-size-xs: 0.8rem;
+  --font-size-sm: 0.9rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
+  --font-size-xxl: 1.75rem;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -47,10 +49,9 @@
 }
 
 .custom-select {
-  /* background: var(--color-input-background) var(--custom-select-background-image) no-repeat right 2px center; */
   background: var(--color-input-background);
   background-size: 8px 10px;
-  border-color: var(--dark-blue);
+  border-color: var(--color-input-border);
   color: var(--color-input);
   height: 20px;
   padding: 0px 22px 0px 3px;
@@ -70,38 +71,91 @@
   justify-content: space-evenly;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  &.right {
+    justify-content: right;
+  }
+}
+
 html {
   font-size: var(--font-size-base) !important;
 }
 
 body {
-  background: var(--dark);
-  color: var(--light);
+  background: var(--color-background);
+  color: var(--color-text);
   font-size: var(--font-size-md);
+}
 
-  input,
-  select,
-  .btn {
-    background: var(--darker);
-    color: var(--light);
-    border: 1px solid var(--dark-blue);
-    border-radius: 3px;
+input,
+select,
+button,
+.btn {
+  background: var(--color-input-background);
+  color: var(--color-input);
+  border: 1px solid var(--color-input-border);
+  border-radius: 3px;
 
-    font-size: var(--font-size-md);
-    height: 1.25em;
-    line-height: 1em;
-    padding: 0.2em 0.375em;
+  font-size: var(--font-size-md);
+  height: 1.75em;
+  line-height: 1em;
+  padding: 0.25em 0.5em;
+
+  svg {
+    fill: var(--color-input);
+  }
+
+  &.active {
+    background: var(--color-active-background);
+    border-color: var(--color-active-border);
+    color: var(--color-active);
+  }
+}
+
+button,
+.btn {
+  cursor: pointer;
+  color: var(--highlight-more);
+
+  display: flex;
+  align-items: center;
+  flex-direction: row nowrap;
+  gap: 0.3em;
+  padding: 0.25em 0.6em;
+
+  &:hover {
+    background: var(--color-active-background);
+    border-color: var(--color-active-border);
+    color: var(--color-active);
+  }
+
+  &.sm {
+    font-size: var(--font-size-sm);
+  }
+
+  &.success {
+    color: var(--green);
+  }
+
+  &.fail,
+  &.error {
+    color: var(--red);
+  }
+
+  &.warn {
+    color: var(--yellow);
   }
 }
 
 /* Light mode styles */
 @media (prefers-color-scheme: light) {
   :root {
-    --color-background: var(--light);
-    --color-text: var(--dark);
-    --color-input: var(--middle-dark);
-    --color-input-background: white;
-
     --color-bar-gradient-from: var(--blue);
     --color-bar-gradient-to: var(--light-blue);
   }

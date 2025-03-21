@@ -1,3 +1,6 @@
+// Uncomment the following line to use dev options override
+// import '@/dev';
+
 import { Logger } from './logger';
 const logger = new Logger('store');
 
@@ -33,6 +36,7 @@ export const DefaultDownloaderOptions: DownloaderOptions = {
 
 export interface IndexerOptions {
   Enabled: boolean;
+  Display: boolean;
   Matches: string[];
   Js: string[];
 }
@@ -108,10 +112,17 @@ export async function setOptions(
     options,
     // console.trace,
   );
+
+  const prev = await getOptionsRaw();
+
   await storageArea.set<NZBUnityOptions>({
     ...options,
     Version: manifest().version, // Always set the last version used
   });
+
+  // We have to pretend to be the storage change event because it's not always triggered
+  notifyWatchers(options, prev);
+
   return await getOptionsRaw();
 }
 
@@ -184,9 +195,10 @@ export async function getDefaultDownloader(): Promise<DownloaderOptions | undefi
 
 export async function updateIndexers(): Promise<void> {
   const options = await getOptionsRaw();
+
   // Only update if there are no indexers or the version has changed
   if (
-    Object.keys(options.Indexers).length === 0 &&
+    Object.keys(options.Indexers).length === 0 ||
     options.Version !== manifest().version
   ) {
     const indexers = { ...options.Indexers };
@@ -201,7 +213,8 @@ export async function updateIndexers(): Promise<void> {
 
       if (name !== 'utils') {
         indexers[name] = {
-          Enabled: indexers[name]?.Enabled ?? true,
+          Enabled: indexers[name]?.Enabled ?? options.IndexerEnabled ?? true,
+          Display: indexers[name]?.Display ?? options.IndexerDisplay ?? true,
           Matches,
           Js,
         };
@@ -210,6 +223,11 @@ export async function updateIndexers(): Promise<void> {
 
     await setOptions({ Indexers: indexers });
   }
+}
+
+export async function resetIndexers(): Promise<void> {
+  await setOptions({ Indexers: {} });
+  await updateIndexers();
 }
 
 export async function getIndexers(): Promise<Record<string, IndexerOptions>> {
@@ -225,6 +243,22 @@ export async function getIndexer(providerName: string): Promise<IndexerOptions> 
 // Watchers
 
 export type Watcher = Parameters<typeof browser.storage.onChanged.addListener>[0];
+const watchOptionsListeners: Watcher[] = [];
+
+function notifyWatchers(changed: Partial<NZBUnityOptions>, prev: NZBUnityOptions): void {
+  // Apparently sometimges the storage change event is not triggered because why not
+  const changes = Object.entries(changed).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: { newValue: value, oldValue: prev[key as keyof NZBUnityOptions] },
+    }),
+    {} as { [key: string]: chrome.storage.StorageChange },
+  );
+  // Let's pretend to be the storage change event, yayfml
+  for (const listener of watchOptionsListeners) {
+    listener(changes, storageAreaName);
+  }
+}
 
 export function watchOptions(
   watchers: // Either named functions for individual options
@@ -251,8 +285,18 @@ export function watchOptions(
       }
     }
   };
+  // For some reason, this does not always work, so we keep track of the listeners
+  // setOptions will also call the listeners with any changes, so there might be duplicates, w/e
   browser.storage.onChanged.addListener(listener);
+  watchOptionsListeners.push(listener);
   return listener;
+}
+
+export function removeWatcher(watcher: Watcher): void {
+  if (watcher) {
+    browser.storage.onChanged.removeListener(watcher);
+    watchOptionsListeners.splice(watchOptionsListeners.indexOf(watcher), 1);
+  }
 }
 
 export function watchActiveDownloader(
@@ -265,10 +309,6 @@ export function watchActiveDownloader(
       }
     },
   });
-}
-
-export function removeWatcher(watcher: Watcher): void {
-  if (watcher) browser.storage.onChanged.removeListener(watcher);
 }
 
 // Migrations (exported for testing)

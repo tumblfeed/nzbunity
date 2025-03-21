@@ -1,10 +1,13 @@
 /* Tooltip container */
 :root {
-  --tooltip-background: rgba(0, 0, 0, 0.7);
-  --tooltip-color: var(--lighter);
+  --tooltip-background: rgb(from var(--crust) r g b / 0.9);
+  /* TODO: This combo might be annoying, ask someone with working eyes */
+  --tooltip-color: var(--rosewater);
+  --tooltip-border-color: var(--flamingo);
   --tooltip-padding: 10px;
-  --tooltip-width: 300px;
+  --tooltip-width: 250px;
   --tooltip-left: calc(50% - (var(--tooltip-width) / 2));
+  --tooltip-font-size: var(--font-size-sm);
 }
 
 .tooltip {
@@ -12,22 +15,27 @@
 
   /* Tooltip content */
   .tooltiptext {
-    visibility: hidden;
     background-color: var(--tooltip-background);
-    color: var(--lighter);
-    text-align: center;
+    border: 1px solid var(--tooltip-border-color);
     border-radius: 6px;
     box-sizing: content-box;
     padding: var(--tooltip-padding);
-    width: var(--tooltip-width);
+    min-width: var(--tooltip-width);
+    max-width: 90%;
+
+    color: var(--tooltip-color);
+    font-size: var(--tooltip-font-size);
+    text-align: center;
+
+    /* TODO: This positioning is very annoying... make an alternate */
+    position: absolute;
+    top: 100%;
+    left: var(--tooltip-left);
     z-index: 1024;
 
-    position: absolute;
-    top: 110%;
-    left: var(--tooltip-left);
-
+    visibility: hidden;
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: opacity 0.5s, top 0.25s;
 
     p {
       margin: 0.5em 0.25em;
@@ -42,11 +50,11 @@
       content: ' ';
       position: absolute;
       bottom: 100%; /* At the top of the tooltip */
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
+      left: 33%;
+      margin-left: -7px;
+      border-width: 7px;
       border-style: solid;
-      border-color: transparent transparent black transparent;
+      border-color: transparent transparent var(--tooltip-border-color) transparent;
     }
   }
 
@@ -54,5 +62,6 @@
     /* Show the tooltip text when you mouse over the tooltip container */
     visibility: visible;
     opacity: 1;
+    top: 122%;
   }
 }

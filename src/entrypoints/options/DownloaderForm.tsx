@@ -1,4 +1,4 @@
-import { use, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import {
   PiCheckFatDuotone as Success,
   PiProhibitInsetDuotone as Failure,
@@ -6,32 +6,29 @@ import {
   PiTrashDuotone as Remove,
   PiArrowSquareOutDuotone as OpenUI,
 } from 'react-icons/pi';
-
 import { findApiUrl } from '@/Client';
-import { useLogger } from '@/logger';
-import { useIsFirstRender, useOptions } from '@/service';
 import {
   type DownloaderOptions,
   DefaultDownloaderOptions,
   DownloaderType,
 } from '@/store';
-import { Megabyte, trunc, debounce } from '@/utils';
 import './Options.css';
 
 function DownloaderForm({
   currentDownloader,
   invalidNames = [],
-  onUpdated = undefined,
+  onSaved = undefined,
   onRemoved = undefined,
 }: {
   currentDownloader: DownloaderOptions | null;
   invalidNames: string[];
-  onUpdated?: (fields: DownloaderOptions) => void;
+  onSaved?: (fields: DownloaderOptions) => void;
   onRemoved?: () => void;
 }) {
   // Dirty on any change, should check on first save
   const [dirty, setDirty] = useState(false);
   const [shouldCheck, setShouldCheck] = useState(false);
+  const [shouldSave, setShouldSave] = useState(false);
   const [testResult, setTestResult] = useState<boolean | null>(null);
 
   // Fields
@@ -94,6 +91,7 @@ function DownloaderForm({
   const reset = () => {
     setDirty(false);
     setShouldCheck(false);
+    setShouldSave(false);
     setTestResult(null);
     setInvalid({});
   };
@@ -117,22 +115,35 @@ function DownloaderForm({
   };
 
   const save = async () => {
-    const url = await test();
-    if (url === null) return; // Invalid, not tested, do not save
+    // If save is not yet in progress, start with a test
+    if (!shouldSave) {
+      const url = await test();
+      if (url === null) return; // Invalid, do not save
 
-    // If no url was found, confirm for save
-    if (
-      !url &&
-      !confirm(
-        'Could not validate the API URL. Are you sure you want to save this downloader?',
+      // If no url was found, confirm for save
+      if (
+        !url &&
+        !confirm(
+          'Could not validate the API URL. Are you sure you want to save this downloader?',
+        )
       )
-    )
-      return;
+        return;
+
+      // We need to do something silly, because the test function
+      // may have updated the url field, and in order to save the
+      // updated url we need to wait for a re-render.
+      // Save should automatically be called again.
+      return setShouldSave(true);
+    }
 
     // Save
     reset();
-    onUpdated?.(fields);
+    onSaved?.(fields);
   };
+
+  useEffect(() => {
+    if (shouldSave) save();
+  }, [shouldSave]);
 
   const remove = () => {
     if (
@@ -196,10 +207,11 @@ function DownloaderForm({
         />
         {invalid.ApiUrl && <span className="error">{invalid.ApiUrl}</span>}
         <span className="tooltiptext">
-          The URL to Full URL to connect to downloader API.
+          The full URL to connect to downloader API.
           <p>
-            When Test or Save is clicked, NZBUnity will attempt to automatically find the
-            full API URL using smart defaults
+            This is probably different from the URL you use to access the web UI, but when
+            Test or Save is clicked, NZBUnity will attempt to automatically find the full
+            API URL using smart defaults
             {/* TODO: (if 'exactly as shown' is not checked) */}.
             <br />
             For example:
@@ -281,10 +293,10 @@ function DownloaderForm({
         </span>
       </div>
 
-      <div className="actions">
+      <div className="actions right">
         <button
           onClick={test}
-          className={testResult === null ? '' : testResult ? 'success' : 'error'}
+          className={testResult === null ? '' : testResult ? 'success' : 'fail'}
         >
           Test
           {testResult === true && <Success />}

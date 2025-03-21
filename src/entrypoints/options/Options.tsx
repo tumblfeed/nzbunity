@@ -1,13 +1,11 @@
-import { use, useEffect, useMemo } from 'react';
 import { PiStarDuotone as Current, PiFilePlusDuotone as Add } from 'react-icons/pi';
 
-import { Client } from '@/Client';
 import { useLogger } from '@/logger';
-import { useIsFirstRender, useOptions } from '@/service';
+import { useOptions } from '@/service';
 import {
+  DefaultOptions,
   type DownloaderOptions,
   DefaultDownloaderOptions,
-  DownloaderType,
   getDownloaders,
   setDownloaders,
 } from '@/store';
@@ -17,20 +15,30 @@ import './Options.css';
 
 function Options() {
   const logger = useLogger('Options');
-  const isFirstRender = useIsFirstRender();
-  const [options, setOptions, setDownloader] = useOptions();
+  const [options, setOptions] = useOptions();
+
+  const downloaderNames = () => Object.keys(options?.Downloaders || {});
 
   const [currentDownloader, setCurrentDownloader] = useState<DownloaderOptions | null>(
     null,
   );
 
-  const addDownloader = async (downloader: DownloaderOptions) => {
-    logger.debug('addDownloader', downloader);
+  const addDownloader = () => {
+    logger.debug('addDownloader');
+    setCurrentDownloader({
+      ...DefaultDownloaderOptions,
+      Name: downloaderNames().length ? '' : 'Default',
+    });
+  };
+
+  const saveDownloader = async (downloader: DownloaderOptions) => {
+    logger.debug('saveDownloader', downloader);
     if (!options) return;
 
     const downloaders = await getDownloaders();
     downloaders[downloader.Name] = downloader;
     await setDownloaders(downloaders);
+    setCurrentDownloader(downloader);
   };
 
   const removeDownloader = async (downloader?: DownloaderOptions) => {
@@ -41,6 +49,7 @@ function Options() {
     const downloaders = await getDownloaders();
     delete downloaders[name];
     await setDownloaders(downloaders);
+    setCurrentDownloader(null);
   };
 
   return (
@@ -54,7 +63,7 @@ function Options() {
         <div id="downloader-container">
           <div id="downloader-list">
             <ul>
-              {Object.keys(options?.Downloaders || {}).map((name) => (
+              {downloaderNames().map((name) => (
                 <li
                   key={name}
                   onClick={() => setCurrentDownloader(options!.Downloaders[name])}
@@ -64,19 +73,41 @@ function Options() {
                 </li>
               ))}
             </ul>
-            <button id="AddDownloader">
-              <Add /> Add Downloader
-            </button>
+            <div>
+              <button onClick={addDownloader}>
+                <Add /> Add
+              </button>
+            </div>
           </div>
 
-          <DownloaderForm
-            currentDownloader={currentDownloader}
-            invalidNames={Object.keys(options?.Downloaders || {}).filter(
-              (name) => name !== currentDownloader?.Name,
-            )}
-            onUpdated={addDownloader}
-            onRemoved={removeDownloader}
-          />
+          {currentDownloader ? (
+            <DownloaderForm
+              currentDownloader={currentDownloader}
+              invalidNames={downloaderNames().filter(
+                (name) => name !== currentDownloader?.Name,
+              )}
+              onSaved={saveDownloader}
+              onRemoved={removeDownloader}
+            />
+          ) : (
+            <div>
+              {downloaderNames().length > 0 ? (
+                <p>
+                  Select a downloader to edit or click Add to create a new downloader.
+                </p>
+              ) : (
+                <p>
+                  No downloaders have been added yet; click Add to create a new
+                  downloader.
+                </p>
+              )}
+              <div className="actions right">
+                <button onClick={addDownloader}>
+                  <Add /> Add Downloader
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -88,7 +119,7 @@ function Options() {
 
           <ul>
             {Object.keys(options?.Indexers || {}).map((name) => (
-              <li>{name}</li>
+              <li key={name}>{name}</li>
             ))}
           </ul>
         </div>
@@ -99,7 +130,7 @@ function Options() {
             type="text"
             name="IndexerNewznab"
             placeholder="mynewznab.com,otherprovider.com"
-            value={options?.IndexerNewznab}
+            value={options?.IndexerNewznab ?? DefaultOptions.IndexerNewznab}
             onChange={(e) => setOptions({ IndexerNewznab: e.target.value })}
           />
           <span className="tooltiptext">
@@ -112,7 +143,7 @@ function Options() {
             <input
               type="checkbox"
               name="ReplaceLinks"
-              checked={options?.ReplaceLinks}
+              checked={options?.ReplaceLinks ?? DefaultOptions.ReplaceLinks}
               onChange={(e) => setOptions({ ReplaceLinks: e.target.checked })}
             />
             Replace download links on 1-click sites instead of adding an additional
@@ -129,7 +160,7 @@ function Options() {
             <input
               type="checkbox"
               name="IgnoreCategories"
-              checked={options?.IgnoreCategories}
+              checked={options?.IgnoreCategories ?? DefaultOptions.IgnoreCategories}
               onChange={(e) => setOptions({ IgnoreCategories: e.target.checked })}
             />
             Do not pass categories to the downloader, use group names from NZB only (this
@@ -142,7 +173,7 @@ function Options() {
             <input
               type="checkbox"
               name="SimplifyCategories"
-              checked={options?.SimplifyCategories}
+              checked={options?.SimplifyCategories ?? DefaultOptions.SimplifyCategories}
               onChange={(e) => setOptions({ SimplifyCategories: e.target.checked })}
             />
             Simplify category names to just the primary category (eg. "Movies &gt; HD"
@@ -155,8 +186,9 @@ function Options() {
           <input
             type="text"
             name="DefaultCategory"
-            value={options?.DefaultCategory || ''}
-            onChange={(e) => setOptions({ DefaultCategory: e.target.value })}
+            value={options?.DefaultCategory ?? ''}
+            onChange={(e) => setOptions({ DefaultCategory: e.target.value || null })}
+            // Default is null
           />
           <span className="tooltiptext">
             Optional, if no category can be determined from site or NZB headers, this
@@ -168,7 +200,7 @@ function Options() {
           <label htmlFor="RefreshRate">Refresh Rate:</label>
           <select
             name="RefreshRate"
-            value={options?.RefreshRate}
+            value={options?.RefreshRate ?? DefaultOptions.RefreshRate}
             onChange={(e) => setOptions({ RefreshRate: Number(e.target.value) })}
           >
             <option value="10">10 seconds</option>
@@ -183,7 +215,7 @@ function Options() {
             <input
               type="checkbox"
               name="EnableNotifications"
-              checked={options?.EnableNotifications}
+              checked={options?.EnableNotifications ?? DefaultOptions.EnableNotifications}
               onChange={(e) => setOptions({ EnableNotifications: e.target.checked })}
             />
             Enable Notifications
@@ -195,7 +227,7 @@ function Options() {
             <input
               type="checkbox"
               name="Debug"
-              checked={options?.Debug}
+              checked={options?.Debug ?? DefaultOptions.Debug}
               onChange={(e) => setOptions({ Debug: e.target.checked })}
             />
             Show Debug Messages on Popup UI (might help debug category naming)

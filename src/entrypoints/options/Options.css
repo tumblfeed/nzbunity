@@ -9,15 +9,15 @@
 }
 
 body {
-  padding: 0.5em;
+  padding: 0.5rem;
 }
 
 section {
-  background: var(--darker);
-  border: 1px solid black;
+  background: var(--color-background-alt);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  margin: 0 auto 1em;
-  padding: 1em;
+  margin: 0 auto 1rem;
+  padding: 1rem;
 
   > h1,
   > h2 {
@@ -35,32 +35,62 @@ h2 {
   margin: 35px 0 17px;
 }
 
-.custom-select.form-control-sm {
-  padding-top: 0.2rem;
-}
-
-.tooltiplol {
-  /* TODO */
-  left: -65px !important;
-
-  .tooltip-inner {
-    max-width: 450px;
-
-    p {
-      margin: 0.75em 1em;
-      text-align: left;
-    }
-    br {
-      margin-bottom: 0.25em;
-    }
-  }
-}
-
 #Version {
   font-size: var(--font-size-md);
   position: absolute;
   right: 10px;
   top: 10px;
+}
+
+/* Downloaders section */
+
+#downloader-container {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  gap: 2rem;
+  width: 100%;
+
+  > div {
+    flex: 3;
+
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+
+    > * {
+      flex: 0;
+    }
+
+    > :first-child {
+      flex: 1;
+    }
+  }
+
+  > div:first-child {
+    flex: 1;
+    border-right: 1px solid var(--highlight);
+  }
+}
+
+#downloader-settings {
+  div:not(.actions) {
+    display: flex;
+    flex-direction: row nowrap;
+    justify-content: left;
+    align-items: center;
+    gap: 0.5rem;
+
+    label {
+      flex: 0 0 5.25rem;
+    }
+
+    input {
+      flex: 1;
+    }
+  }
 }
 
 @media (min-width: 576px) {

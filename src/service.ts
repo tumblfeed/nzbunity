@@ -1,7 +1,3 @@
-// TODO: Remove this file when the options page is ready
-import '@/dev';
-// END TODO
-
 import { useState, useEffect } from 'react';
 import {
   getOptions,

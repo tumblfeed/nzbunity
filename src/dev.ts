@@ -1,3 +1,8 @@
+/**
+ * Development helper script to set up default options for the extension.
+ * Include this script in the from an entrypoint script (or store.ts) and
+ * set WXT_DEV_OPTIONS to true in .env.local
+ */
 import { SABnzbd } from '@/downloader/SABnzbd';
 import { NZBGet } from '@/downloader/NZBGet';
 import { getOptions, DownloaderType, setDownloaders } from '@/store';
@@ -10,9 +15,8 @@ export const downloaders = {
   [DownloaderType.NZBGet]: NZBGet,
 };
 
-// TODO: Remove this once options page is working
 async function initDevelopmentOptions() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && import.meta.env.WXT_DEV_OPTIONS) {
     await Logger.clear();
     logger.debug('Service loaded, setting up default options...');
     const opts = await getOptions();
@@ -54,4 +58,3 @@ async function initDevelopmentOptions() {
   }
 }
 initDevelopmentOptions();
-// END TODO Remove
