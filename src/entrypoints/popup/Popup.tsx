@@ -80,17 +80,17 @@ function Popup() {
           {client.isPaused() && (
             <Play className="icon" onClick={() => client?.resumeQueue()} />
           )}
-          <span id="QueueStatus">{client?.status || 'Unknown'}</span>
+          <span>{client?.status || 'Unknown'}</span>
         </span>
 
         <span>
-          <span id="QueueSpeed">{client?.speed || '0 B/s'}</span>
-          <span id="QueueMaxSpeed">({client?.maxSpeed || '0'})</span>
+          <span title="Download Speed">{client?.speed || '0 B/s'}</span>
+          <span title="Max Speed">({client?.maxSpeed || '0'})</span>
         </span>
 
         <span>
-          <span id="QueueSizeRemaining">{client?.sizeRemaining || '0 B'}</span>
-          <span id="QueueTimeRemaining">({client?.timeRemaining || '∞'})</span>
+          <span title="Size Remaining">{client?.sizeRemaining || '0 B'}</span>
+          <span title="Time Temaining">({client?.timeRemaining || '∞'})</span>
         </span>
       </div>
 
@@ -186,29 +186,14 @@ function Popup() {
       )}
 
       <nav id="menu">
-        <button
-          id="MenuRefresh"
-          className="btn"
-          title="Refresh"
-          onClick={() => client?.refresh()}
-        >
-          <Refresh className="icon" />
+        <button title="Refresh" onClick={() => client?.refresh()}>
+          <Refresh />
         </button>
-        <button
-          id="MenuOpenUI"
-          className="btn"
-          title="Open downloader web UI"
-          onClick={() => client?.openWebUI()}
-        >
-          <OpenUI className="icon" />
+        <button title="Open downloader web UI" onClick={() => client?.openWebUI()}>
+          <OpenUI />
         </button>
-        <button
-          id="MenuOptions"
-          className="btn"
-          title="Open options"
-          onClick={openOptions}
-        >
-          <Options className="icon" />
+        <button title="Open options" onClick={openOptions}>
+          <Options />
         </button>
       </nav>
     </>

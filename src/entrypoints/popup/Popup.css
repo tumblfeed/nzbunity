@@ -4,26 +4,33 @@ body {
   font-size: var(--font-size-sm);
   overflow-x: hidden;
   width: 460px;
+}
 
-  select,
-  input,
-  .btn {
-    /* font-size: var(--font-size-xs); */
-  }
+input,
+select,
+button {
+  height: 2rem;
+}
 
-  input [type='number'] {
-    height: 20px;
-    padding: 0 1px 0 6px;
-    width: 40px;
-  }
+input[type='number'] {
+  padding: 0 0 0 0.5em;
+}
+
+svg {
+  fill: var(--highlight);
 }
 
 #head {
-  border-bottom: 1px solid var(--dark-blue);
-  padding: 10px 15px 10px;
+  border-bottom: 1px solid var(--highlight);
+  padding: 10px 0;
+
+  display: flex;
+  align-items: center;
+  flex-flow: row nowrap;
+  justify-content: center;
 
   #Refreshing {
-    color: var(--dark-blue);
+    color: var(--highlight);
     font-size: var(--font-size-sm);
     position: absolute;
     top: 5px;
@@ -31,7 +38,7 @@ body {
   }
 
   #Version {
-    color: var(--dark-blue);
+    color: var(--highlight);
     font-size: var(--font-size-xs);
     position: absolute;
     top: 5px;
@@ -39,13 +46,11 @@ body {
   }
 
   #profile {
-    text-align: center;
-
-    select {
-      height: 24px;
-      margin-left: 5px;
-      width: 125px;
-    }
+    display: flex;
+    align-items: center;
+    flex-flow: row nowrap;
+    gap: 0.5em;
+    margin-right: 10px;
   }
 }
 
@@ -54,26 +59,17 @@ body {
   align-items: center;
   flex-flow: row nowrap;
   justify-content: space-evenly;
-  padding: 5px 0 5px;
+  padding: 10px 0;
 
-  #QueuePause {
-    cursor: pointer;
-    line-height: 21px;
+  > span {
+    display: flex;
+    align-items: center;
+    flex-flow: row nowrap;
+    gap: 0.35em;
 
-    .icon {
-      color: var(--blue);
-      font-size: var(--font-size-sm);
-      margin: -3px 0 0 0;
-
-      .fa-play {
-        left: 1px;
-        top: 1px;
-      }
-
-      .fa-pause {
-        left: 0;
-        top: 0;
-      }
+    svg {
+      height: 2em;
+      width: 2em;
     }
   }
 }
@@ -101,13 +97,12 @@ body {
   }
 
   #MaxSpeed {
-    text-align: right;
     width: 65px;
   }
 }
 
 #queue {
-  background: var(--darker);
+  background: var(--color-background-alt);
   padding: 0;
   max-height: 300px;
   min-height: 25px;
@@ -123,7 +118,7 @@ body {
 
   .nzb {
     align-items: center;
-    border-bottom: 1px solid var(--dark-blue);
+    border-bottom: 1px solid var(--highlight);
     display: flex;
     flex-flow: row nowrap;
     font-size: var(--font-size-sm);
@@ -132,7 +127,7 @@ body {
     width: 100%;
 
     &:first-child {
-      border-top: 1px solid var(--dark-blue);
+      border-top: 1px solid var(--highlight);
     }
 
     span {
@@ -155,7 +150,6 @@ body {
     }
 
     .bar {
-      background: var(--middle-dark);
       background: var(--color-bar-gradient);
       height: 100%;
       position: absolute;
@@ -198,11 +192,16 @@ body {
 
   button {
     flex-grow: 0;
-    height: calc(var(--font-size-xl) + 0.75em);
+    height: 2.5rem;
     width: 100px;
 
-    .icon {
-      font-size: var(--font-size-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      height: 1.5em;
+      width: 1.5em;
     }
   }
 }

@@ -14,7 +14,7 @@
   position: relative;
 
   /* Tooltip content */
-  .tooltiptext {
+  .tooltip-text {
     background-color: var(--tooltip-background);
     border: 1px solid var(--tooltip-border-color);
     border-radius: 6px;
@@ -27,7 +27,6 @@
     font-size: var(--tooltip-font-size);
     text-align: center;
 
-    /* TODO: This positioning is very annoying... make an alternate */
     position: absolute;
     top: 100%;
     left: var(--tooltip-left);
@@ -35,7 +34,7 @@
 
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.5s, top 0.25s;
+    transition: opacity 0.5s, top 0.25s, right 0.25s, bottom 0.25s, left 0.25s;
 
     p {
       margin: 0.5em 0.25em;
@@ -51,17 +50,41 @@
       position: absolute;
       bottom: 100%; /* At the top of the tooltip */
       left: 33%;
+      /*left: 15px; /* Move arrow way over to the left so that it doesn't accidentally keep hover active */
       margin-left: -7px;
       border-width: 7px;
       border-style: solid;
-      border-color: transparent transparent var(--tooltip-border-color) transparent;
+      border-color: transparent;
+      border-bottom-color: var(--tooltip-border-color);
+    }
+
+    &.tooltip-top {
+      top: auto;
+      bottom: 100%;
+
+      &::after {
+        bottom: auto;
+        top: 100%;
+        border-bottom-color: transparent;
+        border-top-color: var(--tooltip-border-color);
+      }
+    }
+
+    &.tooltip-noarrow::after {
+      display: none;
     }
   }
 
-  &:hover .tooltiptext {
-    /* Show the tooltip text when you mouse over the tooltip container */
+  /* Use either focus or hover, not both (hover can be annoying in lists of fields */
+  &:has(input:focus) .tooltip-text.tooltip-focus,
+  &:hover .tooltip-text:not(.tooltip-focus) {
     visibility: visible;
     opacity: 1;
-    top: 122%;
+    top: calc(100% + 0.5rem);
+
+    &.tooltip-top {
+      top: auto;
+      bottom: calc(100% + 0.5rem);
+    }
   }
 }

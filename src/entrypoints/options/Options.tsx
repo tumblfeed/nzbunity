@@ -1,13 +1,18 @@
-import { PiStarDuotone as Current, PiFilePlusDuotone as Add } from 'react-icons/pi';
+import {
+  PiArrowFatLineRightDuotone as Current,
+  PiFilePlusDuotone as Add,
+} from 'react-icons/pi';
 
 import { useLogger } from '@/logger';
 import { useOptions } from '@/service';
 import {
+  type NZBUnityOptions,
   DefaultOptions,
   type DownloaderOptions,
   DefaultDownloaderOptions,
   getDownloaders,
   setDownloaders,
+  type IndexerOptions,
 } from '@/store';
 import { Megabyte, trunc, debounce } from '@/utils';
 import DownloaderForm from './DownloaderForm';
@@ -52,6 +57,26 @@ function Options() {
     setCurrentDownloader(null);
   };
 
+  const saveIndexer = async (name: string, indexer: IndexerOptions) => {
+    logger.debug('saveIndexer', indexer);
+    if (!options) return;
+
+    const indexers = options.Indexers;
+    indexers[name] = indexer;
+    setOptions({ Indexers: indexers });
+  };
+
+  const resetOptions = async () => {
+    logger.debug('resetOptions');
+    if (
+      confirm(
+        'Are you sure you want to reset all settings to default? This cannot be undone.',
+      )
+    ) {
+      await setOptions(DefaultOptions);
+    }
+  };
+
   return (
     <>
       <h1>NZB Unity Options</h1>
@@ -65,6 +90,7 @@ function Options() {
             <ul>
               {downloaderNames().map((name) => (
                 <li
+                  className={currentDownloader?.Name === name ? 'active' : ''}
                   key={name}
                   onClick={() => setCurrentDownloader(options!.Downloaders[name])}
                 >
@@ -118,8 +144,20 @@ function Options() {
           <p>Enable 1-click downloading for the following sites:</p>
 
           <ul>
-            {Object.keys(options?.Indexers || {}).map((name) => (
-              <li key={name}>{name}</li>
+            {Object.entries(options?.Indexers || {}).map(([name, indexer]) => (
+              <li key={name}>
+                <label>
+                  <input
+                    type="checkbox"
+                    name={`Indexer-${name}`}
+                    checked={indexer.Enabled ?? DefaultOptions.IndexerEnabled ?? false}
+                    onChange={(e) =>
+                      saveIndexer(name, { ...indexer, Enabled: e.target.checked })
+                    }
+                  />
+                  {name}
+                </label>
+              </li>
             ))}
           </ul>
         </div>
@@ -133,7 +171,7 @@ function Options() {
             value={options?.IndexerNewznab ?? DefaultOptions.IndexerNewznab}
             onChange={(e) => setOptions({ IndexerNewznab: e.target.value })}
           />
-          <span className="tooltiptext">
+          <span className="tooltip-text">
             Comma separated hostnames for Newznab sites to enable 1-click downloading
           </span>
         </div>
@@ -190,7 +228,7 @@ function Options() {
             onChange={(e) => setOptions({ DefaultCategory: e.target.value || null })}
             // Default is null
           />
-          <span className="tooltiptext">
+          <span className="tooltip-text">
             Optional, if no category can be determined from site or NZB headers, this
             category will be sent instead
           </span>
@@ -210,6 +248,7 @@ function Options() {
           </select>
         </div>
 
+        {/* Currently does nothing, so let's not show it
         <div>
           <label>
             <input
@@ -221,6 +260,7 @@ function Options() {
             Enable Notifications
           </label>
         </div>
+        */}
 
         <div>
           <label>
@@ -236,7 +276,7 @@ function Options() {
 
         <div>
           <p>Click to reset all settings to default</p>
-          <button id="ResetOptions">Reset</button>
+          <button onClick={resetOptions}>Reset</button>
         </div>
       </section>
     </>

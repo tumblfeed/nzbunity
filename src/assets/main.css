@@ -48,29 +48,6 @@
   -webkit-text-size-adjust: 100%;
 }
 
-.custom-select {
-  background: var(--color-input-background);
-  background-size: 8px 10px;
-  border-color: var(--color-input-border);
-  color: var(--color-input);
-  height: 20px;
-  padding: 0px 22px 0px 3px;
-}
-
-.flex-row {
-  align-items: center;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-evenly;
-}
-
-.flex-col {
-  align-items: center;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-evenly;
-}
-
 .actions {
   display: flex;
   flex-wrap: nowrap;
@@ -108,13 +85,17 @@ button,
   padding: 0.25em 0.5em;
 
   svg {
-    fill: var(--color-input);
+    fill: var(--color-input-border);
   }
 
   &.active {
     background: var(--color-active-background);
     border-color: var(--color-active-border);
     color: var(--color-active);
+
+    svg {
+      fill: var(--color-active-border);
+    }
   }
 }
 
@@ -133,6 +114,10 @@ button,
     background: var(--color-active-background);
     border-color: var(--color-active-border);
     color: var(--color-active);
+
+    svg {
+      fill: var(--color-active-border);
+    }
   }
 
   &.sm {

@@ -156,141 +156,152 @@ function DownloaderForm({
 
   return (
     <div id="downloader-settings">
-      {/* <ul>
+      <div className="form">
+        {/* <ul>
         <li>dirty: {JSON.stringify(dirty)}</li>
         <li>shouldCheck: {JSON.stringify(shouldCheck)}</li>
         <li>isValid: {JSON.stringify(isValid)}</li>
         <li>invalidNames: {JSON.stringify(invalidNames)}</li>
         <li>Invalid: {JSON.stringify(invalid)}</li>
       </ul> */}
-      <div className="tooltip">
-        <label htmlFor="DownloaderName">Name:</label>
-        <input
-          type="text"
-          name="DownloaderName"
-          value={fields.Name}
-          onChange={(e) => setFields({ Name: e.target.value })}
-          onBlur={() => trim('Name')}
-        />
-        {invalid.Name && <span className="error">{invalid.Name}</span>}
-        <span className="tooltiptext">
-          A unique name for this downloader. This is used to identify the downloader in
-          the list.
-        </span>
-      </div>
+        <div className="tooltip">
+          <label htmlFor="DownloaderName">Name:</label>
+          <input
+            type="text"
+            name="DownloaderName"
+            value={fields.Name}
+            onChange={(e) => setFields({ Name: e.target.value })}
+            onBlur={() => trim('Name')}
+          />
+          {invalid.Name && <span className="error">{invalid.Name}</span>}
+          <span className="tooltip-text tooltip-focus">
+            A unique name for this downloader.
+            <p>
+              This is used to identify the downloader in the list. If you change the name
+              of an existing downloader, it will duplicate the downloader with the new
+              name.
+            </p>
+          </span>
+        </div>
 
-      <div>
-        <label htmlFor="DownloaderType">Type:</label>
-        <select
-          name="DownloaderType"
-          value={(fields.Type as string) || ''}
-          onChange={(e) => setFields({ Type: e.target.value as DownloaderType })}
-        >
-          <option value=""></option>
-          {Object.values(DownloaderType).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        {invalid.Type && <span className="error">{invalid.Type}</span>}
-      </div>
+        <div>
+          <label htmlFor="DownloaderType">Type:</label>
+          <select
+            name="DownloaderType"
+            value={(fields.Type as string) || ''}
+            onChange={(e) => setFields({ Type: e.target.value as DownloaderType })}
+          >
+            <option value=""></option>
+            {Object.values(DownloaderType).map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          {invalid.Type && <span className="error">{invalid.Type}</span>}
+        </div>
 
-      <div className="tooltip">
-        <label htmlFor="DownloaderApiUrl">API URL:</label>
-        <input
-          type="text"
-          name="DownloaderApiUrl"
-          value={fields.ApiUrl || ''}
-          onChange={(e) => setFields({ ApiUrl: e.target.value })}
-          onBlur={() => trim('ApiUrl')}
-        />
-        {invalid.ApiUrl && <span className="error">{invalid.ApiUrl}</span>}
-        <span className="tooltiptext">
-          The full URL to connect to downloader API.
-          <p>
-            This is probably different from the URL you use to access the web UI, but when
-            Test or Save is clicked, NZBUnity will attempt to automatically find the full
-            API URL using smart defaults
-            {/* TODO: (if 'exactly as shown' is not checked) */}.
+        <div className="tooltip">
+          <label htmlFor="DownloaderApiUrl">API URL:</label>
+          <input
+            type="text"
+            name="DownloaderApiUrl"
+            value={fields.ApiUrl || ''}
+            onChange={(e) => setFields({ ApiUrl: e.target.value })}
+            onBlur={() => trim('ApiUrl')}
+          />
+          {invalid.ApiUrl && <span className="error">{invalid.ApiUrl}</span>}
+          <span className="tooltip-text tooltip-focus">
+            The full URL to connect to downloader API.
+            <p>
+              This is probably different from the URL you use to access the web UI, but
+              when Test or Save is clicked, NZBUnity will attempt to automatically find
+              the full API URL using smart defaults
+              {/* TODO: (if 'exactly as shown' is not checked) */}.
+              <br />
+              For example:
+              <br />
+              Entering '192.168.1.123' will try 'http://192.168.1.123:8080/api', etc.
+              <br />
+              If the URL cannot be automatically found (ie, you are using a non-standard
+              port or proxy), please try the full URL from your downloader UI without
+              path.
+              <br />
+              You may want to set 'Web UI' URL as well.
+            </p>
+          </span>
+        </div>
+
+        {fields.Type === DownloaderType.SABnzbd && (
+          <>
+            <div className="tooltip">
+              <label htmlFor="DownloaderApiKey">API Key:</label>
+              <input
+                type="text"
+                name="DownloaderApiKey"
+                value={fields.ApiKey || ''}
+                onChange={(e) => setFields({ ApiKey: e.target.value })}
+                onBlur={() => trim('ApiKey')}
+              />
+              {invalid.ApiKey && <span className="error">{invalid.ApiKey}</span>}
+              <span className="tooltip-text tooltip-focus">
+                The API Key for SABnzbd. This can be found in the SABnzbd settings.
+              </span>
+            </div>
+          </>
+        )}
+
+        {fields.Type === DownloaderType.NZBGet && (
+          <>
+            <div className="tooltip">
+              <label htmlFor="DownloaderUsername">Username:</label>
+              <input
+                type="text"
+                name="DownloaderUsername"
+                value={fields.Username || ''}
+                onChange={(e) => setFields({ Username: e.target.value })}
+                onBlur={() => trim('Username')}
+              />
+              {invalid.Username && <span className="error">{invalid.Username}</span>}
+              <span className="tooltip-text tooltip-focus">
+                The control username for NZBGet.
+              </span>
+            </div>
+
+            <div className="tooltip">
+              <label htmlFor="DownloaderPassword">Password:</label>
+              <input
+                type="text"
+                name="DownloaderPassword"
+                value={fields.Password || ''}
+                onChange={(e) => setFields({ Password: e.target.value })}
+                onBlur={() => trim('Password')}
+              />
+              {invalid.Password && <span className="error">{invalid.Password}</span>}
+              <span className="tooltip-text tooltip-focus">
+                The control password for NZBGet.
+              </span>
+            </div>
+          </>
+        )}
+
+        <div className="tooltip">
+          <label htmlFor="DownloaderWebUrl">Web URL:</label>
+          <input
+            type="text"
+            name="DownloaderWebUrl"
+            value={fields.WebUrl || ''}
+            onChange={(e) => setFields({ WebUrl: e.target.value })}
+            onBlur={() => trim('WebUrl')}
+          />
+          <span className="tooltip-text tooltip-focus">
+            Optional, page URL to open when clicking the
             <br />
-            For example:
+            Open web UI button (<OpenUI />) on the toolbar UI.
             <br />
-            Entering '192.168.1.123' will try 'http://192.168.1.123:8080/api', etc.
-            <br />
-            If the URL cannot be automatically found (ie, you are using a non-standard
-            port or proxy), please try the full URL from your downloader UI without path.
-            <br />
-            You may want to set 'Web UI' URL as well.
-          </p>
-        </span>
-      </div>
-
-      {fields.Type === DownloaderType.SABnzbd && (
-        <>
-          <div className="tooltip">
-            <label htmlFor="DownloaderApiKey">API Key:</label>
-            <input
-              type="text"
-              name="DownloaderApiKey"
-              value={fields.ApiKey || ''}
-              onChange={(e) => setFields({ ApiKey: e.target.value })}
-              onBlur={() => trim('ApiKey')}
-            />
-            {invalid.ApiKey && <span className="error">{invalid.ApiKey}</span>}
-            <span className="tooltiptext">
-              The API Key for SABnzbd. This can be found in the SABnzbd settings.
-            </span>
-          </div>
-        </>
-      )}
-
-      {fields.Type === DownloaderType.NZBGet && (
-        <>
-          <div className="tooltip">
-            <label htmlFor="DownloaderUsername">Username:</label>
-            <input
-              type="text"
-              name="DownloaderUsername"
-              value={fields.Username || ''}
-              onChange={(e) => setFields({ Username: e.target.value })}
-              onBlur={() => trim('Username')}
-            />
-            {invalid.Username && <span className="error">{invalid.Username}</span>}
-            <span className="tooltiptext">The control username for NZBGet.</span>
-          </div>
-
-          <div className="tooltip">
-            <label htmlFor="DownloaderPassword">Password:</label>
-            <input
-              type="text"
-              name="DownloaderPassword"
-              value={fields.Password || ''}
-              onChange={(e) => setFields({ Password: e.target.value })}
-              onBlur={() => trim('Password')}
-            />
-            {invalid.Password && <span className="error">{invalid.Password}</span>}
-            <span className="tooltiptext">The control password for NZBGet.</span>
-          </div>
-        </>
-      )}
-
-      <div className="tooltip">
-        <label htmlFor="DownloaderWebUrl">Web URL:</label>
-        <input
-          type="text"
-          name="DownloaderWebUrl"
-          value={fields.WebUrl || ''}
-          onChange={(e) => setFields({ WebUrl: e.target.value })}
-          onBlur={() => trim('WebUrl')}
-        />
-        <span className="tooltiptext">
-          Optional, page URL to open when clicking the
-          <br />
-          Open web UI button (<OpenUI />) on the toolbar UI.
-          <br />
-          Defaults to API URL value above.
-        </span>
+            Defaults to API URL value above.
+          </span>
+        </div>
       </div>
 
       <div className="actions right">
