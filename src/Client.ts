@@ -12,7 +12,7 @@ import {
 } from '@/store';
 
 import { Logger } from '@/logger';
-const logger = new Logger('Queue');
+const logger = new Logger('Client');
 
 export const downloaders = {
   [DownloaderType.SABnzbd]: SABnzbd,
@@ -30,51 +30,51 @@ export function findApiUrl(opts?: DownloaderOptions): Promise<string | null> {
 }
 
 export class Client {
-  static #instance: Client | undefined;
+  static _instance: Client | undefined;
   static getInstance() {
-    if (!this.#instance) this.#instance = new Client();
-    return this.#instance;
+    if (!this._instance) this._instance = new Client();
+    return this._instance;
   }
 
-  #downloader: Promise<Downloader | undefined>;
-  #syncDownloader: Downloader | undefined; // Set after the promise resolves
-  #queue: NZBQueue | undefined;
+  _downloader: Promise<Downloader | undefined>;
+  _syncDownloader: Downloader | undefined; // Set after the promise resolves
+  _queue: NZBQueue | undefined;
 
-  #optsWatcher: Watcher | undefined;
-  #timer: NodeJS.Timeout | undefined;
-  #interval: number = 0;
+  _optsWatcher: Watcher | undefined;
+  _timer: NodeJS.Timeout | undefined;
+  _interval: number = 0;
 
-  #listeners: ((arg0: Client) => void)[] = [];
-  #refreshing: boolean = false;
+  _listeners: ((arg0: Client) => void)[] = [];
+  _refreshing: boolean = false;
 
-  constructor() {
+  constructor(autoStart = true) {
     // Initialize with the active downloader
-    this.#downloader = getActiveDownloader().then((opts) => {
-      this.#syncDownloader = createDownloader(opts);
-      return this.#syncDownloader;
+    this._downloader = getActiveDownloader().then((opts) => {
+      this._syncDownloader = createDownloader(opts);
+      return this._syncDownloader;
     });
 
     // Watch for changes to the active downloader
-    this.#optsWatcher = watchActiveDownloader((opts) => {
-      this.#syncDownloader = createDownloader(opts);
-      this.#downloader = Promise.resolve(this.#syncDownloader);
+    this._optsWatcher = watchActiveDownloader((opts) => {
+      this._syncDownloader = createDownloader(opts);
+      this._downloader = Promise.resolve(this._syncDownloader);
       this.refresh();
     });
 
     // Start the refresh interval
-    this.start();
+    if (autoStart) this.start();
   }
 
   // Allow for cleanup
   cleanup() {
-    if (this.#optsWatcher) removeWatcher(this.#optsWatcher);
+    if (this._optsWatcher) removeWatcher(this._optsWatcher);
   }
 
   /**
    * Async function to wait for the downloader to be ready, for guaranteed set.
    */
   getDownloader() {
-    return this.#downloader;
+    return this._downloader;
   }
 
   /**
@@ -82,18 +82,18 @@ export class Client {
    * Should be next tick, but not guaranteed.
    */
   get downloader() {
-    return this.#syncDownloader;
+    return this._syncDownloader;
   }
 
   async refresh() {
-    this.#refreshing = true;
-    this.#queue = await (await this.getDownloader())?.getQueue();
+    this._refreshing = true;
+    this._queue = await (await this.getDownloader())?.getQueue();
     this.onRefresh();
-    setTimeout(() => (this.#refreshing = false), 500); // Actual refresh is too fast, so delay
+    setTimeout(() => (this._refreshing = false), 500); // Actual refresh is too fast, so delay
   }
 
   get refreshing() {
-    return this.#refreshing;
+    return this._refreshing;
   }
 
   // Refresh timer
@@ -104,97 +104,97 @@ export class Client {
 
     if (overrideInterval) {
       // Use the override interval if provided
-      this.#interval = overrideInterval;
+      this._interval = overrideInterval;
     } else {
       // Or get the refresh rate from the options
       const { RefreshRate } = await getOptions();
-      this.#interval = Math.max(RefreshRate * 1000, 0);
+      this._interval = Math.max(RefreshRate * 1000, 0);
     }
 
     // Start with a fresh queue
     await this.refresh();
 
     // Start the timer (if interval is > 0)
-    this.#timer = setInterval(() => this.refresh(), this.#interval);
+    this._timer = setInterval(() => this.refresh(), this._interval);
   }
 
   stop() {
-    if (this.#timer) clearInterval(this.#timer);
+    if (this._timer) clearInterval(this._timer);
   }
 
   // Refresh listeners
 
   addRefreshListener(listener: (client: Client) => void) {
-    this.#listeners.push(listener);
+    this._listeners.push(listener);
   }
 
   removeRefreshListener(listener: (client: Client) => void) {
-    this.#listeners = this.#listeners.filter((l) => l !== listener);
+    this._listeners = this._listeners.filter((l) => l !== listener);
   }
 
   onRefresh() {
-    this.#listeners.forEach((l) => l(this));
+    this._listeners.forEach((l) => l(this));
   }
 
   // Queue properties (call refresh to update)
 
   get name() {
-    return this.#syncDownloader?.name;
+    return this._syncDownloader?.name;
   }
 
   get type() {
-    return this.#syncDownloader?.type;
+    return this._syncDownloader?.type;
   }
 
   get status() {
-    return this.#queue?.status;
+    return this._queue?.status;
   }
 
   get speed() {
-    return this.#queue?.speed;
+    return this._queue?.speed;
   }
 
   get maxSpeed() {
-    return this.#queue?.maxSpeed;
+    return this._queue?.maxSpeed;
   }
 
   get sizeRemaining() {
-    return this.#queue?.sizeRemaining;
+    return this._queue?.sizeRemaining;
   }
 
   get timeRemaining() {
-    return this.#queue?.timeRemaining;
+    return this._queue?.timeRemaining;
   }
 
   get categories() {
-    return this.#queue?.categories || [];
+    return this._queue?.categories || [];
   }
 
   get queue(): NZBQueueItem[] {
     // Note: this is actually the queue items
-    return this.#queue?.queue || [];
+    return this._queue?.queue || [];
   }
 
   // Convenience helpers
 
   isDownloading(item?: NZBQueueItem) {
-    return (item ?? this.#queue)?.status.toLowerCase() === 'downloading';
+    return (item ?? this._queue)?.status.toLowerCase() === 'downloading';
   }
 
   isPaused(item?: NZBQueueItem) {
-    return (item ?? this.#queue)?.status.toLowerCase() === 'paused';
+    return (item ?? this._queue)?.status.toLowerCase() === 'paused';
   }
 
   isQueued(item?: NZBQueueItem) {
-    return (item ?? this.#queue)?.status.toLowerCase() === 'queued';
+    return (item ?? this._queue)?.status.toLowerCase() === 'queued';
   }
 
   openWebUI() {
-    let url = this.#syncDownloader?.options.WebUrl;
+    let url = this._syncDownloader?.options.WebUrl;
 
     if (!url) {
       // Fallback to the API URL
-      url = this.#syncDownloader?.options.ApiUrl || '';
+      url = this._syncDownloader?.options.ApiUrl || '';
       url = url.replace(/\/(api|jsonrpc).*$/, '');
     }
 
@@ -203,7 +203,7 @@ export class Client {
 
   // Proxy methods
 
-  async #awaitRefresh<T>(promise: Promise<T> | undefined): Promise<T | undefined> {
+  async _awaitRefresh<T>(promise: Promise<T> | undefined): Promise<T | undefined> {
     // Silly little helper to refresh after a promise resolves
     const res = await promise;
     await this.refresh();
@@ -217,52 +217,59 @@ export class Client {
   }
 
   async setMaxSpeed(bytes: number) {
-    return await this.#awaitRefresh((await this.getDownloader())?.setMaxSpeed(bytes));
+    return await this._awaitRefresh((await this.getDownloader())?.setMaxSpeed(bytes));
   }
 
   async pauseQueue() {
-    return await this.#awaitRefresh((await this.getDownloader())?.pauseQueue());
+    return await this._awaitRefresh((await this.getDownloader())?.pauseQueue());
   }
 
   async resumeQueue() {
-    return await this.#awaitRefresh((await this.getDownloader())?.resumeQueue());
+    return await this._awaitRefresh((await this.getDownloader())?.resumeQueue());
   }
 
   async addUrl(url: string, options?: Record<string, unknown>) {
-    return await this.#awaitRefresh((await this.getDownloader())?.addUrl(url, options));
+    return await this._awaitRefresh((await this.getDownloader())?.addUrl(url, options));
   }
 
   async addFile(filename: string, content: string, options?: Record<string, unknown>) {
-    return await this.#awaitRefresh(
+    return await this._awaitRefresh(
       (await this.getDownloader())?.addFile(filename, content, options),
     );
   }
 
   async removeId(id: string) {
-    return await this.#awaitRefresh((await this.getDownloader())?.removeId(id));
+    return await this._awaitRefresh((await this.getDownloader())?.removeId(id));
   }
 
   async removeItem(item: NZBQueueItem) {
-    return await this.#awaitRefresh((await this.getDownloader())?.removeItem(item));
+    return await this._awaitRefresh((await this.getDownloader())?.removeItem(item));
   }
 
   async pauseId(id: string) {
-    return await this.#awaitRefresh((await this.getDownloader())?.pauseId(id));
+    return await this._awaitRefresh((await this.getDownloader())?.pauseId(id));
   }
 
   async pauseItem(item: NZBQueueItem) {
-    return await this.#awaitRefresh((await this.getDownloader())?.pauseItem(item));
+    return await this._awaitRefresh((await this.getDownloader())?.pauseItem(item));
   }
 
   async resumeId(id: string) {
-    return await this.#awaitRefresh((await this.getDownloader())?.resumeId(id));
+    return await this._awaitRefresh((await this.getDownloader())?.resumeId(id));
   }
 
   async resumeItem(item: NZBQueueItem) {
-    return await this.#awaitRefresh((await this.getDownloader())?.resumeItem(item));
+    return await this._awaitRefresh((await this.getDownloader())?.resumeItem(item));
   }
 
   async test() {
     return await (await this.getDownloader())?.test();
+  }
+}
+
+export class PageClient extends Client {
+  constructor() {
+    // Don't auto-start, we don't need queue updates on content pages
+    super(false);
   }
 }

@@ -13,7 +13,6 @@ import {
 } from 'react-icons/pi';
 
 import { Client } from '@/Client';
-import { type NZBQueue, type Downloader } from '@/downloader';
 import { useLogger } from '@/logger';
 import { useIsFirstRender, useOptions } from '@/service';
 import { Megabyte, trunc, debounce } from '@/utils';
@@ -186,6 +185,10 @@ function Popup() {
             )}
           </div>
         </>
+      ) : downloaderNames().length > 0 ? (
+        <div id="summary" className="empty">
+          <Refresh fontSize={'2rem'} />
+        </div>
       ) : (
         <div id="summary" className="empty">
           <p>

@@ -140,6 +140,8 @@ export async function setDownloaders(
     }, {} as Record<string, DownloaderOptions>);
   }
   await setOptions({ Downloaders: downloaders });
+  // Ensure the active downloader is set
+  await getActiveDownloader();
 }
 
 export async function getDownloader(

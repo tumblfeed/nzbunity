@@ -33,8 +33,6 @@ export interface RequestOptions extends RequestInit {
 }
 
 export function setMenuIcon(color: string = 'green', status?: string): Promise<void> {
-  // TODO: Roadmap #8, allow either color by profile or badge, and color by type
-  //       Green for NZBGet, Orange for SABnzbd
   color = color.toLowerCase();
   if (/^(active|downloading)/i.test(color)) color = 'green';
   if (/^(inactive|idle|paused|gray)/i.test(color)) color = 'grey';
@@ -48,13 +46,10 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
     title: 'NZB Unity' + (status ? ` - ${status}` : ''),
   });
 
-  const bySize = ['16', '32', '64'].reduce(
-    (set, size) => {
-      set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
-      return set;
-    },
-    {} as Record<string, string>,
-  );
+  const bySize = ['16', '32', '64'].reduce((set, size) => {
+    set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
+    return set;
+  }, {} as Record<string, string>);
 
   return new Promise((resolve) =>
     browser.browserAction.setIcon({ path: bySize }, resolve),
@@ -166,7 +161,9 @@ export async function request(options: RequestOptions): Promise<unknown> {
   if (options.username && options.password) {
     options.headers.set(
       'Authorization',
-      `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`,
+      `Basic ${Buffer.from(`${options.username}:${options.password}`).toString(
+        'base64',
+      )}`,
     );
     // options.credentials = 'include';
   }

@@ -5,7 +5,7 @@
  */
 import { SABnzbd } from '@/downloader/SABnzbd';
 import { NZBGet } from '@/downloader/NZBGet';
-import { getOptions, DownloaderType, setDownloaders } from '@/store';
+import { getOptions, DownloaderType, setDownloaders, setOptions } from '@/store';
 
 import { Logger } from '@/logger';
 const logger = new Logger('dev');

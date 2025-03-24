@@ -17,10 +17,16 @@ export class Logger {
   static LOG_MAX_ENTRIES = 1000;
   static LOG_STORAGE_KEY = 'logEntries';
 
+  // used when browser session storage is not available
+  // ie in a content script
+  static entries: LogEntry[] = [];
+
   static async get(): Promise<LogEntries> {
-    const entries: LogEntry[] = (
-      await browser.storage.session.get({ [this.LOG_STORAGE_KEY]: [] })
-    )[this.LOG_STORAGE_KEY];
+    const entries: LogEntry[] = browser?.storage?.session
+      ? (await browser.storage.session.get({ [this.LOG_STORAGE_KEY]: [] }))[
+          this.LOG_STORAGE_KEY
+        ]
+      : this.entries;
     // return the formatted entries
     return entries.map((entry) => ({
       ...entry,
@@ -50,7 +56,11 @@ export class Logger {
       .toSorted((a, b) => a.timestamp - b.timestamp)
       .slice(-this.LOG_MAX_ENTRIES);
 
-    await browser.storage.session.set({ [this.LOG_STORAGE_KEY]: entries });
+    if (browser?.storage?.session) {
+      await browser.storage.session.set({ [this.LOG_STORAGE_KEY]: entries });
+    } else {
+      this.entries = entries;
+    }
 
     // For convenience, echo to console as well and add any dump data
     this.dump(`[${entry.group ?? '::'}] ${entry.message}`, dump);
@@ -70,7 +80,11 @@ export class Logger {
   }
 
   static async clear(): Promise<LogEntries> {
-    await browser.storage.session.set({ [this.LOG_STORAGE_KEY]: [] });
+    if (browser?.storage?.session) {
+      await browser.storage.session.remove(this.LOG_STORAGE_KEY);
+    } else {
+      this.entries = [];
+    }
     return [];
   }
 
@@ -78,7 +92,9 @@ export class Logger {
     const [time24] = entry?.timestamp
       ? new Date(entry.timestamp).toTimeString().split(' ')
       : ['00:00:00'];
-    return `[${time24}] ${entry.group ?? 'root'}::${entry.level.toUpperCase()} - ${entry.message}`;
+    return `[${time24}] ${entry.group ?? 'root'}::${entry.level.toUpperCase()} - ${
+      entry.message
+    }`;
   }
 
   group?: string;
