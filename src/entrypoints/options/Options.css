@@ -118,6 +118,16 @@ h2 {
           flex: 1;
         }
       }
+
+      input.error {
+        border-color: var(--color-error);
+      }
+    }
+
+    .errors {
+      color: var(--color-error);
+      font-size: var(--font-size-xs);
+      margin-top: 0.5rem;
     }
   }
 }

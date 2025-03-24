@@ -26,13 +26,17 @@
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
     "test": "vitest --mode test",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "compose": "docker compose -f test/docker/docker-compose.yaml",
+    "compose:sabnzbd": "npm run compose -- up sabnzbd",
+    "compose:nzbget": "npm run compose -- up nzbget"
   },
   "dependencies": {
     "@webext-core/proxy-service": "^1.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "react-tooltip": "^5.28.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.309",

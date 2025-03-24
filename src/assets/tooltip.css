@@ -1,3 +1,5 @@
+@import 'react-tooltip/dist/react-tooltip.css';
+
 /* Tooltip container */
 :root {
   --tooltip-background: rgb(from var(--crust) r g b / 0.9);
@@ -8,83 +10,49 @@
   --tooltip-width: 250px;
   --tooltip-left: calc(50% - (var(--tooltip-width) / 2));
   --tooltip-font-size: var(--font-size-sm);
+  --tooltip-arrow-size: 8px;
 }
 
-.tooltip {
-  position: relative;
+#tooltip {
+  /* Rather than use var customizations, we're just going to do the styling here */
+  background: var(--tooltip-background);
+  border: 1px solid var(--tooltip-border-color);
+  border-radius: 6px;
+  box-sizing: content-box;
+  padding: var(--tooltip-padding);
+  min-width: var(--tooltip-width);
+  max-width: 80%;
+  width: auto;
 
-  /* Tooltip content */
-  .tooltip-text {
-    background-color: var(--tooltip-background);
-    border: 1px solid var(--tooltip-border-color);
-    border-radius: 6px;
-    box-sizing: content-box;
-    padding: var(--tooltip-padding);
-    min-width: var(--tooltip-width);
-    max-width: 90%;
+  color: var(--tooltip-color);
+  font-size: var(--tooltip-font-size);
+  text-align: center;
 
-    color: var(--tooltip-color);
-    font-size: var(--tooltip-font-size);
-    text-align: center;
-
-    position: absolute;
-    top: 100%;
-    left: var(--tooltip-left);
-    z-index: 1024;
-
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.5s, top 0.25s, right 0.25s, bottom 0.25s, left 0.25s;
-
-    p {
-      margin: 0.5em 0.25em;
-      text-align: left;
-    }
-    br {
-      margin-bottom: 0.25em;
-    }
-
-    /* Arrow */
-    &::after {
-      content: ' ';
-      position: absolute;
-      bottom: 100%; /* At the top of the tooltip */
-      left: 33%;
-      /*left: 15px; /* Move arrow way over to the left so that it doesn't accidentally keep hover active */
-      margin-left: -7px;
-      border-width: 7px;
-      border-style: solid;
-      border-color: transparent;
-      border-bottom-color: var(--tooltip-border-color);
-    }
-
-    &.tooltip-top {
-      top: auto;
-      bottom: 100%;
-
-      &::after {
-        bottom: auto;
-        top: 100%;
-        border-bottom-color: transparent;
-        border-top-color: var(--tooltip-border-color);
-      }
-    }
-
-    &.tooltip-noarrow::after {
-      display: none;
-    }
+  p {
+    margin: 0.5em 0.25em;
+    text-align: left;
+  }
+  br {
+    margin-bottom: 0.25em;
   }
 
-  /* Use either focus or hover, not both (hover can be annoying in lists of fields */
-  &:has(input:focus) .tooltip-text.tooltip-focus,
-  &:hover .tooltip-text:not(.tooltip-focus) {
-    visibility: visible;
-    opacity: 1;
-    top: calc(100% + 0.5rem);
+  .react-tooltip-arrow {
+    background: transparent;
+    border: var(--tooltip-arrow-size) solid transparent;
+    border-top-color: var(--tooltip-border-color);
+    height: var(--tooltip-arrow-size);
+    width: var(--tooltip-arrow-size);
+    transform: rotate(0deg);
+  }
 
-    &.tooltip-top {
-      top: auto;
-      bottom: calc(100% + 0.5rem);
-    }
+  &.react-tooltip__place-top .react-tooltip-arrow {
+    /* Override element dynamic positioning */
+    bottom: calc(var(--tooltip-arrow-size) * -2) !important;
+  }
+
+  &.react-tooltip__place-bottom .react-tooltip-arrow {
+    transform: rotate(180deg);
+    /* Override element dynamic positioning */
+    top: calc(var(--tooltip-arrow-size) * -2) !important;
   }
 }

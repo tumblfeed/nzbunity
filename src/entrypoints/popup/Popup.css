@@ -16,10 +16,6 @@ input[type='number'] {
   padding: 0 0 0 0.5em;
 }
 
-svg {
-  fill: var(--highlight);
-}
-
 #head {
   border-bottom: 1px solid var(--highlight);
   padding: 10px 0;
@@ -103,6 +99,7 @@ svg {
 
 #queue {
   background: var(--color-background-alt);
+  font-size: var(--font-size-sm);
   padding: 0;
   max-height: 300px;
   min-height: 25px;
@@ -110,32 +107,34 @@ svg {
   overflow-x: hidden;
 
   .empty {
-    font-size: var(--font-size-sm);
     font-style: italic;
     margin-top: 3px;
     text-align: center;
   }
 
   .nzb {
-    align-items: center;
     border-bottom: 1px solid var(--highlight);
-    display: flex;
-    flex-flow: row nowrap;
-    font-size: var(--font-size-sm);
-    height: 25px;
     position: relative;
     width: 100%;
+    height: 1.75em;
+
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
 
     &:first-child {
       border-top: 1px solid var(--highlight);
     }
 
     span {
-      display: block;
-      flex: 0 0 auto;
-      order: 1;
       text-align: left;
-      width: 65px;
+      flex: 0 1 auto;
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.25em;
       z-index: 100;
     }
 
@@ -149,11 +148,21 @@ svg {
       text-align: right;
     }
 
+    .nzb-actions {
+      > svg {
+        cursor: pointer;
+
+        &:hover {
+          fill: var(--color-active);
+        }
+      }
+    }
+
     .bar {
       background: var(--color-bar-gradient);
       height: 100%;
       position: absolute;
-      z-index: 0;
+      z-index: 10;
     }
   }
 }

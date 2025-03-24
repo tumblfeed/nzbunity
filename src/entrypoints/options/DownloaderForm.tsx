@@ -164,24 +164,28 @@ function DownloaderForm({
         <li>invalidNames: {JSON.stringify(invalidNames)}</li>
         <li>Invalid: {JSON.stringify(invalid)}</li>
       </ul> */}
-        <div className="tooltip">
+        <div
+          data-tooltip-id="tooltip"
+          data-tooltip-html="
+            <span>
+              A unique name for this downloader.
+              <p>
+                This is used to identify the downloader in the list. If you change the
+                name of an existing downloader, it will duplicate the downloader with the
+                new name.
+              </p>
+            </span>
+          "
+        >
           <label htmlFor="DownloaderName">Name:</label>
           <input
             type="text"
             name="DownloaderName"
+            className={invalid.Name ? 'error' : ''}
             value={fields.Name}
             onChange={(e) => setFields({ Name: e.target.value })}
             onBlur={() => trim('Name')}
           />
-          {invalid.Name && <span className="error">{invalid.Name}</span>}
-          <span className="tooltip-text tooltip-focus">
-            A unique name for this downloader.
-            <p>
-              This is used to identify the downloader in the list. If you change the name
-              of an existing downloader, it will duplicate the downloader with the new
-              name.
-            </p>
-          </span>
         </div>
 
         <div>
@@ -201,17 +205,9 @@ function DownloaderForm({
           {invalid.Type && <span className="error">{invalid.Type}</span>}
         </div>
 
-        <div className="tooltip">
-          <label htmlFor="DownloaderApiUrl">API URL:</label>
-          <input
-            type="text"
-            name="DownloaderApiUrl"
-            value={fields.ApiUrl || ''}
-            onChange={(e) => setFields({ ApiUrl: e.target.value })}
-            onBlur={() => trim('ApiUrl')}
-          />
-          {invalid.ApiUrl && <span className="error">{invalid.ApiUrl}</span>}
-          <span className="tooltip-text tooltip-focus">
+        <div
+          data-tooltip-id="tooltip"
+          data-tooltip-html="
             The full URL to connect to downloader API.
             <p>
               This is probably different from the URL you use to access the web UI, but
@@ -229,63 +225,84 @@ function DownloaderForm({
               <br />
               You may want to set 'Web UI' URL as well.
             </p>
-          </span>
+          "
+        >
+          <label htmlFor="DownloaderApiUrl">API URL:</label>
+          <input
+            type="text"
+            name="DownloaderApiUrl"
+            value={fields.ApiUrl || ''}
+            onChange={(e) => setFields({ ApiUrl: e.target.value })}
+            onBlur={() => trim('ApiUrl')}
+          />
+          {invalid.ApiUrl && <span className="error">{invalid.ApiUrl}</span>}
         </div>
 
         {fields.Type === DownloaderType.SABnzbd && (
           <>
-            <div className="tooltip">
+            <div
+              data-tooltip-id="tooltip"
+              data-tooltip-html="
+                The API Key for SABnzbd. This can be found in the SABnzbd settings.
+              "
+            >
               <label htmlFor="DownloaderApiKey">API Key:</label>
               <input
                 type="text"
                 name="DownloaderApiKey"
+                className={invalid.ApiKey ? 'error' : ''}
                 value={fields.ApiKey || ''}
                 onChange={(e) => setFields({ ApiKey: e.target.value })}
                 onBlur={() => trim('ApiKey')}
               />
-              {invalid.ApiKey && <span className="error">{invalid.ApiKey}</span>}
-              <span className="tooltip-text tooltip-focus">
-                The API Key for SABnzbd. This can be found in the SABnzbd settings.
-              </span>
             </div>
           </>
         )}
 
         {fields.Type === DownloaderType.NZBGet && (
           <>
-            <div className="tooltip">
+            <div
+              data-tooltip-id="tooltip"
+              data-tooltip-html="The control username for NZBGet."
+            >
               <label htmlFor="DownloaderUsername">Username:</label>
               <input
                 type="text"
                 name="DownloaderUsername"
+                className={invalid.Username ? 'error' : ''}
                 value={fields.Username || ''}
                 onChange={(e) => setFields({ Username: e.target.value })}
                 onBlur={() => trim('Username')}
               />
-              {invalid.Username && <span className="error">{invalid.Username}</span>}
-              <span className="tooltip-text tooltip-focus">
-                The control username for NZBGet.
-              </span>
             </div>
 
-            <div className="tooltip">
+            <div
+              data-tooltip-id="tooltip"
+              data-tooltip-html="The control password for NZBGet."
+            >
               <label htmlFor="DownloaderPassword">Password:</label>
               <input
                 type="text"
                 name="DownloaderPassword"
+                className={invalid.Password ? 'error' : ''}
                 value={fields.Password || ''}
                 onChange={(e) => setFields({ Password: e.target.value })}
                 onBlur={() => trim('Password')}
               />
-              {invalid.Password && <span className="error">{invalid.Password}</span>}
-              <span className="tooltip-text tooltip-focus">
-                The control password for NZBGet.
-              </span>
             </div>
           </>
         )}
 
-        <div className="tooltip">
+        <div
+          data-tooltip-id="tooltip"
+          data-tooltip-html="
+            Optional, page URL to open when clicking the
+            <br />
+            Open web UI button on the toolbar UI.
+            <br />
+            Defaults to API URL value above.
+          "
+        >
           <label htmlFor="DownloaderWebUrl">Web URL:</label>
           <input
             type="text"
@@ -294,15 +311,16 @@ function DownloaderForm({
             onChange={(e) => setFields({ WebUrl: e.target.value })}
             onBlur={() => trim('WebUrl')}
           />
-          <span className="tooltip-text tooltip-focus">
-            Optional, page URL to open when clicking the
-            <br />
-            Open web UI button (<OpenUI />) on the toolbar UI.
-            <br />
-            Defaults to API URL value above.
-          </span>
         </div>
       </div>
+
+      {Object.keys(invalid).length > 0 && (
+        <div className="errors">
+          {Object.entries(invalid).map(([field, error]) => (
+            <span key={field}>{error}.&nbsp;</span>
+          ))}
+        </div>
+      )}
 
       <div className="actions right">
         <button

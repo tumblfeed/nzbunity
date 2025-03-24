@@ -17,12 +17,17 @@
   --color-active-background: var(--crust);
   --color-active-border: var(--rosewater);
 
+  --color-error: var(--red);
+
+  --color-bar: var(--highlight-alt);
   --color-bar-gradient: linear-gradient(
     to right,
-    var(--crust) 0%,
-    rgb(from var(--highlight) r g b / 0.2) 85%,
-    rgb(from var(--highlight) r g b / 0.4) 100%
+    var(--color-background-alt) 0%,
+    rgb(from var(--color-bar) r g b / 0.2) 70%,
+    rgb(from var(--color-bar) r g b / 0.4) 100%
   );
+
+  --color-icon: currentColor;
 
   color-scheme: light dark;
   color: var(--color-text);
@@ -70,6 +75,10 @@ body {
   font-size: var(--font-size-md);
 }
 
+svg {
+  fill: var(--color-icon);
+}
+
 input,
 select,
 button,
@@ -84,18 +93,17 @@ button,
   line-height: 1em;
   padding: 0.25em 0.5em;
 
-  svg {
-    fill: var(--color-input-border);
-  }
-
   &.active {
     background: var(--color-active-background);
     border-color: var(--color-active-border);
     color: var(--color-active);
+  }
 
-    svg {
-      fill: var(--color-active-border);
-    }
+  &[disabled] {
+    background: var(--color-input-background);
+    border-color: var(--overlay1);
+    color: var(--overlay1);
+    cursor: not-allowed;
   }
 }
 
@@ -110,14 +118,10 @@ button,
   gap: 0.3em;
   padding: 0.25em 0.6em;
 
-  &:hover {
+  &:hover:not([disabled]) {
     background: var(--color-active-background);
     border-color: var(--color-active-border);
     color: var(--color-active);
-
-    svg {
-      fill: var(--color-active-border);
-    }
   }
 
   &.sm {

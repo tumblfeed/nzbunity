@@ -1,6 +1,3 @@
-// Uncomment the following line to use dev options override
-// import '@/dev';
-
 import { Logger } from './logger';
 const logger = new Logger('store');
 

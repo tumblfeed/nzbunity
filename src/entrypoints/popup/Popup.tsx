@@ -26,6 +26,8 @@ function Popup() {
 
   const client = useMemo(() => Client.getInstance(), []);
 
+  const downloaderNames = () => Object.keys(options?.Downloaders || {});
+
   // Max Speed - Sync with the server and debounce
   const updateMaxSpeed = debounce(async (val: string) => {
     let mb = parseFloat(val || '0');
@@ -56,124 +58,142 @@ function Popup() {
         <div id="errors"></div>
 
         <div id="profile">
-          <span>Active Downloader:</span>
-          <select
-            id="ActiveDownloader"
-            className="custom-select"
-            value={client?.name}
-            onChange={(e) => setDownloader(e.target.value)}
-          >
-            {Object.keys(options?.Downloaders || {}).map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div id="summary">
-        <span id="QueuePause">
-          {client.isDownloading() && (
-            <Pause className="icon" onClick={() => client?.pauseQueue()} />
+          {downloaderNames().length > 1 ? (
+            <>
+              <span>Active Downloader:</span>
+              <select
+                id="ActiveDownloader"
+                className="custom-select"
+                value={client?.name}
+                onChange={(e) => setDownloader(e.target.value)}
+              >
+                {Object.keys(options?.Downloaders || {}).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : client?.name ? (
+            <span>{client?.name}</span>
+          ) : (
+            <span>NZB Unity</span>
           )}
-          {client.isPaused() && (
-            <Play className="icon" onClick={() => client?.resumeQueue()} />
-          )}
-          <span>{client?.status || 'Unknown'}</span>
-        </span>
-
-        <span>
-          <span title="Download Speed">{client?.speed || '0 B/s'}</span>
-          <span title="Max Speed">({client?.maxSpeed || '0'})</span>
-        </span>
-
-        <span>
-          <span title="Size Remaining">{client?.sizeRemaining || '0 B'}</span>
-          <span title="Time Temaining">({client?.timeRemaining || '∞'})</span>
-        </span>
-      </div>
-
-      <div id="controls">
-        <div id="override">
-          <span>Override Category</span>
-          <select
-            id="OverrideCategory"
-            className="custom-select"
-            value={options?.OverrideCategory ?? ''}
-            onChange={(e) => setOptions({ OverrideCategory: e.target.value })}
-            disabled={!client}
-          >
-            <option key="" value=""></option>
-            {client?.categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div id="max-speed">
-          <span>Max Speed</span>
-          <span>
-            <input
-              id="MaxSpeed"
-              type="number"
-              step="0.1"
-              min="0"
-              value={maxSpeed}
-              onChange={(e) => setMaxSpeed(e.target.value)}
-            />
-            MB/s
-          </span>
         </div>
       </div>
 
-      <div id="queue">
-        {client?.queue?.length ? (
-          client.queue.map((item) => (
-            <div key={item.id} className="nzb">
-              <span className="status">
-                {client.isDownloading(item) && <Downloading className="icon" />}
-                {client.isPaused(item) && <Paused className="icon" />}
-                {client.isQueued(item) && <Queued className="icon" />}
-              </span>
-              <span className="name" title={`${item.name} [${item.id}]`}>
-                {trunc(item.name, 30)}
-              </span>
-              <span className="category">{item.category || ''}</span>
-              <span className="size">{item.size || ''}</span>
-              {/* <span className="progress">{item.percentage || ''}</span> */}
-              <span className="actions">
-                {client.isDownloading(item) && (
-                  <Pause
-                    className="icon"
-                    title="Pause Download"
-                    onClick={() => client?.pauseId(item.id)}
-                  />
-                )}
-                {client.isPaused(item) && (
-                  <Play
-                    className="icon"
-                    title="Resume Download"
-                    onClick={() => client?.resumeId(item.id)}
-                  />
-                )}
-                <Cancel
-                  className="icon"
-                  title="Cancel & Remove NZB"
-                  onClick={() => confirm('Are you sure?') && client?.removeId(item.id)}
-                />
-              </span>
-              <span className="bar" style={{ width: `${item.percentage}%` }}></span>
-            </div>
-          ))
-        ) : (
-          <div id="queueEmpty" className="empty">
-            Queue empty, add some NZBs!
+      {client?.downloader ? (
+        <>
+          <div id="summary">
+            <span id="QueuePause">
+              {client.isDownloading() && (
+                <Pause className="icon" onClick={() => client?.pauseQueue()} />
+              )}
+              {client.isPaused() && (
+                <Play className="icon" onClick={() => client?.resumeQueue()} />
+              )}
+              <span>{client?.status || 'Unknown'}</span>
+            </span>
+
+            <span>
+              <span title="Download Speed">{client?.speed || '0 B/s'}</span>
+              <span title="Max Speed">({client?.maxSpeed || '0'})</span>
+            </span>
+
+            <span>
+              <span title="Size Remaining">{client?.sizeRemaining || '0 B'}</span>
+              <span title="Time Temaining">({client?.timeRemaining || '∞'})</span>
+            </span>
           </div>
-        )}
-      </div>
+
+          <div id="controls">
+            <div id="override">
+              <span>Override Category</span>
+              <select
+                id="OverrideCategory"
+                className="custom-select"
+                value={options?.OverrideCategory ?? ''}
+                onChange={(e) => setOptions({ OverrideCategory: e.target.value })}
+                disabled={!client}
+              >
+                <option key="" value=""></option>
+                {client?.categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div id="max-speed">
+              <span>Max Speed</span>
+              <span>
+                <input
+                  id="MaxSpeed"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={maxSpeed}
+                  onChange={(e) => setMaxSpeed(e.target.value)}
+                />
+                MB/s
+              </span>
+            </div>
+          </div>
+
+          <div id="queue">
+            {client?.queue?.length ? (
+              client.queue.map((item) => (
+                <div key={item.id} className="nzb">
+                  <span className="status">
+                    {client.isDownloading(item) && <Downloading title="Downloading" />}
+                    {client.isPaused(item) && <Paused title="Paused" />}
+                    {client.isQueued(item) && <Queued title="Queued" />}
+                  </span>
+                  <span className="name" title={`${item.name} [${item.id}]`}>
+                    {trunc(item.name, 30)}
+                  </span>
+                  <span className="category">{item.category || ''}</span>
+                  <span className="size">{item.size || ''}</span>
+                  {/* <span className="progress">{item.percentage || ''}</span> */}
+                  <span className="nzb-actions">
+                    {client.isDownloading(item) && (
+                      <Pause
+                        title="Pause Download"
+                        onClick={() => client?.pauseId(item.id)}
+                      />
+                    )}
+                    {client.isPaused(item) && (
+                      <Play
+                        title="Resume Download"
+                        onClick={() => client?.resumeId(item.id)}
+                      />
+                    )}
+                    <Cancel
+                      title="Cancel & Remove NZB"
+                      onClick={() =>
+                        confirm('Are you sure?') && client?.removeId(item.id)
+                      }
+                    />
+                  </span>
+                  <span className="bar" style={{ width: `${item.percentage}%` }}></span>
+                </div>
+              ))
+            ) : (
+              <div id="queueEmpty" className="empty">
+                Queue empty, add some NZBs!
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div id="summary" className="empty">
+          <p>
+            No downloaders configured, please add one in <Options onClick={openOptions} />{' '}
+            Options.
+          </p>
+        </div>
+      )}
 
       {options?.Debug && (
         <div id="debug" className="show">
@@ -186,7 +206,11 @@ function Popup() {
       )}
 
       <nav id="menu">
-        <button title="Refresh" onClick={() => client?.refresh()}>
+        <button
+          title="Refresh"
+          disabled={!client?.downloader}
+          onClick={() => client?.refresh()}
+        >
           <Refresh />
         </button>
         <button title="Open downloader web UI" onClick={() => client?.openWebUI()}>

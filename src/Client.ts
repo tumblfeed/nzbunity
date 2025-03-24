@@ -190,7 +190,14 @@ export class Client {
   }
 
   openWebUI() {
-    const url = this.#syncDownloader?.options.WebUrl || this.#syncDownloader?.url;
+    let url = this.#syncDownloader?.options.WebUrl;
+
+    if (!url) {
+      // Fallback to the API URL
+      url = this.#syncDownloader?.options.ApiUrl || '';
+      url = url.replace(/\/(api|jsonrpc).*$/, '');
+    }
+
     if (url) window.open(url, '_blank');
   }
 

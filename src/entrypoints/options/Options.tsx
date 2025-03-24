@@ -2,6 +2,7 @@ import {
   PiArrowFatLineRightDuotone as Current,
   PiFilePlusDuotone as Add,
 } from 'react-icons/pi';
+import { Tooltip } from 'react-tooltip';
 
 import { useLogger } from '@/logger';
 import { useOptions } from '@/service';
@@ -12,6 +13,8 @@ import {
   DefaultDownloaderOptions,
   getDownloaders,
   setDownloaders,
+  setActiveDownloader,
+  getActiveDownloader,
   type IndexerOptions,
 } from '@/store';
 import { Megabyte, trunc, debounce } from '@/utils';
@@ -44,6 +47,11 @@ function Options() {
     downloaders[downloader.Name] = downloader;
     await setDownloaders(downloaders);
     setCurrentDownloader(downloader);
+
+    // If this is the only downloader, set it as active
+    if (Object.keys(downloaders).length === 1) {
+      await setActiveDownloader(downloader.Name);
+    }
   };
 
   const removeDownloader = async (downloader?: DownloaderOptions) => {
@@ -51,10 +59,19 @@ function Options() {
     const name = downloader?.Name ?? currentDownloader?.Name;
     if (!options || !name) return;
 
+    let active = await getActiveDownloader();
+
     const downloaders = await getDownloaders();
     delete downloaders[name];
     await setDownloaders(downloaders);
     setCurrentDownloader(null);
+
+    // If this was the active downloader,
+    // set the first downloader as active or clear
+    if (active?.Name === name) {
+      active = Object.values(downloaders)[0] || null;
+      await setActiveDownloader(active?.Name);
+    }
   };
 
   const saveIndexer = async (name: string, indexer: IndexerOptions) => {
@@ -162,7 +179,12 @@ function Options() {
           </ul>
         </div>
 
-        <div className="tooltip">
+        <div
+          data-tooltip-id="tooltip"
+          data-tooltip-html="
+            Comma separated hostnames for Newznab sites to enable 1-click downloading
+          "
+        >
           <label htmlFor="IndexerNewznab">Newznab Indexers:</label>
           <input
             type="text"
@@ -171,9 +193,6 @@ function Options() {
             value={options?.IndexerNewznab ?? DefaultOptions.IndexerNewznab}
             onChange={(e) => setOptions({ IndexerNewznab: e.target.value })}
           />
-          <span className="tooltip-text">
-            Comma separated hostnames for Newznab sites to enable 1-click downloading
-          </span>
         </div>
 
         <div>
@@ -219,7 +238,13 @@ function Options() {
           </label>
         </div>
 
-        <div className="tooltip">
+        <div
+          data-tooltip-id="tooltip"
+          data-tooltip-html="
+            Optional, if no category can be determined from site or NZB headers, this
+            category will be sent instead.
+          "
+        >
           <label htmlFor="DefaultCategory">Default category:</label>
           <input
             type="text"
@@ -228,10 +253,6 @@ function Options() {
             onChange={(e) => setOptions({ DefaultCategory: e.target.value || null })}
             // Default is null
           />
-          <span className="tooltip-text">
-            Optional, if no category can be determined from site or NZB headers, this
-            category will be sent instead
-          </span>
         </div>
 
         <div>
@@ -279,6 +300,8 @@ function Options() {
           <button onClick={resetOptions}>Reset</button>
         </div>
       </section>
+
+      <Tooltip id="tooltip" place="bottom" />
     </>
   );
 }
