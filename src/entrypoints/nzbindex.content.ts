@@ -1,5 +1,6 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '@/Content';
+import { sendMessage } from '@/utils';
 
 export default defineContentScript({
   matches: ['*://*.nzbindex.com/*', '*://*.nzbindex.nl/*'],
@@ -18,6 +19,9 @@ class NzbIndexContent extends Content {
   isDetail: boolean = false;
 
   async ready() {
+    sendMessage({
+      log: { entry: { level: 'log', message: 'NZBIndex content script loaded' } },
+    });
     this.results = Array.from(
       await this.waitForQuerySelectorAll('#results-table .result:not(#template)'),
     );

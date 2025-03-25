@@ -17,7 +17,7 @@ export const downloaders = {
 
 async function initDevelopmentOptions() {
   if (import.meta.env.DEV && import.meta.env.WXT_DEV_OPTIONS) {
-    await Logger.clear();
+    // await Logger.clear();
     logger.debug('Service loaded, setting up default options...');
     const opts = await getOptions();
 

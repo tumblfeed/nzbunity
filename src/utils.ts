@@ -32,6 +32,50 @@ export interface RequestOptions extends RequestInit {
   // duplex?: RequestDuplex
 }
 
+export function isContentScript(): boolean {
+  return window.location.protocol !== 'moz-extension:';
+}
+
+function getLastError(caller: string = 'sendMessage'): string | null {
+  const error = browser.runtime.lastError;
+  if (!error?.message) return null;
+
+  console.warn(`[${caller}] Last error: ${error.message}`);
+  // Receiving end not existing isn't really concerning, ignore.
+  return /Receiving end does not exist/i.test(error?.message) ? null : error.message;
+}
+
+export function sendMessage<T, R>(message: Record<string, T>): Promise<R> {
+  return new Promise((resolve, reject) => {
+    browser.runtime.sendMessage(message, (response: R) => {
+      const error = getLastError();
+      if (error) {
+        reject(error);
+      } else {
+        // console.info('[util.sendMessage]', { message, response });
+        resolve(response as R);
+      }
+    });
+  });
+}
+
+export function sendTabMessage<T, R>(
+  tabId: number,
+  message: Record<string, T>,
+): Promise<R> {
+  return new Promise((resolve, reject) => {
+    browser.tabs.sendMessage(tabId, message, (response: R) => {
+      const error = getLastError();
+      if (error) {
+        reject(error);
+      } else {
+        // console.info('[util.sendTabMessage] Response:', response);
+        resolve(response as R);
+      }
+    });
+  });
+}
+
 export function setMenuIcon(color: string = 'green', status?: string): Promise<void> {
   color = color.toLowerCase();
   if (/^(active|downloading)/i.test(color)) color = 'green';

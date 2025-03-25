@@ -8,10 +8,10 @@ export default defineConfig({
   manifest: {
     permissions: [
       // "<all_urls>",
-      "notifications",
-      "storage",
-      "tabs",
-      "webRequest",
+      'notifications',
+      'storage',
+      'tabs',
+      'webRequest',
       // "webRequestBlocking",
     ],
   },

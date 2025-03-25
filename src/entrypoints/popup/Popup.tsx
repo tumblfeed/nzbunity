@@ -42,7 +42,7 @@ function Popup() {
 
   // Open options page
   const openOptions = () => {
-    chrome.runtime.openOptionsPage();
+    browser.runtime.openOptionsPage();
   };
 
   useEffect(() => {
@@ -203,7 +203,7 @@ function Popup() {
 
       {options?.Debug && (
         <div id="debug" className="show">
-          {logger.entries.toReversed().map((entry, i) => (
+          {logger.entries.map((entry, i) => (
             <div key={i} className={`${entry.level} green`} title={entry.formatted}>
               {entry.formatted}
             </div>

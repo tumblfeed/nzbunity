@@ -1,32 +1,30 @@
 import { useState, useEffect } from 'react';
+import { isContentScript, sendMessage } from '@/utils';
 
-interface LogEntry {
+export interface LogEntry {
   level: 'debug' | 'log' | 'error';
   group?: string;
   message: string;
   timestamp: number;
 }
-interface LogEntryFormatted extends LogEntry {
+export interface LogEntryFormatted extends LogEntry {
   formatted: string;
 }
-type LogEntryParam = Omit<LogEntry, 'timestamp'>;
+export type LogEntryParam = Omit<LogEntry, 'timestamp'>;
+export type LogEntries = LogEntryFormatted[];
 
-type LogEntries = LogEntryFormatted[];
+const LOG_MAX_ENTRIES = 1000;
+const LOG_STORAGE_KEY = 'logEntries';
 
-export class Logger {
-  static LOG_MAX_ENTRIES = 1000;
-  static LOG_STORAGE_KEY = 'logEntries';
-
-  // used when browser session storage is not available
-  // ie in a content script
-  static entries: LogEntry[] = [];
-
+/**
+ * Used from the background script to store log entries.
+ * Entries can be retrieved, added, and cleared using the webext messaging API.
+ */
+export class LogStorage {
   static async get(): Promise<LogEntries> {
-    const entries: LogEntry[] = browser?.storage?.session
-      ? (await browser.storage.session.get({ [this.LOG_STORAGE_KEY]: [] }))[
-          this.LOG_STORAGE_KEY
-        ]
-      : this.entries;
+    const entries: LogEntry[] = (
+      await browser.storage.session.get({ [LOG_STORAGE_KEY]: [] })
+    )[LOG_STORAGE_KEY];
     // return the formatted entries
     return entries.map((entry) => ({
       ...entry,
@@ -54,13 +52,9 @@ export class Logger {
     // Because there could be multiple message sources, sort, prune, and save
     entries = entries
       .toSorted((a, b) => a.timestamp - b.timestamp)
-      .slice(-this.LOG_MAX_ENTRIES);
+      .slice(-LOG_MAX_ENTRIES);
 
-    if (browser?.storage?.session) {
-      await browser.storage.session.set({ [this.LOG_STORAGE_KEY]: entries });
-    } else {
-      this.entries = entries;
-    }
+    await browser.storage.session.set({ [LOG_STORAGE_KEY]: entries });
 
     // For convenience, echo to console as well and add any dump data
     this.dump(`[${entry.group ?? '::'}] ${entry.message}`, dump);
@@ -80,11 +74,7 @@ export class Logger {
   }
 
   static async clear(): Promise<LogEntries> {
-    if (browser?.storage?.session) {
-      await browser.storage.session.remove(this.LOG_STORAGE_KEY);
-    } else {
-      this.entries = [];
-    }
+    await browser.storage.session.remove(LOG_STORAGE_KEY);
     return [];
   }
 
@@ -95,6 +85,27 @@ export class Logger {
     return `[${time24}] ${entry.group ?? 'root'}::${entry.level.toUpperCase()} - ${
       entry.message
     }`;
+  }
+}
+
+export class Logger {
+  static async get(): Promise<LogEntries> {
+    // If we're in a content script, use sendMessage
+    if (isContentScript()) {
+      console.debug('content script, using sendMessage');
+      return await sendMessage({ getLog: true });
+    } else {
+      return await LogStorage.get();
+    }
+  }
+
+  static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
+    // If we're in a content script, use sendMessage
+    if (isContentScript()) {
+      return await sendMessage({ log: { entry, dump } });
+    } else {
+      return await LogStorage.add(entry, ...dump);
+    }
   }
 
   group?: string;
@@ -126,22 +137,6 @@ export class Logger {
 
   skip(...whatever: unknown[]): void {
     // Do nothing
-  }
-}
-
-export class ContentLogger extends Logger {
-  static async get(): Promise<LogEntries> {
-    return [];
-  }
-
-  static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
-    // TODO: Send via message to background script
-    return [];
-  }
-
-  static async clear(): Promise<LogEntries> {
-    // TODO: Send via message to background script
-    return [];
   }
 }
 
