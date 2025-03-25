@@ -35,6 +35,37 @@ h2 {
   margin: 35px 0 17px;
 }
 
+label:has(> input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+section > div:has(> label + input),
+section > div:has(> label + select) {
+  display: flex;
+  flex-direction: row nowrap;
+  justify-content: left;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+
+  > * {
+    flex: 0;
+  }
+
+  label {
+    text-wrap: nowrap;
+  }
+}
+
+section > label:has(> input[type='checkbox']),
+section > div:has(label + input),
+section > div:has(label + select) {
+  margin: 1rem 0;
+}
+
 #Version {
   font-size: var(--font-size-md);
   position: absolute;
@@ -143,39 +174,12 @@ h2 {
 
     li {
       padding: 0;
+
+      label {
+        margin: 0;
+      }
     }
   }
-}
-
-label:has(> input[type='checkbox']) {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 0;
-}
-
-section > div:has(> label + input),
-section > div:has(> label + select) {
-  display: flex;
-  flex-direction: row nowrap;
-  justify-content: left;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 0;
-
-  > * {
-    flex: 0;
-  }
-
-  label {
-    text-wrap: nowrap;
-  }
-}
-
-section > label:has(> input[type='checkbox']),
-section > div:has(label + input),
-section > div:has(label + select) {
-  margin: 1rem 0;
 }
 
 @media (min-width: 576px) {

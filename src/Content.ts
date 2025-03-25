@@ -6,16 +6,18 @@ import { request } from '@/utils';
 
 import '@/assets/content.css';
 
+export { request, RequestOptions } from '@/utils';
 export const icons = {
   green: browser.runtime.getURL('/icon/nzb-16-green.png'),
   grey: browser.runtime.getURL('/icon/nzb-16-grey.png'),
   orange: browser.runtime.getURL('/icon/nzb-16-orange.png'),
   red: browser.runtime.getURL('/icon/nzb-16-red.png'),
 };
-export const backgroundNormal: string = 'var(--color-button-background)';
-export const backgroundPending: string = 'var(--overlay1)';
-
-export { request, RequestOptions } from '@/utils';
+export const classLight: string = 'NZBUnityLight';
+export const backgroundNormal: string = 'var(--nzb-button-background)';
+export const backgroundPending: string = 'var(--nzb-pending)';
+export const backgroundSuccess: string = 'var(--nzb-success)';
+export const backgroundFailure: string = 'var(--nzb-error)';
 
 export abstract class Content {
   get client() {
@@ -56,7 +58,7 @@ export abstract class Content {
 
       // Set page params
       if (this.useLightTheme) {
-        document.documentElement.classList.add('NZBUnityLight');
+        document.documentElement.classList.add(classLight);
       }
 
       // All good, continue
@@ -168,11 +170,7 @@ export abstract class Content {
       a.insertAdjacentText('beforeend', ` ${label}`);
     }
 
-    Object.assign(a.style, {
-      cursor: 'pointer',
-      display: 'inline-block',
-      ...styles,
-    });
+    Object.assign(a.style, { ...styles });
 
     a.addEventListener('nzb.pending', () => (img.src = icons.grey));
     a.addEventListener('nzb.success', () => (img.src = icons.green));
@@ -184,12 +182,14 @@ export abstract class Content {
   createButton({
     context,
     styles,
+    element = 'button',
   }: {
     context?: string;
     styles?: Record<string, string>;
+    element?: 'button' | 'a';
   } = {}): HTMLElement {
-    const btn = document.createElement('a');
-    btn.classList.add('NZBUnityDownloadAll');
+    const btn = document.createElement(element);
+    btn.classList.add('NZBUnityButton');
 
     switch (context) {
       case 'list':
@@ -203,21 +203,7 @@ export abstract class Content {
         btn.title = 'Download with NZB Unity';
     }
 
-    Object.assign(btn.style, {
-      background: `${backgroundNormal} url(${icons.green}) no-repeat scroll 4px center`,
-      border: '1px solid var(--highlight)',
-      borderRadius: '4px',
-      color: '#fff',
-      cursor: 'pointer',
-      display: 'inline-block',
-      fontSize: '11px',
-      fontWeight: 'normal',
-      margin: '0 0.5em 0 0',
-      padding: '3px 8px 3px 25px',
-      textShadow: '0 -1px 0 rgba(0,0,0,0.25)',
-      whiteSpace: 'nowrap',
-      ...styles,
-    });
+    Object.assign(btn.style, { ...styles });
 
     btn.addEventListener('nzb.pending', () =>
       Object.assign(btn.style, {

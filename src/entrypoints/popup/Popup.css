@@ -108,7 +108,7 @@ input[type='number'] {
 
   .empty {
     font-style: italic;
-    margin-top: 3px;
+    margin: 0.5rem 0 0.75rem;
     text-align: center;
   }
 
@@ -169,10 +169,10 @@ input[type='number'] {
 
 #debug {
   display: none;
-  background: #333;
-  color: #eee;
+  background: var(--mocha-crust);
+  color: var(--mocha-text);
   font-family: monospace;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
   line-height: var(--font-size-sm);
   max-height: 220px;
   min-height: 120px;
@@ -188,7 +188,7 @@ input[type='number'] {
   }
 
   .green {
-    color: #6e6;
+    color: var(--mocha-green);
   }
 }
 

@@ -129,7 +129,21 @@ export class Logger {
   }
 }
 
-export default Logger;
+export class ContentLogger extends Logger {
+  static async get(): Promise<LogEntries> {
+    return [];
+  }
+
+  static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
+    // TODO: Send via message to background script
+    return [];
+  }
+
+  static async clear(): Promise<LogEntries> {
+    // TODO: Send via message to background script
+    return [];
+  }
+}
 
 /**
  * Hook to use the logger with reactive entries, formatted entries, and log methods

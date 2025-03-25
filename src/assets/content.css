@@ -1,21 +1,80 @@
-@import '@/assets/catppuccin.css';
-
 :root {
-  --color-button: var(--text);
-  --color-button-background: var(--base);
-  --color-button-border: var(--highlight);
+  /* Copied from catppuccin theme */
+  --mocha-text: #cdd6f4;
+  --mocha-base: #1e1e2e;
+  --mocha-blue: #89b4fa;
+  --mocha-flamingo: #f2cdcd;
+  --mocha-overlay1: #7f849c;
+  --mocha-green: #a6e3a1;
+  --mocha-red: #f38ba8;
+  --latte-text: #4c4f69;
+  --latte-base: #eff1f5;
+  --latte-blue: #1e66f5;
 
-  --highlight-more: hsl(from var(--highlight) h s calc(l * 1.15) / 1);
-  --highlight-less: hsl(from var(--highlight) h s calc(l * 0.85) / 1);
+  --nzb-base: var(--mocha-base);
+  --nzb-highlight: var(--mocha-blue);
+  --nzb-normal: var(--mocha-blue);
+  --nzb-active: var(--mocha-flamingo);
+  --nzb-pending: var(--mocha-overlay1);
+  --nzb-success: var(--mocha-green);
+  --nzb-error: var(--mocha-red);
 
-  --color-active: var(--flamingo);
-  --color-active-background: var(--crust);
-  --color-active-border: var(--rosewater);
+  --nzb-text: var(--mocha-text);
+  --nzb-button-base: var(--nzb-normal);
+  --nzb-button-text: rgba(0, 0, 0, 0.7);
 }
 
-html.NZBUnityLight {
-  /* For sites that do not use dark/light preference, provide a way to override */
-  --color-button: var(--frappe-text);
-  --color-button-background: var(--frappe-base);
-  --color-button-border: var(--frappe-blue);
+.NZBUnityLight {
+  --nzb-text: var(--latte-text);
+  --nzb-highlight: var(--latte-blue);
+}
+
+.NZBUnityLink {
+  color: var(--nzb-text);
+
+  cursor: pointer;
+  display: inline-block;
+
+  &:hover {
+    color: var(--nzb-highlight);
+  }
+}
+
+.NZBUnityButton {
+  color: var(--nzb-button-text);
+  background: var(--nzb-button-base) url(/icon/nzb-16-green.png) no-repeat scroll 6px
+    center;
+  border: 1px solid var(--nzb-button-text);
+  border-radius: 4px;
+
+  margin: 0 6px 0 0;
+  padding: 10px 10px 6px 26px;
+
+  cursor: pointer;
+  display: inline-block;
+
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  line-height: 1em;
+
+  &:hover,
+  &:active {
+    /* --nzb-button-base: var(--nzb-active); */
+    --nzb-button-base: var(--nzb-base);
+    --nzb-button-text: var(--nzb-active);
+  }
+
+  &.pending,
+  &.disabled,
+  &:disabled {
+    --nzb-button-base: var(--nzb-pending);
+  }
+
+  &.success {
+    --nzb-button-base: var(--nzb-success);
+  }
+  &.error {
+    --nzb-button-base: var(--nzb-error);
+  }
 }

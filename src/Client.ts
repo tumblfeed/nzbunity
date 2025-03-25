@@ -1,4 +1,4 @@
-import { NZBQueue, NZBQueueItem, type Downloader } from '@/downloader';
+import { NZBAddOptions, NZBQueue, NZBQueueItem, type Downloader } from '@/downloader';
 import { SABnzbd } from '@/downloader/SABnzbd';
 import { NZBGet } from '@/downloader/NZBGet';
 import {
@@ -10,6 +10,7 @@ import {
   watchActiveDownloader,
   removeWatcher,
 } from '@/store';
+import { simplifyCategory } from '@/utils';
 
 import { Logger } from '@/logger';
 const logger = new Logger('Client');
@@ -201,6 +202,44 @@ export class Client {
     if (url) window.open(url, '_blank');
   }
 
+  /**
+   * Given a category for a download, process it using options into
+   * the final category to send to the server.
+   */
+  async transmogrifyCategory(category?: string | null): Promise<string | undefined> {
+    const { OverrideCategory, IgnoreCategories, SimplifyCategories, DefaultCategory } =
+      await getOptions();
+
+    // If we're overriding categories, use that.
+    if (OverrideCategory) {
+      logger.debug(`Overriding category "${category}" with "${OverrideCategory}"`);
+      return OverrideCategory;
+    }
+
+    // If we're ignoring categories, send nothing.
+    if (IgnoreCategories) {
+      logger.debug(`Ignoring category "${category}"`);
+      return undefined;
+    }
+
+    // If the category is empty, use the default if set.
+    if (!category && DefaultCategory) {
+      logger.debug(
+        `Using default category "${DefaultCategory}" instead of "${category}"`,
+      );
+      return DefaultCategory || undefined;
+    }
+
+    // Simplify category if set
+    if (category && SimplifyCategories) {
+      logger.debug(`Simplifying category "${category}"`);
+      category = simplifyCategory(category);
+      logger.debug(`    >> "${category}"`);
+    }
+
+    return category || undefined;
+  }
+
   // Proxy methods
 
   async _awaitRefresh<T>(promise: Promise<T> | undefined): Promise<T | undefined> {
@@ -228,11 +267,21 @@ export class Client {
     return await this._awaitRefresh((await this.getDownloader())?.resumeQueue());
   }
 
-  async addUrl(url: string, options?: Record<string, unknown>) {
+  async addUrl(url: string, options?: NZBAddOptions) {
+    const category = await this.transmogrifyCategory(options?.category);
+    if (category) {
+      options = { ...(options ?? {}), category };
+    }
+
     return await this._awaitRefresh((await this.getDownloader())?.addUrl(url, options));
   }
 
-  async addFile(filename: string, content: string, options?: Record<string, unknown>) {
+  async addFile(filename: string, content: string, options?: NZBAddOptions) {
+    const category = await this.transmogrifyCategory(options?.category);
+    if (category) {
+      options = { ...(options ?? {}), category };
+    }
+
     return await this._awaitRefresh(
       (await this.getDownloader())?.addFile(filename, content, options),
     );

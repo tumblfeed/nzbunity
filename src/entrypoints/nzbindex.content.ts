@@ -11,8 +11,7 @@ export default defineContentScript({
 class NzbIndexContent extends Content {
   readonly checkboxSelector: string = 'input[id^="release_"][type="checkbox"]';
 
-  // TODO
-  // useLightTheme: boolean = true;
+  useLightTheme: boolean = true;
 
   results: HTMLElement[] = [];
   isList: boolean = false;
