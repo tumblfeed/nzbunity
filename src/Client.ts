@@ -199,7 +199,7 @@ export class Client {
       url = url.replace(/\/(api|jsonrpc).*$/, '');
     }
 
-    if (url) window.open(url, '_blank');
+    if (url) globalThis.open(url, '_blank');
   }
 
   /**

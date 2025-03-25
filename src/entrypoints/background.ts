@@ -9,16 +9,12 @@ export default defineBackground(() => {
   // Listen for messages from the content script
   browser.runtime.onMessage.addListener(
     (message: MessageEvent, sender: any, sendResponse: (response: any) => void) => {
-      console.log('onMessage', message, sender);
-
+      // console.log('onMessage', message, sender);
       for (const [key, data] of Object.entries(message)) {
         try {
           switch (key) {
             case 'log':
-              LogStorage.add(data.entry, ...(data.dump ?? [])).then((lol) => {
-                console.log('log', lol);
-                sendResponse(lol);
-              });
+              LogStorage.add(data.entry, ...(data.dump ?? [])).then(sendResponse);
               break;
 
             case 'getLog':

@@ -33,7 +33,7 @@ export interface RequestOptions extends RequestInit {
 }
 
 export function isContentScript(): boolean {
-  return window.location.protocol !== 'moz-extension:';
+  return location && !/^(chrome|moz)-extension:/.test(location.protocol);
 }
 
 function getLastError(caller: string = 'sendMessage'): string | null {
@@ -69,7 +69,7 @@ export function sendTabMessage<T, R>(
       if (error) {
         reject(error);
       } else {
-        // console.info('[util.sendTabMessage] Response:', response);
+        // console.info('[util.sendTabMessage]', { message, response });
         resolve(response as R);
       }
     });
@@ -86,7 +86,9 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
     return Promise.resolve();
   }
 
-  browser.browserAction.setTitle({
+  const action = browser.action ?? browser.browserAction;
+
+  action.setTitle({
     title: 'NZB Unity' + (status ? ` - ${status}` : ''),
   });
 
@@ -95,12 +97,12 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
     return set;
   }, {} as Record<string, string>);
 
-  return new Promise((resolve) =>
-    browser.browserAction.setIcon({ path: bySize }, resolve),
-  );
+  return new Promise((resolve) => action.setIcon({ path: bySize }, resolve));
 }
 
-export function queryToObject(query: string = window.location.search): URLSearchParams {
+export function queryToObject(
+  query: string = globalThis.location.search,
+): URLSearchParams {
   return new URLSearchParams(query);
 }
 
@@ -130,7 +132,7 @@ export function parseUrl(url: string): URL {
     url = `http://${url}`;
   }
 
-  return new URL(url, window?.location?.href);
+  return new URL(url);
 }
 
 /**
