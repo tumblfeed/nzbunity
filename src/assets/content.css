@@ -1,0 +1,21 @@
+@import '@/assets/catppuccin.css';
+
+:root {
+  --color-button: var(--text);
+  --color-button-background: var(--base);
+  --color-button-border: var(--highlight);
+
+  --highlight-more: hsl(from var(--highlight) h s calc(l * 1.15) / 1);
+  --highlight-less: hsl(from var(--highlight) h s calc(l * 0.85) / 1);
+
+  --color-active: var(--flamingo);
+  --color-active-background: var(--crust);
+  --color-active-border: var(--rosewater);
+}
+
+html.NZBUnityLight {
+  /* For sites that do not use dark/light preference, provide a way to override */
+  --color-button: var(--frappe-text);
+  --color-button-background: var(--frappe-base);
+  --color-button-border: var(--frappe-blue);
+}

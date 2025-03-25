@@ -231,7 +231,7 @@ export function ucFirst(s: string): string {
 }
 
 export function trunc(s: string, n: number): string {
-  return s.length > n ? `${s.substr(0, n)}&hellip;` : s;
+  return s.length > n ? `${s.substring(0, n)}...` : s;
 }
 
 export function simplifyCategory(s: string): string {

@@ -267,7 +267,7 @@ export class Client {
   }
 }
 
-export class PageClient extends Client {
+export class ContentClient extends Client {
   constructor() {
     // Don't auto-start, we don't need queue updates on content pages
     super(false);

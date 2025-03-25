@@ -1,23 +1,26 @@
 import { defineContentScript } from 'wxt/sandbox';
-import { Page } from '@/Page';
+import { Content } from '@/Content';
 
 export default defineContentScript({
   matches: ['*://*.nzbindex.com/*', '*://*.nzbindex.nl/*'],
   main() {
-    new NzbIndexPage();
+    new NzbIndexContent();
   },
 });
 
-class NzbIndexPage extends Page {
-  public readonly checkboxSelector: string = 'input[id^="release_"][type="checkbox"]';
+class NzbIndexContent extends Content {
+  readonly checkboxSelector: string = 'input[id^="release_"][type="checkbox"]';
 
-  public results: HTMLElement[] = [];
-  public isList: boolean = false;
-  public isDetail: boolean = false;
+  // TODO
+  // useLightTheme: boolean = true;
+
+  results: HTMLElement[] = [];
+  isList: boolean = false;
+  isDetail: boolean = false;
 
   async ready() {
     this.results = Array.from(
-      await this.waitForQuerySelectorAll('#results-table .result'),
+      await this.waitForQuerySelectorAll('#results-table .result:not(#template)'),
     );
     this.isDetail = /^\/(collection)/.test(window.location.pathname);
     this.isList = !this.isDetail && this.results.length > 0;
@@ -43,8 +46,6 @@ class NzbIndexPage extends Page {
 
   initializeDetailLinks() {
     const button = this.createButton();
-    button.textContent = 'Download NZB';
-    button.title = 'Download with NZB Unity';
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
@@ -55,38 +56,63 @@ class NzbIndexPage extends Page {
         this.addUrlFromElement(button, this.getNzbUrl(nzbId));
       }
     });
-    document.getElementById('actions')?.prepend(button);
+
+    const download = document.querySelector('#actions .download');
+
+    if (!download) {
+      return document.querySelector('#actions')?.prepend(button);
+    }
+
+    if (this.replaceLinks) {
+      return download.replaceWith(button);
+    }
+
+    return download.insertAdjacentElement('beforebegin', button);
   }
 
   initializeListLinks() {
-    console.log('List page');
-
     // Direct download links
     for (const checkbox of this.results.flatMap(
       (el) =>
         Array.from(el.querySelectorAll(this.checkboxSelector)) as HTMLInputElement[],
     )) {
-      const link = this.createLink();
-      link.style.display = 'block';
+      const container = checkbox.closest('tr');
+      if (!container) continue;
+
+      const download = container.querySelector('a[href*="/download/"]');
+
+      const link = this.createLink({
+        label: this.replaceLinks,
+      });
       link.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        const nzbUrl = checkbox
-          .closest('tr')
-          ?.querySelector('a[href*="/download/"]')
-          ?.getAttribute('href');
         const nzbId = checkbox.id.replace('release_', '');
+        const nzbUrl = download?.getAttribute('href');
 
-        if (nzbUrl && nzbId) {
+        if (nzbUrl || nzbId) {
           console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-          this.addUrlFromElement(link, nzbUrl);
+          this.addUrlFromElement(link, nzbUrl || this.getNzbUrl(nzbId));
         }
       });
-      checkbox.closest('tr')?.prepend(link);
+
+      // Can't find the download link, insert after the checkbox
+      if (!download) {
+        checkbox.insertAdjacentElement('afterend', link);
+        continue;
+      }
+      // Replace the download link with the 1-click link
+      if (this.replaceLinks) {
+        download.replaceWith(link);
+        continue;
+      }
+
+      link.style.marginRight = '6px';
+      download.insertAdjacentElement('beforebegin', link);
     }
 
     // Create download all button
-    const button = this.createButton();
+    const button = this.createButton({ context: 'selected' });
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
@@ -109,6 +135,12 @@ class NzbIndexPage extends Page {
       }
     });
 
-    document.getElementById('actions')?.prepend(button);
+    const download = document.querySelector('#actions button');
+
+    if (download && this.replaceLinks) {
+      download.replaceWith(button);
+    } else {
+      document.getElementById('actions')?.prepend(button);
+    }
   }
 }

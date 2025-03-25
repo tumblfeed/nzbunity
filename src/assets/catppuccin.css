@@ -1,31 +1,90 @@
 :root {
+  /* Catppuccin Themes */
   /* Mocha */
-  --rosewater: #f5e0dc;
-  --flamingo: #f2cdcd;
-  --pink: #f5c2e7;
-  --mauve: #cba6f7;
-  --red: #f38ba8;
-  --maroon: #eba0ac;
-  --peach: #fab387;
-  --yellow: #f9e2af;
-  --green: #a6e3a1;
-  --teal: #94e2d5;
-  --sky: #89dceb;
-  --sapphire: #74c7ec;
-  --blue: #89b4fa;
-  --lavender: #b4befe;
-  --text: #cdd6f4;
-  --subtext1: #bac2de;
-  --subtext0: #a6adc8;
-  --overlay2: #9399b2;
-  --overlay1: #7f849c;
-  --overlay0: #6c7086;
-  --surface2: #585b70;
-  --surface1: #45475a;
-  --surface0: #313244;
-  --base: #1e1e2e;
-  --mantle: #181825;
-  --crust: #11111b;
+  --mocha-rosewater: #f5e0dc;
+  --mocha-flamingo: #f2cdcd;
+  --mocha-pink: #f5c2e7;
+  --mocha-mauve: #cba6f7;
+  --mocha-red: #f38ba8;
+  --mocha-maroon: #eba0ac;
+  --mocha-peach: #fab387;
+  --mocha-yellow: #f9e2af;
+  --mocha-green: #a6e3a1;
+  --mocha-teal: #94e2d5;
+  --mocha-sky: #89dceb;
+  --mocha-sapphire: #74c7ec;
+  --mocha-blue: #89b4fa;
+  --mocha-lavender: #b4befe;
+  --mocha-text: #cdd6f4;
+  --mocha-subtext1: #bac2de;
+  --mocha-subtext0: #a6adc8;
+  --mocha-overlay2: #9399b2;
+  --mocha-overlay1: #7f849c;
+  --mocha-overlay0: #6c7086;
+  --mocha-surface2: #585b70;
+  --mocha-surface1: #45475a;
+  --mocha-surface0: #313244;
+  --mocha-base: #1e1e2e;
+  --mocha-mantle: #181825;
+  --mocha-crust: #11111b;
+  /* Frappe */
+  --frappe-rosewater: #dc8a78;
+  --frappe-flamingo: #dd7878;
+  --frappe-pink: #ea76cb;
+  --frappe-mauve: #8839ef;
+  --frappe-red: #d20f39;
+  --frappe-maroon: #e64553;
+  --frappe-peach: #fe640b;
+  --frappe-yellow: #df8e1d;
+  --frappe-green: #40a02b;
+  --frappe-teal: #179299;
+  --frappe-sky: #04a5e5;
+  --frappe-sapphire: #209fb5;
+  --frappe-blue: #1e66f5;
+  --frappe-lavender: #7287fd;
+  --frappe-text: #4c4f69;
+  --frappe-subtext1: #5c5f77;
+  --frappe-subtext0: #6c6f85;
+  --frappe-overlay2: #7c7f93;
+  --frappe-overlay1: #8c8fa1;
+  --frappe-overlay0: #9ca0b0;
+  --frappe-surface2: #acb0be;
+  --frappe-surface1: #bcc0cc;
+  --frappe-surface0: #ccd0da;
+  --frappe-base: #eff1f5;
+  --frappe-mantle: #e6e9ef;
+  --frappe-crust: #dce0e8;
+}
+
+:root {
+  /* Default Dark (Mocha) */
+  --rosewater: var(--mocha-rosewater);
+  --flamingo: var(--mocha-flamingo);
+  --pink: var(--mocha-pink);
+  --mauve: var(--mocha-mauve);
+  --red: var(--mocha-red);
+  --maroon: var(--mocha-maroon);
+  --peach: var(--mocha-peach);
+  --yellow: var(--mocha-yellow);
+  --green: var(--mocha-green);
+  --teal: var(--mocha-teal);
+  --sky: var(--mocha-sky);
+  --sapphire: var(--mocha-sapphire);
+  --blue: var(--mocha-blue);
+  --lavender: var(--mocha-lavender);
+  --text: var(--mocha-text);
+  --subtext1: var(--mocha-subtext1);
+  --subtext0: var(--mocha-subtext0);
+  --overlay2: var(--mocha-overlay2);
+  --overlay1: var(--mocha-overlay1);
+  --overlay0: var(--mocha-overlay0);
+  --surface2: var(--mocha-surface2);
+  --surface1: var(--mocha-surface1);
+  --surface0: var(--mocha-surface0);
+  --base: var(--mocha-base);
+  --mantle: var(--mocha-mantle);
+  --crust: var(--mocha-crust);
+
   --inverted-text: var(--crust);
   --selection-color: var(--mauve);
   --highlight: var(--blue);
@@ -34,33 +93,34 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    /* Frappe */
-    --rosewater: #dc8a78;
-    --flamingo: #dd7878;
-    --pink: #ea76cb;
-    --mauve: #8839ef;
-    --red: #d20f39;
-    --maroon: #e64553;
-    --peach: #fe640b;
-    --yellow: #df8e1d;
-    --green: #40a02b;
-    --teal: #179299;
-    --sky: #04a5e5;
-    --sapphire: #209fb5;
-    --blue: #1e66f5;
-    --lavender: #7287fd;
-    --text: #4c4f69;
-    --subtext1: #5c5f77;
-    --subtext0: #6c6f85;
-    --overlay2: #7c7f93;
-    --overlay1: #8c8fa1;
-    --overlay0: #9ca0b0;
-    --surface2: #acb0be;
-    --surface1: #bcc0cc;
-    --surface0: #ccd0da;
-    --base: #eff1f5;
-    --mantle: #e6e9ef;
-    --crust: #dce0e8;
+    /* Default Light (Frappe) */
+    --rosewater: var(--frappe-rosewater);
+    --flamingo: var(--frappe-flamingo);
+    --pink: var(--frappe-pink);
+    --mauve: var(--frappe-mauve);
+    --red: var(--frappe-red);
+    --maroon: var(--frappe-maroon);
+    --peach: var(--frappe-peach);
+    --yellow: var(--frappe-yellow);
+    --green: var(--frappe-green);
+    --teal: var(--frappe-teal);
+    --sky: var(--frappe-sky);
+    --sapphire: var(--frappe-sapphire);
+    --blue: var(--frappe-blue);
+    --lavender: var(--frappe-lavender);
+    --text: var(--frappe-text);
+    --subtext1: var(--frappe-subtext1);
+    --subtext0: var(--frappe-subtext0);
+    --overlay2: var(--frappe-overlay2);
+    --overlay1: var(--frappe-overlay1);
+    --overlay0: var(--frappe-overlay0);
+    --surface2: var(--frappe-surface2);
+    --surface1: var(--frappe-surface1);
+    --surface0: var(--frappe-surface0);
+    --base: var(--frappe-base);
+    --mantle: var(--frappe-mantle);
+    --crust: var(--frappe-crust);
+
     --inverted-text: var(--base);
     --selection-color: var(--blue);
   }
