@@ -10,7 +10,6 @@ export enum DownloaderType {
   NZBGet = 'NZBGet',
 }
 
-// Current version
 export interface DownloaderOptions {
   Name: string;
   Type: DownloaderType | null;
@@ -21,21 +20,9 @@ export interface DownloaderOptions {
   WebUrl: string | null;
 }
 
-export const DefaultDownloaderOptions: DownloaderOptions = {
-  Name: 'Default',
-  Type: null,
-  ApiUrl: null,
-  ApiKey: null,
-  Username: null,
-  Password: null,
-  WebUrl: null,
-};
-
 export interface IndexerOptions {
+  Display: string | boolean;
   Enabled: boolean;
-  Display: boolean;
-  Matches: string[];
-  Js: string[];
 }
 
 export interface NZBUnityOptions {
@@ -78,6 +65,38 @@ export const DefaultOptions: NZBUnityOptions = {
   OverrideCategory: null,
   ReplaceLinks: false,
 };
+
+export const DefaultDownloaderOptions: DownloaderOptions = {
+  Name: 'Default',
+  Type: null,
+  ApiUrl: null,
+  ApiKey: null,
+  Username: null,
+  Password: null,
+  WebUrl: null,
+};
+
+// This used to come from manifest, making it static reduces the need scripting permissions in v3
+// The keys match the names of entrypoints/*.content.ts
+export const DefaultIndexers: Record<string, IndexerOptions> = {
+  althub: { Display: 'AltHub', Enabled: true },
+  animetosho: { Display: 'AnimeTosho', Enabled: true },
+  binsearch: { Display: 'BinSearch', Enabled: true },
+  dognzb: { Display: 'DogNZB', Enabled: true },
+  drunkenslug: { Display: 'DrunkenSlug', Enabled: true },
+  gingadaddy: { Display: 'GingaDaddy', Enabled: true },
+  nzbfinder: { Display: 'NZBFinder', Enabled: true },
+  nzbgeek: { Display: 'NZBGeek', Enabled: true },
+  nzbindex: { Display: 'NZBIndex', Enabled: true },
+  nzbking: { Display: 'NZBKing', Enabled: true },
+  nzbserver: { Display: 'NZBServer', Enabled: true },
+  nzbsu: { Display: 'NZBSu', Enabled: true },
+  omgwtfnzbs: { Display: 'Omgwtfnzbs', Enabled: true },
+  tabularasa: { Display: 'TabulaRasa', Enabled: true },
+};
+for (const value of Object.values(DefaultIndexers)) {
+  value.Enabled = DefaultOptions.IndexerEnabled;
+}
 
 // Getter and setter functions
 
@@ -200,27 +219,14 @@ export async function updateIndexers(): Promise<void> {
     Object.keys(options.Indexers).length === 0 ||
     options.Version !== manifest().version
   ) {
-    const indexers = { ...options.Indexers };
-
-    // Init indexers from manifest
-    for (const script of manifest().content_scripts ?? []) {
-      const Matches = [...(script.matches ?? [])];
-      const Js = [...(script.js ?? [])];
-
-      const first = [...Js].pop() ?? '';
-      const [, name] = first.match(/(\w+)\.[tj]s$/) ?? [];
-
-      if (name !== 'utils') {
-        indexers[name] = {
-          Enabled: indexers[name]?.Enabled ?? options.IndexerEnabled ?? true,
-          Display: indexers[name]?.Display ?? options.IndexerDisplay ?? true,
-          Matches,
-          Js,
-        };
-      }
+    const indexers = { ...DefaultIndexers };
+    for (const [key, value] of Object.entries(options.Indexers)) {
+      value.Enabled = options.Indexers[key]?.Enabled ?? value.Enabled;
     }
 
-    await setOptions({ Indexers: indexers });
+    await setOptions({
+      Indexers: indexers,
+    });
   }
 }
 

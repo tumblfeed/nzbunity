@@ -14,5 +14,20 @@ export default defineConfig({
       'webRequest',
       // "webRequestBlocking",
     ],
+    commands: {
+      _execute_browser_action: {
+        suggested_key: {
+          default: 'Ctrl+Shift+U',
+          mac: 'Command+Shift+U',
+        },
+        description: 'Open the popup',
+      },
+      'toggle-queue': {
+        description: 'Toggle queue',
+      },
+      'open-web-ui': {
+        description: 'Open downloader web UI',
+      },
+    },
   },
 });

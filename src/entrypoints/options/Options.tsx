@@ -161,21 +161,23 @@ function Options() {
           <p>Enable 1-click downloading for the following sites:</p>
 
           <ul>
-            {Object.entries(options?.Indexers || {}).map(([name, indexer]) => (
-              <li key={name}>
-                <label>
-                  <input
-                    type="checkbox"
-                    name={`Indexer-${name}`}
-                    checked={indexer.Enabled ?? DefaultOptions.IndexerEnabled ?? false}
-                    onChange={(e) =>
-                      saveIndexer(name, { ...indexer, Enabled: e.target.checked })
-                    }
-                  />
-                  {name}
-                </label>
-              </li>
-            ))}
+            {Object.entries(options?.Indexers || {})
+              .filter(([, indexer]) => indexer.Display !== false)
+              .map(([name, indexer]) => (
+                <li key={name}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name={`Indexer-${name}`}
+                      checked={indexer.Enabled ?? options?.IndexerEnabled ?? false}
+                      onChange={(e) =>
+                        saveIndexer(name, { ...indexer, Enabled: e.target.checked })
+                      }
+                    />
+                    {typeof indexer.Display === 'string' ? indexer.Display : name}
+                  </label>
+                </li>
+              ))}
           </ul>
         </div>
 

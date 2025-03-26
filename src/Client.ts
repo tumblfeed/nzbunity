@@ -100,6 +100,7 @@ export class Client {
   // Refresh timer
 
   async start(overrideInterval?: number) {
+    // TODO: Switch to alarms
     // Stop any existing interval
     this.stop();
 

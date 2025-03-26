@@ -42,6 +42,7 @@
 
 .NZBUnityButton {
   color: var(--nzb-button-text);
+  /* TODO: This is not working in chrome */
   background: var(--nzb-button-base) url(/icon/nzb-16-green.png) no-repeat scroll 6px
     center;
   border: 1px solid var(--nzb-button-text);

@@ -4,8 +4,8 @@ import { sendMessage } from '@/utils';
 
 export default defineContentScript({
   matches: ['*://*.nzbindex.com/*', '*://*.nzbindex.nl/*'],
-  main() {
-    new NzbIndexContent();
+  main(ctx) {
+    new NzbIndexContent(ctx);
   },
 });
 
@@ -15,27 +15,6 @@ class NzbIndexContent extends Content {
   useLightTheme: boolean = true;
 
   results: HTMLElement[] = [];
-  isList: boolean = false;
-  isDetail: boolean = false;
-
-  async ready() {
-    sendMessage({
-      log: { entry: { level: 'log', message: 'NZBIndex content script loaded' } },
-    });
-    this.results = Array.from(
-      await this.waitForQuerySelectorAll('#results-table .result:not(#template)'),
-    );
-    this.isDetail = /^\/(collection)/.test(window.location.pathname);
-    this.isList = !this.isDetail && this.results.length > 0;
-
-    if (this.isDetail) {
-      this.initializeDetailLinks();
-    } else if (this.isList) {
-      this.initializeListLinks();
-    } else {
-      console.error(`[NZB Unity] Not a detail or list page, 1-click disabled`);
-    }
-  }
 
   getNzbUrl(id: string): string {
     return `${window.location.origin}/download/${id}`;
@@ -47,7 +26,22 @@ class NzbIndexContent extends Content {
       .map((el) => el.id.replace('release_', ''));
   }
 
-  initializeDetailLinks() {
+  get isDetail(): boolean {
+    return /^\/(collection)/.test(window.location.pathname);
+  }
+
+  get isList(): boolean {
+    return !this.isDetail && this.results.length > 0;
+  }
+
+  async ready() {
+    // Wait for the results to load before continuing
+    this.results = Array.from(
+      await this.waitForQuerySelectorAll('#results-table .result:not(#template)'),
+    );
+  }
+
+  initializeDetailLinks = () => {
     const button = this.createButton();
     button.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -71,9 +65,9 @@ class NzbIndexContent extends Content {
     }
 
     return download.insertAdjacentElement('beforebegin', button);
-  }
+  };
 
-  initializeListLinks() {
+  initializeListLinks = () => {
     // Direct download links
     for (const checkbox of this.results.flatMap(
       (el) =>
@@ -145,5 +139,5 @@ class NzbIndexContent extends Content {
     } else {
       document.getElementById('actions')?.prepend(button);
     }
-  }
+  };
 }

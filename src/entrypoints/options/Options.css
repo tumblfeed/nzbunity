@@ -12,6 +12,11 @@ body {
   padding: 0.5rem;
 }
 
+#root {
+  max-width: 768px;
+  margin: 0 auto;
+}
+
 section {
   background: var(--color-background-alt);
   border: 1px solid var(--color-border);

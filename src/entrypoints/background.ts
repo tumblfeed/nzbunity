@@ -6,6 +6,29 @@ import { DownloaderType } from '@/store';
 import { setMenuIcon } from '@/utils';
 
 export default defineBackground(() => {
+  const logger = new Logger('Background');
+  logger.debug(`Background running ${browser.runtime.id}`);
+
+  // Handle commands
+  browser.commands.onCommand.addListener((command: string) => {
+    switch (command) {
+      case 'toggle-queue':
+        const client = Client.getInstance();
+        client.getDownloader().then(() => {
+          if (client.isDownloading()) {
+            client.pauseQueue();
+          } else {
+            client.resumeQueue();
+          }
+        });
+        break;
+
+      case 'open-web-ui':
+        Client.getInstance().openWebUI();
+        break;
+    }
+  });
+
   // Listen for messages from the content script
   browser.runtime.onMessage.addListener(
     (message: MessageEvent, sender: any, sendResponse: (response: any) => void) => {
@@ -44,9 +67,6 @@ export default defineBackground(() => {
       return true;
     },
   );
-
-  const logger = new Logger('Background');
-  logger.debug(`Background running ${browser.runtime.id}`);
 
   // Watch for changes to status and set the menu icon
   Client.getInstance().addRefreshListener((client: Client) => {
