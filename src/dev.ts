@@ -3,11 +3,11 @@
  * Include this script in the from an entrypoint script (or store.ts) and
  * set WXT_DEV_OPTIONS to true in .env.local
  */
-import { SABnzbd } from '@/downloader/SABnzbd';
-import { NZBGet } from '@/downloader/NZBGet';
-import { getOptions, DownloaderType, setDownloaders, setOptions } from '@/store';
+import { SABnzbd } from '~/downloader/SABnzbd';
+import { NZBGet } from '~/downloader/NZBGet';
+import { getOptions, DownloaderType, setDownloaders, setOptions } from '~/store';
 
-import { Logger } from '@/logger';
+import { Logger } from '~/logger';
 const logger = new Logger('dev');
 
 export const downloaders = {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isContentScript, sendMessage } from '@/utils';
+import { isContentScript, sendMessage } from '~/utils';
 
 export interface LogEntry {
   level: 'debug' | 'log' | 'error';

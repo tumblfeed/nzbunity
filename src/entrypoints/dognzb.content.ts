@@ -1,6 +1,6 @@
 import { defineContentScript } from 'wxt/sandbox';
-import { Content } from '@/Content';
-import { sendMessage } from '@/utils';
+import { Content } from '~/Content';
+import { sendMessage } from '~/utils';
 
 export default defineContentScript({
   matches: ['*://*.dognzb.cr/*'],
@@ -97,19 +97,25 @@ class DognzbContent extends Content {
       const link = this.createAddUrlLink({
         url: this.getNzbUrl(id),
         category,
+        linkOptions: {
+          styles: { margin: '0 0 0 2px' },
+        },
       });
 
       link.addEventListener('nzb.success', (e) => {
         catLabel
           ?.closest('tr')
-          ?.prepend('<td width="19"><div class="dog-icon-tick"></div></td>');
+          ?.insertAdjacentHTML(
+            'afterbegin',
+            '<td width="19"><div class="dog-icon-tick"></div></td>',
+          );
       });
 
       if (this.replaceLinks) {
         a.closest('td')?.setAttribute('width', '20');
         a.replaceWith(link);
       } else {
-        a.closest('td')?.setAttribute('width', '36');
+        a.closest('td')?.setAttribute('width', '40');
         a.style.float = 'left';
         a.insertAdjacentElement('afterend', link);
       }

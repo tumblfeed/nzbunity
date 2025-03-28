@@ -8,7 +8,7 @@ import {
   Megabyte,
   Gigabyte,
   ucFirst,
-} from '@/utils';
+} from '~/utils';
 import {
   Downloader,
   DownloaderType,
@@ -17,7 +17,7 @@ import {
   NZBPriority,
 } from '.';
 
-import type { RequestOptions } from '@/utils';
+import type { RequestOptions } from '~/utils';
 import type {
   DownloaderOptions,
   NZBAddOptions,

@@ -1,4 +1,4 @@
-@import '@/assets/catppuccin.css';
+@import '~/assets/catppuccin.css';
 
 :root {
   --color-text: var(--text);

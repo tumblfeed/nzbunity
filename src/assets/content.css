@@ -22,6 +22,11 @@
   --nzb-text: var(--mocha-text);
   --nzb-button-base: var(--nzb-normal);
   --nzb-button-text: rgba(0, 0, 0, 0.7);
+
+  --icon-nzb-green: url(~/assets/images/nzb-16-green.png);
+  --icon-nzb-grey: url(~/assets/images/nzb-16-grey.png);
+  --icon-nzb-orange: url(~/assets/images/nzb-16-orange.png);
+  --icon-nzb-red: url(~/assets/images/nzb-16-red.png);
 }
 
 .NZBUnityLight {
@@ -31,25 +36,51 @@
 
 .NZBUnityLink {
   color: var(--nzb-text);
+  background: transparent var(--icon-nzb-green) no-repeat scroll left center;
+
+  padding: 0 0 0 16px;
+  height: 16px;
+  width: auto;
 
   cursor: pointer;
   display: inline-block;
 
-  &:hover {
-    color: var(--nzb-highlight);
+  &:not(:empty) {
+    padding-left: 20px;
+  }
+
+  &:hover,
+  &:active {
+    --nzb-text: var(--nzb-highlight);
+  }
+
+  &.pending,
+  &.disabled,
+  &:disabled {
+    --nzb-text: var(--nzb-pending);
+    background-image: var(--icon-nzb-grey);
+  }
+
+  &.success {
+    --nzb-text: var(--nzb-success);
+    background-image: var(--icon-nzb-green);
+  }
+
+  &.error {
+    --nzb-text: var(--nzb-error);
+    background-image: var(--icon-nzb-red);
   }
 }
 
 .NZBUnityButton {
   color: var(--nzb-button-text);
-  /* TODO: This is not working in chrome */
-  background: var(--nzb-button-base) url(/icon/nzb-16-green.png) no-repeat scroll 6px
-    center;
+  background: var(--nzb-button-base) var(--icon-nzb-green) no-repeat scroll 6px center;
   border: 1px solid var(--nzb-button-text);
   border-radius: 4px;
 
   margin: 0 6px 0 0;
-  padding: 10px 10px 6px 26px;
+  padding: 10px;
+  padding-left: 26px;
 
   cursor: pointer;
   display: inline-block;
@@ -70,12 +101,15 @@
   &.disabled,
   &:disabled {
     --nzb-button-base: var(--nzb-pending);
+    background-image: var(--icon-nzb-grey);
   }
 
   &.success {
     --nzb-button-base: var(--nzb-success);
+    background-image: var(--icon-nzb-green);
   }
   &.error {
     --nzb-button-base: var(--nzb-error);
+    background-image: var(--icon-nzb-red);
   }
 }

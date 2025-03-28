@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { DefaultDownloaderOptions } from '@/store';
+import { DefaultDownloaderOptions } from '~/store';
 import { type NZBQueueItem, NZBGet } from '../NZBGet';
 
-import { request } from '@/utils';
+import { request } from '~/utils';
 
 const downloaderOptions: typeof DefaultDownloaderOptions = {
   ...DefaultDownloaderOptions,

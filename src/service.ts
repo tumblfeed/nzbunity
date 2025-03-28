@@ -1,5 +1,5 @@
 // Uncomment the following line to use dev options override
-import '@/dev';
+import '~/dev';
 
 import { useState, useEffect } from 'react';
 import {
@@ -9,9 +9,9 @@ import {
   removeWatcher,
   setActiveDownloader,
   type NZBUnityOptions,
-} from '@/store';
+} from '~/store';
 
-import { Logger } from '@/logger';
+import { Logger } from '~/logger';
 const logger = new Logger('Service');
 
 /**

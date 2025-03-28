@@ -1,9 +1,9 @@
 import { defineBackground } from 'wxt/sandbox';
 
-import { Client } from '@/Client';
-import { Logger, LogStorage } from '@/logger';
-import { DownloaderType } from '@/store';
-import { setMenuIcon } from '@/utils';
+import { Client } from '~/Client';
+import { Logger, LogStorage } from '~/logger';
+import { DownloaderType } from '~/store';
+import { setMenuIcon } from '~/utils';
 
 export default defineBackground(() => {
   const logger = new Logger('Background');
@@ -74,7 +74,7 @@ export default defineBackground(() => {
       // Set the icon based on the downloader type
       setMenuIcon(
         client.type === DownloaderType.SABnzbd ? 'orange' : 'green',
-        client.status,
+        `${client.status} (${client.name})`,
       );
     } else {
       setMenuIcon('inactive', client.status);

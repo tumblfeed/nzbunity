@@ -1,25 +1,16 @@
 import { ContentScriptContext } from 'wxt/client';
-import { ContentClient } from '@/Client';
-import { Logger } from '@/logger';
-import { getOptions, type IndexerOptions } from '@/store';
-import { request } from '@/utils';
+import { ContentClient } from '~/Client';
+import { Logger } from '~/logger';
+import { getOptions, type IndexerOptions } from '~/store';
+import { request } from '~/utils';
 
-import type { NZBAddUrlResult } from '@/downloader';
+import type { NZBAddUrlResult } from '~/downloader';
 
-import '@/assets/content.css';
+import '~/assets/content.css';
 
-export { request, RequestOptions } from '@/utils';
-export const icons = {
-  green: browser.runtime.getURL('/icon/nzb-16-green.png'),
-  grey: browser.runtime.getURL('/icon/nzb-16-grey.png'),
-  orange: browser.runtime.getURL('/icon/nzb-16-orange.png'),
-  red: browser.runtime.getURL('/icon/nzb-16-red.png'),
-};
+export { request, RequestOptions } from '~/utils';
+
 export const classLight: string = 'NZBUnityLight';
-export const backgroundNormal: string = 'var(--nzb-button-background)';
-export const backgroundPending: string = 'var(--nzb-pending)';
-export const backgroundSuccess: string = 'var(--nzb-success)';
-export const backgroundFailure: string = 'var(--nzb-error)';
 
 export abstract class Content {
   get client() {
@@ -327,10 +318,6 @@ export abstract class Content {
     a.classList.add('NZBUnityLink');
     a.title = 'Download with NZB Unity';
 
-    const img = document.createElement('img');
-    img.src = icons.green;
-    a.append(img);
-
     if (label) {
       if (label === true) label = 'Download';
       a.insertAdjacentText('beforeend', ` ${label}`);
@@ -338,9 +325,9 @@ export abstract class Content {
 
     Object.assign(a.style, { ...styles });
 
-    a.addEventListener('nzb.pending', () => (img.src = icons.grey));
-    a.addEventListener('nzb.success', () => (img.src = icons.green));
-    a.addEventListener('nzb.failure', () => (img.src = icons.red));
+    // a.addEventListener('nzb.pending', () => (img.src = icon_nzb_16_grey));
+    // a.addEventListener('nzb.success', () => (img.src = icon_nzb_16_green));
+    // a.addEventListener('nzb.failure', () => (img.src = icon_nzb_16_red));
 
     return a;
   }
@@ -381,26 +368,14 @@ export abstract class Content {
 
     Object.assign(btn.style, { ...styles });
 
-    btn.addEventListener('nzb.pending', () =>
-      Object.assign(btn.style, {
-        backgroundColor: backgroundPending,
-        backgroundImage: `url(${icons.grey})`,
-      }),
-    );
+    const setClass = (className: string) => {
+      btn.classList.remove('success', 'failure', 'pending', 'disabled');
+      btn.classList.add(className);
+    };
 
-    btn.addEventListener('nzb.success', () =>
-      Object.assign(btn.style, {
-        backgroundColor: backgroundNormal,
-        backgroundImage: `url(${icons.green})`,
-      }),
-    );
-
-    btn.addEventListener('nzb.failure', () =>
-      Object.assign(btn.style, {
-        backgroundColor: backgroundNormal,
-        backgroundImage: `url(${icons.red})`,
-      }),
-    );
+    btn.addEventListener('nzb.pending', () => setClass('pending'));
+    btn.addEventListener('nzb.success', () => setClass('success'));
+    btn.addEventListener('nzb.failure', () => setClass('failure'));
 
     return btn;
   }
@@ -427,11 +402,6 @@ export abstract class Content {
     // console.debug(`${this.name}.createAddUrlLink`, url, category, adjacent, linkOptions);
     const a = this.bindAddUrl(this.createLink(linkOptions), url, category);
     a.setAttribute('href', url);
-
-    Object.assign(a.style, {
-      height: '16px',
-      width: '16px',
-    });
 
     if (adjacent) {
       adjacent.insertAdjacentElement('afterend', a);

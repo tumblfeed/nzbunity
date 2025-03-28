@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { DefaultDownloaderOptions } from '@/store';
+import { DefaultDownloaderOptions } from '~/store';
 import { type NZBQueueItem, SABnzbd } from '../SABnzbd';
 
 // Queue operations need a little time in between or then don't work

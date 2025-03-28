@@ -1,4 +1,5 @@
 import { PublicPath } from 'wxt/browser';
+import { icons } from '~/assets';
 
 export interface RequestOptions extends RequestInit {
   url: string;
@@ -93,7 +94,7 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
   });
 
   const bySize = ['16', '32', '64'].reduce((set, size) => {
-    set[size] = browser.runtime.getURL(`/icon/nzb-${size}-${color}.png` as PublicPath);
+    set[size] = (icons as Record<string, string>)[`icon_nzb_${size}_${color}`];
     return set;
   }, {} as Record<string, string>);
 

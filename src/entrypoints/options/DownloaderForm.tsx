@@ -6,12 +6,12 @@ import {
   PiTrashDuotone as Remove,
   PiArrowSquareOutDuotone as OpenUI,
 } from 'react-icons/pi';
-import { findApiUrl } from '@/Client';
+import { findApiUrl } from '~/Client';
 import {
   type DownloaderOptions,
   DefaultDownloaderOptions,
   DownloaderType,
-} from '@/store';
+} from '~/store';
 import './Options.css';
 
 function DownloaderForm({

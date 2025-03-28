@@ -4,8 +4,8 @@ import {
 } from 'react-icons/pi';
 import { Tooltip } from 'react-tooltip';
 
-import { useLogger } from '@/logger';
-import { useOptions } from '@/service';
+import { useLogger } from '~/logger';
+import { useOptions } from '~/service';
 import {
   type NZBUnityOptions,
   DefaultOptions,
@@ -16,8 +16,8 @@ import {
   setActiveDownloader,
   getActiveDownloader,
   type IndexerOptions,
-} from '@/store';
-import { Megabyte, trunc, debounce } from '@/utils';
+} from '~/store';
+import { Megabyte, trunc, debounce } from '~/utils';
 import DownloaderForm from './DownloaderForm';
 import './Options.css';
 

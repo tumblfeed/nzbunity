@@ -12,10 +12,10 @@ import {
   PiGearDuotone as Options,
 } from 'react-icons/pi';
 
-import { Client } from '@/Client';
-import { useLogger } from '@/logger';
-import { useIsFirstRender, useOptions } from '@/service';
-import { Megabyte, trunc, debounce } from '@/utils';
+import { Client } from '~/Client';
+import { useLogger } from '~/logger';
+import { useIsFirstRender, useOptions } from '~/service';
+import { Megabyte, trunc, debounce } from '~/utils';
 import './Popup.css';
 
 function Popup() {

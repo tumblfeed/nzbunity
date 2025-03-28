@@ -1,6 +1,6 @@
-import { NZBAddOptions, NZBQueue, NZBQueueItem, type Downloader } from '@/downloader';
-import { SABnzbd } from '@/downloader/SABnzbd';
-import { NZBGet } from '@/downloader/NZBGet';
+import { NZBAddOptions, NZBQueue, NZBQueueItem, type Downloader } from '~/downloader';
+import { SABnzbd } from '~/downloader/SABnzbd';
+import { NZBGet } from '~/downloader/NZBGet';
 import {
   getOptions,
   DownloaderType,
@@ -9,10 +9,10 @@ import {
   type Watcher,
   watchActiveDownloader,
   removeWatcher,
-} from '@/store';
-import { simplifyCategory } from '@/utils';
+} from '~/store';
+import { simplifyCategory } from '~/utils';
 
-import { Logger } from '@/logger';
+import { Logger } from '~/logger';
 const logger = new Logger('Client');
 
 export const downloaders = {

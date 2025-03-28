@@ -1,6 +1,6 @@
-import { Logger } from '@/logger';
-import { parseUrl } from '@/utils';
-import { DownloaderType, type DownloaderOptions } from '@/store';
+import { Logger } from '~/logger';
+import { parseUrl } from '~/utils';
+import { DownloaderType, type DownloaderOptions } from '~/store';
 export { DownloaderType, type DownloaderOptions };
 
 export enum NZBPriority {
