@@ -12,6 +12,23 @@ export { request, RequestOptions } from '~/utils';
 
 export const classLight: string = 'NZBUnityLight';
 
+/**
+ * TODO
+ * - althub
+ * - animetosho
+ * - binsearch
+ * - drunkenslug
+ * - gingadaddy
+ * - newznab
+ * - nzbfinder
+ * - nzbgeek
+ * - nzbking
+ * - nzbserver
+ * - nzbsu
+ * - omgwtfnzbs
+ * - tabularasa
+ */
+
 export abstract class Content {
   get client() {
     return ContentClient.getInstance();
@@ -28,6 +45,13 @@ export abstract class Content {
   logger: Logger = new Logger(this.constructor.name);
   debug(...args: unknown[]) {
     if (import.meta.env.DEV) console.debug(...args);
+  }
+
+  /**
+   * Get a meta tag by name returning the value of the attribute.
+   */
+  getMeta(name: string, attr: string = 'content'): string {
+    return document.querySelector(`meta[name="${name}"]`)?.getAttribute(attr) ?? '';
   }
 
   // Options
@@ -437,5 +461,16 @@ export abstract class Content {
     }
 
     return btn;
+  }
+
+  /**
+   * Checks if the current page is a Newznab page.
+   */
+  static isNewznab(): boolean {
+    return (
+      (document.querySelectorAll('[name="RSSTOKEN" i]').length > 0 &&
+        document.querySelectorAll('input.nzb_multi_operations_cart').length > 0) ||
+      document.querySelectorAll('#browsetable tr td.item label').length > 0
+    );
   }
 }
