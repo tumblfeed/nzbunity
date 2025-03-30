@@ -20,12 +20,6 @@ class NzbIndexContent extends Content {
     return `${window.location.origin}/download/${id}`;
   }
 
-  getNzbIds(): string[] {
-    return this.results
-      .filter((el) => el.querySelector(`${this.checkboxSelector}:checked`))
-      .map((el) => el.id.replace('release_', ''));
-  }
-
   get isDetail(): boolean {
     return /^\/(collection)/.test(window.location.pathname);
   }
@@ -50,7 +44,7 @@ class NzbIndexContent extends Content {
 
       if (nzbId) {
         console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-        this.addUrlFromElement(button, this.getNzbUrl(nzbId));
+        this.addUrlAndNotify(button, this.getNzbUrl(nzbId));
       }
     });
 
@@ -89,7 +83,7 @@ class NzbIndexContent extends Content {
 
         if (nzbUrl || nzbId) {
           console.info(`[NZB Unity] Adding NZB ${nzbId}`);
-          this.addUrlFromElement(link, nzbUrl || this.getNzbUrl(nzbId));
+          this.addUrlAndNotify(link, nzbUrl || this.getNzbUrl(nzbId));
         }
       });
 
@@ -113,23 +107,15 @@ class NzbIndexContent extends Content {
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
-      const nzbIds = this.getNzbIds();
-      if (nzbIds.length) {
-        console.info(`[NZB Unity] Adding ${nzbIds.length} NZBs`);
-        button.dispatchEvent(new Event('nzb.pending'));
-
-        const results = await Promise.all(
-          nzbIds.map((nzbId) =>
-            this.client.addUrl(this.getNzbUrl(nzbId), { category: '' }),
-          ),
-        );
-
-        if (results.every((r) => r?.success)) {
-          button.dispatchEvent(new Event('nzb.success'));
-        } else {
-          button.dispatchEvent(new Event('nzb.failure'));
-        }
-      }
+      this.addUrlsFromElementsAndNotify(
+        button,
+        // Get all the checked checkboxes
+        this.results.filter((el) => el.querySelector(`${this.checkboxSelector}:checked`)),
+        // Get the ID from each checkbox
+        (el) => el.id.replace('release_', ''),
+        // Get the category from the checkbox
+        () => '',
+      );
     });
 
     const download = document.querySelector('#actions button');

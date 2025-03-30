@@ -128,44 +128,30 @@ class DognzbContent extends Content {
 
       button.addEventListener('click', async (e) => {
         e.preventDefault();
-
-        const checked = document.querySelectorAll('#featurebox .ckbox:checked');
-        if (checked.length) {
-          console.info(`[NZB Unity] Adding ${checked.length} NZB(s)`);
-          button.dispatchEvent(new Event('nzb.pending'));
-
-          const results = await Promise.all(
-            Array.from(checked).map((el) => {
-              const check = el as HTMLInputElement;
-              const [, id] =
-                check
-                  .closest('tr')
-                  ?.querySelector('[onclick^="doOneDownload"]')
-                  ?.getAttribute('onclick')
-                  ?.match(/\('(\w+)'\)/i) ?? [];
-
-              if (/[a-d0-9]+/.test(id)) {
-                // Get the category
-                const category =
-                  check
-                    .closest('tr')
-                    ?.querySelector('.label:not(.label-empty):not(.label-important)')
-                    ?.textContent?.trim() ?? '';
-
-                console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
-                return this.client.addUrl(this.getNzbUrl(id), { category });
-              } else {
-                return Promise.resolve();
-              }
-            }),
-          );
-
-          if (results.every((r) => r)) {
-            button.dispatchEvent(new Event('nzb.success'));
-          } else {
-            button.dispatchEvent(new Event('nzb.failure'));
-          }
-        }
+        this.addUrlsFromElementsAndNotify(
+          button,
+          // Get all the checked checkboxes
+          document.querySelectorAll('#featurebox .ckbox:checked'),
+          // Get the ID from each checkbox
+          (el) => {
+            const [, id] =
+              (el as HTMLInputElement)
+                .closest('tr')
+                ?.querySelector('[onclick^="doOneDownload"]')
+                ?.getAttribute('onclick')
+                ?.match(/\('(\w+)'\)/i) ?? [];
+            return id;
+          },
+          // Get the category from each checkbox
+          (el) => {
+            return (
+              (el as HTMLInputElement)
+                .closest('tr')
+                ?.querySelector('.label:not(.label-empty):not(.label-important)')
+                ?.textContent?.trim() ?? ''
+            );
+          },
+        );
       });
 
       el.insertAdjacentElement('beforebegin', button);

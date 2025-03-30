@@ -98,39 +98,18 @@ class AlthubContent extends Content {
       button.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        const checked = document.querySelectorAll(
-          '#nzb_multi_operations_form .nzb_check:checked',
+        this.addUrlsFromElementsAndNotify(
+          button,
+          // Get the checked checkboxes
+          document.querySelectorAll('#nzb_multi_operations_form .nzb_check:checked'),
+          // Get the ID from each checkbox
+          (el) => (el as HTMLInputElement).value,
+          // Get the category from each checkbox
+          (el) =>
+            this.extractCategory(
+              el.closest('div.row')?.querySelector('a[href^="/browse"]'),
+            ),
         );
-        if (checked.length) {
-          console.info(`[NZB Unity] Adding ${checked.length} NZB(s)`);
-          button.dispatchEvent(new Event('nzb.pending'));
-
-          const results = await Promise.all(
-            Array.from(checked).map((el) => {
-              const check = el as HTMLInputElement;
-              const id = check.value;
-
-              if (/[a-d0-9]+/.test(id)) {
-                // Get the category
-                const url = this.getNzbUrl(id);
-                const category = this.extractCategory(
-                  check.closest('div.row')?.querySelector('a[href^="/browse"]'),
-                );
-
-                console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
-                return this.client.addUrl(this.getNzbUrl(id), { category });
-              } else {
-                return Promise.resolve();
-              }
-            }),
-          );
-
-          if (results.every((r) => r)) {
-            button.dispatchEvent(new Event('nzb.success'));
-          } else {
-            button.dispatchEvent(new Event('nzb.failure'));
-          }
-        }
       });
 
       const div = document.createElement('div');

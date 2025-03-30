@@ -268,26 +268,26 @@ export abstract class Content {
    * when the request fails.
    * A delay can be set to wait before dispatching the success or failure event,
    * as the request is very quick for localhost downloaders and immediate feedback can feel like a glitch.
-   * @param el The element to dispatch events on
+   * @param notifyEl The element to dispatch events on
    * @param url The URL to add
    * @param category (optional) The category to add the URL to
    * @param delay (default 500ms) The delay before dispatching the success or failure event
    */
-  async addUrlFromElement(
-    el: HTMLElement,
+  async addUrlAndNotify(
+    notifyEl: HTMLElement,
     url: string,
     category: string = '',
     delay: number = 500,
   ): Promise<NZBAddUrlResult | undefined> {
     console.info(`[NZB Unity] Adding URL: ${url}`);
 
-    el?.dispatchEvent(new Event('nzb.pending'));
+    notifyEl?.dispatchEvent(new Event('nzb.pending'));
 
     const res = await this.client.addUrl(url, { category: category });
 
     // Delay the event to allow the icon to change; too fast feels like a glitch
-    setTimeout(() => {
-      el?.dispatchEvent(new Event(res?.success ? 'nzb.success' : 'nzb.failure'));
+    this.ctx.setTimeout(() => {
+      notifyEl?.dispatchEvent(new Event(res?.success ? 'nzb.success' : 'nzb.failure'));
     }, delay || 0);
 
     return res;
@@ -312,7 +312,7 @@ export abstract class Content {
       'click',
       async (event) => {
         event.preventDefault();
-        await this.addUrlFromElement(el, url, category);
+        await this.addUrlAndNotify(el, url, category);
       },
       {
         capture: !!exclusive,
@@ -326,7 +326,7 @@ export abstract class Content {
    * Given a list of elements, extracts the ID and category from each element
    * and adds the URL to the downloader.
    */
-  async addIdsFromElements(
+  async addUrlsFromElements(
     els: NodeListOf<Element> | Element[] | string,
     getId: (el: Element) => string,
     getCategory: (el: Element) => string,
@@ -356,6 +356,50 @@ export abstract class Content {
   }
 
   /**
+   * Given a list of elements, extracts the ID and category from each element
+   * and adds the URL to the downloader.
+   * Dispatches custom events on the notifyEl element to indicate progress.
+   */
+  async addUrlsFromElementsAndNotify(
+    notifyEl: Element,
+    els: NodeListOf<Element> | Element[] | string,
+    getId: (el: Element) => string,
+    getCategory: (el: Element) => string,
+    delay: number = 500,
+  ): Promise<(NZBAddUrlResult | undefined)[]> {
+    if (typeof els === 'string') {
+      els = document.querySelectorAll(els);
+    }
+    if (els instanceof NodeList) {
+      els = Array.from(els);
+    }
+
+    if (els.length) {
+      console.info(`[NZB Unity] Adding ${els.length} NZB(s)`);
+      notifyEl.dispatchEvent(new Event('nzb.pending'));
+
+      try {
+        const results = await this.addUrlsFromElements(els, getId, getCategory);
+
+        this.ctx.setTimeout(() => {
+          if (results.every((r) => r)) {
+            notifyEl.dispatchEvent(new Event('nzb.success'));
+          } else {
+            notifyEl.dispatchEvent(new Event('nzb.failure'));
+          }
+        }, delay || 0);
+
+        return results;
+      } catch (err) {
+        console.error(`[NZB Unity] Error adding URLs`, err);
+        notifyEl.dispatchEvent(new Event('nzb.failure'));
+        return [];
+      }
+    }
+    return [];
+  }
+
+  /**
    * Create a styled link element with no default binding.
    * Use `bindAddUrl` to add a click event to add the URL to the downloader.
    * Listens for custom events 'nzb.pending', 'nzb.success', and 'nzb.failure'
@@ -380,10 +424,6 @@ export abstract class Content {
     }
 
     Object.assign(a.style, { ...styles });
-
-    // a.addEventListener('nzb.pending', () => (img.src = icon_nzb_16_grey));
-    // a.addEventListener('nzb.success', () => (img.src = icon_nzb_16_green));
-    // a.addEventListener('nzb.failure', () => (img.src = icon_nzb_16_red));
 
     return a;
   }
