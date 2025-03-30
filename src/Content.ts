@@ -19,14 +19,13 @@ export const classLight: string = 'NZBUnityLight';
  * - binsearch
  * - drunkenslug
  * - gingadaddy
- * - newznab
- * - nzbfinder
  * - nzbgeek
  * - nzbking
  * - nzbserver
  * - nzbsu
- * - omgwtfnzbs
  * - tabularasa
+ *
+ * newznab, with activation somehow
  */
 
 export abstract class Content {
@@ -127,7 +126,7 @@ export abstract class Content {
         return this.onReady();
       })
       .then(() => {
-        this.debug(`[NZB Unity] ${this.name} initialized!`);
+        console.info(`[NZB Unity] ${this.name} initialized!`);
         // Initialize should be complete, add listeners
         this.ctx.onInvalidated(() => this.cleanup());
       })
@@ -316,11 +315,44 @@ export abstract class Content {
         await this.addUrlFromElement(el, url, category);
       },
       {
-        capture: Boolean(exclusive),
+        capture: !!exclusive,
       },
     );
 
     return el;
+  }
+
+  /**
+   * Given a list of elements, extracts the ID and category from each element
+   * and adds the URL to the downloader.
+   */
+  async addIdsFromElements(
+    els: NodeListOf<Element> | Element[] | string,
+    getId: (el: Element) => string,
+    getCategory: (el: Element) => string,
+  ): Promise<(NZBAddUrlResult | undefined)[]> {
+    if (typeof els === 'string') {
+      els = document.querySelectorAll(els);
+    }
+    if (els instanceof NodeList) {
+      els = Array.from(els);
+    }
+
+    return await Promise.all(
+      els.map((el) => {
+        const id = getId(el);
+        if (/[a-d0-9]+/.test(id)) {
+          const category = getCategory(el);
+          console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
+          return this.client.addUrl(this.getNzbUrl(id), { category });
+        } else {
+          return Promise.resolve({
+            success: false,
+            error: `Invalid ID: ${id} from ${el}`,
+          } as NZBAddUrlResult);
+        }
+      }),
+    );
   }
 
   /**
@@ -461,6 +493,26 @@ export abstract class Content {
     }
 
     return btn;
+  }
+
+  /**
+   * Given an element or selector for an element, extracts the category from the text content.
+   * If `firstWord` is true, only the first word is returned.
+   */
+  extractCategory(el?: Element | string | null, firstWord = true): string {
+    if (!el) return '';
+
+    if (typeof el === 'string') {
+      el = document.querySelector(el) as Element;
+    }
+
+    let category = el.textContent ?? '';
+
+    if (firstWord) {
+      [, category] = category.match(/^(\w+)/) ?? [, ''];
+    }
+
+    return category.trim();
   }
 
   /**

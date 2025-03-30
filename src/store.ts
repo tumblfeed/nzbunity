@@ -79,7 +79,7 @@ export const DefaultDownloaderOptions: DownloaderOptions = {
 // This used to come from manifest, making it static reduces the need scripting permissions in v3
 // The keys match the names of entrypoints/*.content.ts
 export const DefaultIndexers: Record<string, IndexerOptions> = {
-  althub: { Display: 'AltHub', Enabled: true },
+  althub: { Display: 'altHUB', Enabled: true },
   animetosho: { Display: 'AnimeTosho', Enabled: true },
   binsearch: { Display: 'BinSearch', Enabled: true },
   dognzb: { Display: 'DogNZB', Enabled: true },
