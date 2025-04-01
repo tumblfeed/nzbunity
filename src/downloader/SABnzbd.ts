@@ -49,7 +49,6 @@ export class SABnzbd extends Downloader {
     const req: RequestOptions = {
       method: 'GET',
       url: this.url,
-      json: true,
       params: {
         output: 'json',
         apikey: this.key,

@@ -154,7 +154,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
   if (options.params || options.files || options.multipart) {
     if (options.method === 'GET') {
       if (options.json) {
-        options.headers.set('Content-Type', 'application/json');
+        options.headers.set('Accept', 'application/json');
       }
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params ?? {})) {

@@ -491,7 +491,7 @@ export abstract class Content {
     linkOptions,
   }: {
     url: string;
-    category: string;
+    category?: string;
     adjacent?: HTMLElement;
     linkOptions?: Parameters<Content['createLink']>[0];
   }): HTMLElement {
@@ -521,7 +521,7 @@ export abstract class Content {
     buttonOptions,
   }: {
     url: string;
-    category: string;
+    category?: string;
     adjacent?: HTMLElement;
     buttonOptions?: Parameters<Content['createButton']>[0];
   }): HTMLElement {
