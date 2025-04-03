@@ -2,7 +2,7 @@ import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
 
 export default defineContentScript({
-  // matches: ['*://*.nzbgeek.info/*'],
+  registration: 'runtime',
 
   main(ctx) {
     new NewznabContent(ctx);

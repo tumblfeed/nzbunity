@@ -76,7 +76,11 @@ export function sendTabMessage<T, R>(
   });
 }
 
-export function setMenuIcon(color: string = 'green', status?: string): Promise<void> {
+export function setMenuIcon(
+  color: string = 'green',
+  status?: string,
+  badge?: string,
+): Promise<void> {
   color = color.toLowerCase();
   if (/^(active|downloading)/i.test(color)) color = 'green';
   if (/^(inactive|idle|paused|gray)/i.test(color)) color = 'grey';
@@ -90,6 +94,10 @@ export function setMenuIcon(color: string = 'green', status?: string): Promise<v
 
   action.setTitle({
     title: 'NZB Unity' + (status ? ` - ${status}` : ''),
+  });
+
+  action.setBadgeText({
+    text: badge ?? '',
   });
 
   const bySize = ['16', '32', '64'].reduce((set, size) => {

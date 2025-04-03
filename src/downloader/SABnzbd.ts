@@ -104,7 +104,6 @@ export class SABnzbd extends Downloader {
   }
 
   async getHistory(): Promise<NZBQueueItem[]> {
-    // TODO: Useful for done notifications?
     return [];
   }
 

@@ -12,10 +12,6 @@ export { request, RequestOptions } from '~/utils';
 
 export const classLight: string = 'NZBUnityLight';
 
-/**
- * TODO: Figure out if we can activate newznab with a command.
- */
-
 export abstract class Content {
   /**
    * ID of the indexer, matching the key in options.Indexers

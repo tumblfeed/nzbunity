@@ -8,7 +8,9 @@ export default defineConfig({
   manifest: {
     permissions: [
       // "<all_urls>",
+      'activeTab',
       'notifications',
+      'scripting',
       'storage',
       'tabs',
       'webRequest',
@@ -27,6 +29,9 @@ export default defineConfig({
       },
       'open-web-ui': {
         description: 'Open downloader web UI',
+      },
+      'activate-newznab': {
+        description: 'Add 1-click actions to the current Newznab page',
       },
     },
   },

@@ -2,7 +2,7 @@ import { defineBackground } from 'wxt/sandbox';
 
 import { Client } from '~/Client';
 import { Logger, LogStorage } from '~/logger';
-import { DownloaderType } from '~/store';
+import { getOptions, DefaultOptions, DownloaderType } from '~/store';
 import { setMenuIcon } from '~/utils';
 
 export default defineBackground(() => {
@@ -10,7 +10,7 @@ export default defineBackground(() => {
   logger.debug(`Background running ${browser.runtime.id}`);
 
   // Handle commands
-  browser.commands.onCommand.addListener((command: string) => {
+  browser.commands.onCommand.addListener((command: string, tab: chrome.tabs.Tab) => {
     switch (command) {
       case 'toggle-queue':
         const client = Client.getInstance();
@@ -25,6 +25,17 @@ export default defineBackground(() => {
 
       case 'open-web-ui':
         Client.getInstance().openWebUI();
+        break;
+
+      case 'activate-newznab':
+        getOptions().then((options) => {
+          if (tab.id && (options.EnableNewznab ?? DefaultOptions.EnableNewznab)) {
+            browser.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content-scripts/newznab.js'],
+            });
+          }
+        });
         break;
     }
   });
@@ -75,6 +86,7 @@ export default defineBackground(() => {
       setMenuIcon(
         client.type === DownloaderType.SABnzbd ? 'orange' : 'green',
         `${client.status} (${client.name})`,
+        client.queue.length > 0 ? client.queue.length.toString() : undefined,
       );
     } else {
       setMenuIcon('inactive', client.status);

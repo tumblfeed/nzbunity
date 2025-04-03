@@ -214,7 +214,6 @@ function DownloaderForm({
               This is probably different from the URL you use to access the web UI, but
               when Test or Save is clicked, NZBUnity will attempt to automatically find
               the full API URL using smart defaults
-              {/* TODO: (if 'exactly as shown' is not checked) */}.
               <br />
               For example:
               <br />

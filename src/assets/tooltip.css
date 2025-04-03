@@ -3,7 +3,6 @@
 /* Tooltip container */
 :root {
   --tooltip-background: rgb(from var(--crust) r g b / 0.9);
-  /* TODO: This combo might be annoying, ask someone with working eyes */
   --tooltip-color: var(--rosewater);
   --tooltip-border-color: var(--flamingo);
   --tooltip-padding: 10px;
