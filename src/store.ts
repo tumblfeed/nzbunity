@@ -89,7 +89,6 @@ export const DefaultIndexers: Record<string, IndexerOptions> = {
   nzbgeek: { Display: 'NZBGeek', Enabled: true },
   nzbindex: { Display: 'NZBIndex', Enabled: true },
   nzbking: { Display: 'NZBKing', Enabled: true },
-  nzbserver: { Display: 'NZBServer', Enabled: true },
   nzbsu: { Display: 'NZBSu', Enabled: true },
   omgwtfnzbs: { Display: 'Omgwtfnzbs', Enabled: true },
   tabularasa: { Display: 'TabulaRasa', Enabled: true },

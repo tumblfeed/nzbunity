@@ -132,7 +132,7 @@ export function parseUrl(url: string): URL {
     url = `http://${url}`;
   }
 
-  return new URL(url);
+  return new URL(url, url.startsWith('/') ? window.location.origin : undefined);
 }
 
 /**

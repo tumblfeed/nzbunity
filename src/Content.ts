@@ -13,16 +13,7 @@ export { request, RequestOptions } from '~/utils';
 export const classLight: string = 'NZBUnityLight';
 
 /**
- * TODO
- * - drunkenslug
- * - gingadaddy
- * - nzbgeek
- * - nzbking
- * - nzbserver
- * - nzbsu
- * - tabularasa
- *
- * newznab, with activation somehow
+ * TODO: Figure out if we can activate newznab with a command.
  */
 
 export abstract class Content {
@@ -77,14 +68,19 @@ export abstract class Content {
     return false;
   }
 
+  _uid: string = ''; // Can set this in ready() instead of using accessor
   get uid(): string {
-    return '';
+    return this._uid;
   }
+
+  _apikey: string = '';
   get apikey(): string {
-    return '';
+    return this._apikey;
   }
+
+  _apiurl: string = '';
   get apiurl(): string {
-    return '';
+    return this._apiurl;
   }
 
   /**

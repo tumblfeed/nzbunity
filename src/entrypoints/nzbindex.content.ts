@@ -1,6 +1,5 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
-import { sendMessage } from '~/utils';
 
 export default defineContentScript({
   matches: ['*://*.nzbindex.com/*', '*://*.nzbindex.nl/*'],
