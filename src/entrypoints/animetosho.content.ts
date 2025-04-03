@@ -10,6 +10,10 @@ export default defineContentScript({
 });
 
 class AnimeToshoContent extends Content {
+  get id() {
+    return 'animetosho';
+  }
+
   initializeLinks = () => {
     for (const el of document.querySelectorAll('a[href*="/nzbs/"]')) {
       const a = el as HTMLAnchorElement;

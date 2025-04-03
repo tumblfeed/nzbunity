@@ -11,8 +11,8 @@ import {
   type NZBUnityOptions,
 } from '~/store';
 
-import { Logger } from '~/logger';
-const logger = new Logger('Service');
+import { Logger, type LogEntries } from '~/logger';
+// const logger = new Logger('Service');
 
 /**
  * Hook to get a reactive set of options from the store.
@@ -69,4 +69,54 @@ export function useIsFirstRender() {
   }, []);
 
   return isFirstRender.current;
+}
+
+/**
+ * Hook to use the logger with reactive entries, formatted entries, and log methods
+ */
+export function useLogger(
+  group?: string,
+  refresh: number = 5,
+): {
+  entries: LogEntries;
+  group: LogEntries;
+  log: Logger['log'];
+  debug: Logger['debug'];
+  error: Logger['error'];
+  skip: Logger['skip'];
+} {
+  const logger = new Logger(group);
+
+  const [entries, setEntries] = useState<LogEntries>([]);
+  const groupEntries = useMemo(
+    () => entries.filter((entry) => entry.group === group),
+    [entries, group],
+  );
+
+  const updateEntries = async () => {
+    const newEntries = await Logger.get(); // Get all entries and use memo to filter
+    setEntries(newEntries);
+  };
+
+  let timer: NodeJS.Timeout | undefined = undefined;
+
+  useEffect(() => {
+    updateEntries();
+
+    if (timer) clearInterval(timer);
+    timer = setInterval(updateEntries, refresh * 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return {
+    entries,
+    group: groupEntries,
+    log: (message: string, ...dump: unknown[]) => logger.log(message, ...dump),
+    debug: (message: string, ...dump: unknown[]) => logger.debug(message, ...dump),
+    error: (message: string, ...dump: unknown[]) => logger.error(message, ...dump),
+    skip: (message: string, ...dump: unknown[]) => logger.skip(message, ...dump),
+  };
 }

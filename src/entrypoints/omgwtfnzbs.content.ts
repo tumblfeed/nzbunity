@@ -11,6 +11,10 @@ export default defineContentScript({
 });
 
 class OmgwtfnzbsContent extends Content {
+  get id() {
+    return 'omgwtfnzbs';
+  }
+
   get uid(): string {
     // Username is in an html comment that looks like:
     // <!---<extention_user>somebody</extention_user>-->

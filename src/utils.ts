@@ -1,4 +1,3 @@
-import { PublicPath } from 'wxt/browser';
 import { icons } from '~/assets';
 
 export interface RequestOptions extends RequestInit {
@@ -153,9 +152,6 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
   if (options.params || options.files || options.multipart) {
     if (options.method === 'GET') {
-      if (options.json) {
-        options.headers.set('Accept', 'application/json');
-      }
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params ?? {})) {
         url.searchParams.set(k, String(v));
@@ -205,12 +201,10 @@ export async function request(options: RequestOptions): Promise<unknown> {
     }
   }
 
-  if (options.username && options.password) {
+  if (options.username) {
     options.headers.set(
       'Authorization',
-      `Basic ${Buffer.from(`${options.username}:${options.password}`).toString(
-        'base64',
-      )}`,
+      `Basic ${btoa(`${options.username}:${options.password || ''}`)}`,
     );
     // options.credentials = 'include';
   }
@@ -231,14 +225,24 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
   // Debug if requested
   if (options.debug) {
-    console.debug('utils/request() <--', `${response.status}: ${response.statusText}`);
+    console.debug(
+      'utils/request() <--',
+      `${response.status}: ${response.statusText}`,
+      response,
+    );
   }
 
   if (response.ok) {
+    // Pull the body as text and attempt to parse as JSON
+    // We can only pull the body from the response stream once
+    const body = await response.text();
+    // if (options.debug) {
+    //   console.debug('utils/request() <-- body:', body);
+    // }
     try {
-      return response.json();
+      return JSON.parse(body);
     } catch (e) {
-      return response.text();
+      return body;
     }
   } else {
     throw Error(`${response.status}: ${response.statusText}`);

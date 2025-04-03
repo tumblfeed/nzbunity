@@ -15,7 +15,7 @@ export default defineConfig({
       // "webRequestBlocking",
     ],
     commands: {
-      _execute_browser_action: {
+      _execute_action: {
         suggested_key: {
           default: 'Ctrl+Shift+U',
           mac: 'Command+Shift+U',

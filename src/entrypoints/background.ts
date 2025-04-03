@@ -49,7 +49,7 @@ export default defineBackground(() => {
               break;
 
             default:
-              throw new Error(`Unknown message: ${key}`, data);
+              throw Error(`Unknown message: ${key}`, data);
           }
         } catch (err) {
           console.warn(err);

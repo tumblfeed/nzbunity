@@ -10,6 +10,14 @@ export default defineContentScript({
 });
 
 class AlthubContent extends Content {
+  get id() {
+    return 'nzbindex';
+  }
+
+  get useLightTheme() {
+    return true;
+  }
+
   get isDetail(): boolean {
     return false;
   }

@@ -3,10 +3,6 @@
 #
 # It is not necessary to add an NNTP server to these services for testing; api endpoints will work fine.
 
-networks:
-  default:
-    driver: bridge
-
 services:
   sabnzbd:
     # https://docs.linuxserver.io/images/docker-sabnzbd/

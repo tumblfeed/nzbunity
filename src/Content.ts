@@ -1,7 +1,7 @@
 import { ContentScriptContext } from 'wxt/client';
 import { ContentClient } from '~/Client';
 import { Logger } from '~/logger';
-import { getOptions, type IndexerOptions } from '~/store';
+import { getOptions, DefaultIndexers, type IndexerOptions } from '~/store';
 import { request } from '~/utils';
 
 import type { NZBAddUrlResult } from '~/downloader';
@@ -14,9 +14,6 @@ export const classLight: string = 'NZBUnityLight';
 
 /**
  * TODO
- * - althub
- * - animetosho
- * - binsearch
  * - drunkenslug
  * - gingadaddy
  * - nzbgeek
@@ -29,19 +26,27 @@ export const classLight: string = 'NZBUnityLight';
  */
 
 export abstract class Content {
+  /**
+   * ID of the indexer, matching the key in options.Indexers
+   * This is used to get options, and to get the display name for logging.
+   * Must be a function so that it can be overridden in subclasses.
+   */
+  get id(): string {
+    return '';
+  }
+
+  get name(): string {
+    if (typeof this.indexerOptions?.Display === 'string')
+      return this.indexerOptions.Display;
+
+    return (DefaultIndexers[this.id]?.Display as string) ?? this.id;
+  }
+
   get client() {
     return ContentClient.getInstance();
   }
 
-  get name(): string {
-    return this.constructor.name.replace(/(Content|Page)$/, '');
-  }
-
-  get indexerKey(): string {
-    return this.name.toLowerCase();
-  }
-
-  logger: Logger = new Logger(this.constructor.name);
+  logger: Logger = new Logger(this.name);
   debug(...args: unknown[]) {
     if (import.meta.env.DEV) console.debug(...args);
   }
@@ -55,7 +60,11 @@ export abstract class Content {
 
   // Options
 
-  useLightTheme: boolean = false;
+  // Override in subclasses to set the light theme
+  get useLightTheme(): boolean {
+    return false;
+  }
+
   indexerOptions: IndexerOptions | undefined = undefined;
   replaceLinks: boolean = false;
 
@@ -88,8 +97,8 @@ export abstract class Content {
   }
 
   constructor(public ctx: ContentScriptContext) {
-    if (!this.indexerKey) {
-      throw new Error('Indexer key must be defined in subclass');
+    if (!this.id) {
+      throw Error('Indexer id must be defined in subclass');
     }
 
     getOptions()
@@ -97,11 +106,11 @@ export abstract class Content {
         this.replaceLinks = options.ReplaceLinks;
 
         // Check that the indexer is present and enabled
-        if (!options.Indexers[this.indexerKey]) {
-          throw new Error(`Indexer key not found: ${this.indexerKey}`);
+        if (!options.Indexers[this.id]) {
+          throw Error(`Indexer key not found: ${this.id}`);
         }
 
-        this.indexerOptions = options.Indexers[this.indexerKey];
+        this.indexerOptions = options.Indexers[this.id];
 
         if (!this.indexerOptions?.Enabled) {
           console.info(`[NZB Unity] 1-click functionality disabled for this site`);
@@ -247,17 +256,20 @@ export abstract class Content {
    * @param category The category to add the file to
    * @param url The URL to fetch the NZB file content from
    * @param params Additional parameters to pass to the fetch request
+   * @param method The HTTP method to use for the request (default: POST)
    */
   async addFileByRequest(
     filename: string,
     category: string = '',
     url: string = window.location.origin,
     params: Record<string, unknown> = {},
+    method: string = 'POST',
   ): Promise<NZBAddUrlResult | undefined> {
     console.info(`[NZB Unity] Adding file: ${filename} ${url}`);
     // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
     // Fetches a single NZB from a POST request and adds it to the server as a file upload
-    const content = await request({ method: 'POST', url, params });
+    const content = await request({ method, url, params });
+    console.log(`[NZB Unity] File content:`, content);
     return this.client.addFile(filename, content as string, { category });
   }
 

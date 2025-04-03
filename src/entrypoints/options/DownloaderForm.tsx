@@ -67,10 +67,11 @@ function DownloaderForm({
     if (fields.Type === DownloaderType.SABnzbd) {
       if (!fields.ApiKey) invalid.ApiKey = 'API Key is required';
     }
-    if (fields.Type === DownloaderType.NZBGet) {
-      if (!fields.Username) invalid.Username = 'Username is required';
-      if (!fields.Password) invalid.Password = 'Password is required';
-    }
+    // Disabled, allow for empty username/password
+    // if (fields.Type === DownloaderType.NZBGet) {
+    //   if (!fields.Username) invalid.Username = 'Username is required';
+    //   if (!fields.Password) invalid.Password = 'Password is required';
+    // }
 
     setInvalid(invalid);
     return Object.keys(invalid).length === 0;

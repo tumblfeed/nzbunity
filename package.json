@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "2.0.0-alpha.3",
+  "version": "2.0.0-alpha.6",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "tumblfeed@gmail.com",
@@ -29,7 +29,8 @@
     "postinstall": "wxt prepare",
     "compose": "docker compose -f test/docker/docker-compose.yaml",
     "compose:sabnzbd": "npm run compose -- up sabnzbd",
-    "compose:nzbget": "npm run compose -- up nzbget"
+    "compose:nzbget": "npm run compose -- up nzbget",
+    "compose:clean": "rm -rf test/docker/sabnzbd/Downloads/*; rm -rf test/docker/nzbget/downloads/*"
   },
   "dependencies": {
     "react": "^19.0.0",

@@ -10,10 +10,15 @@ export default defineContentScript({
 });
 
 class NzbIndexContent extends Content {
+  get id() {
+    return 'nzbindex';
+  }
+
+  get useLightTheme() {
+    return true;
+  }
+
   readonly checkboxSelector: string = 'input[id^="release_"][type="checkbox"]';
-
-  useLightTheme: boolean = true;
-
   results: HTMLElement[] = [];
 
   getNzbUrl(id: string): string {

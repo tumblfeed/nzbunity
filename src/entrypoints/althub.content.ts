@@ -10,6 +10,10 @@ export default defineContentScript({
 });
 
 class AlthubContent extends Content {
+  get id() {
+    return 'althub';
+  }
+
   get uid(): string {
     const [, uid] =
       document

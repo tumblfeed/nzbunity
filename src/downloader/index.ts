@@ -210,7 +210,7 @@ export abstract class Downloader {
   }
 
   constructor(options: DownloaderOptions) {
-    if (!options.ApiUrl) throw new Error('No API URL provided');
+    if (!options.ApiUrl) throw Error('No API URL provided');
 
     this.options = options;
     this.name = options.Name ?? this.type;

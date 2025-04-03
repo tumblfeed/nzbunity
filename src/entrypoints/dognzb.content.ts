@@ -10,7 +10,14 @@ export default defineContentScript({
 });
 
 class DognzbContent extends Content {
-  useLightTheme: boolean = true;
+  get id() {
+    return 'dognzb';
+  }
+
+  get useLightTheme() {
+    return true;
+  }
+
   // Dognzb uses an ajax filter, watch for dom changes and update links
   observer: MutationObserver | undefined;
 
@@ -41,7 +48,8 @@ class DognzbContent extends Content {
       console.info(`[NZB Unity] Content changed, updating links...`);
       this.onReady(); // Re-run initialization
     });
-    this.observer.observe(document.getElementById('content')!, { childList: true });
+    if (document.getElementById('content'))
+      this.observer.observe(document.getElementById('content')!, { childList: true });
 
     // warn on missing parms
     this.debug(`[NZB Unity] ready()`, { uid: this.uid, apikey: this.apikey });

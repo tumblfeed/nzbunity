@@ -33,7 +33,7 @@ export function findApiUrl(opts?: DownloaderOptions): Promise<string | null> {
 export class Client {
   static _instance: Client | undefined;
   static getInstance() {
-    if (!this._instance) this._instance = new Client();
+    if (!this._instance) this._instance = new this();
     return this._instance;
   }
 
@@ -322,5 +322,10 @@ export class ContentClient extends Client {
   constructor() {
     // Don't auto-start, we don't need queue updates on content pages
     super(false);
+  }
+
+  async start() {
+    // Disable timed refresh, we don't need it on content pages
+    this._interval = 0;
   }
 }

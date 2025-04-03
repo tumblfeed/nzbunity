@@ -4,8 +4,7 @@ import {
 } from 'react-icons/pi';
 import { Tooltip } from 'react-tooltip';
 
-import { useLogger } from '~/logger';
-import { useOptions } from '~/service';
+import { useLogger, useOptions } from '~/service';
 import {
   type NZBUnityOptions,
   DefaultOptions,

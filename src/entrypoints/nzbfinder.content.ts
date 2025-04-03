@@ -11,6 +11,10 @@ export default defineContentScript({
 });
 
 class NZBFinderContent extends Content {
+  get id() {
+    return 'nzbfinder';
+  }
+
   get isDetail(): boolean {
     return window.location.pathname.startsWith('/details');
   }

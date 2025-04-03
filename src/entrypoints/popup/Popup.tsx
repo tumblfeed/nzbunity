@@ -13,8 +13,7 @@ import {
 } from 'react-icons/pi';
 
 import { Client } from '~/Client';
-import { useLogger } from '~/logger';
-import { useIsFirstRender, useOptions } from '~/service';
+import { useLogger, useIsFirstRender, useOptions } from '~/service';
 import { Megabyte, trunc, debounce } from '~/utils';
 import './Popup.css';
 
