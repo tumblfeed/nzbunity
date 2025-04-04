@@ -40,7 +40,7 @@ export default defineBackground(() => {
     }
   });
 
-  // Listen for messages from the content script
+  // Listen for messages from  content scripts
   browser.runtime.onMessage.addListener(
     (message: MessageEvent, sender: any, sendResponse: (response: any) => void) => {
       // console.log('onMessage', message, sender);
@@ -57,6 +57,31 @@ export default defineBackground(() => {
 
             case 'clearLog':
               LogStorage.clear().then(sendResponse);
+              break;
+
+            case 'addUrl':
+              if (!data.url)
+                return sendResponse({ success: false, error: 'No URL provided' });
+
+              Client.getInstance()
+                .ready()
+                .then((client) => client.addUrl(data.url, data.options ?? {}))
+                .then(sendResponse);
+              break;
+
+            case 'addFile':
+              if (!data.filename || !data.content)
+                return sendResponse({
+                  success: false,
+                  error: 'No filename or content provided',
+                });
+
+              Client.getInstance()
+                .ready()
+                .then((client) =>
+                  client.addFile(data.filename, data.content, data.options ?? {}),
+                )
+                .then(sendResponse);
               break;
 
             default:

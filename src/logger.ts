@@ -1,4 +1,4 @@
-import { isContentScript, sendMessage } from '~/utils';
+import { isContentScript } from '~/utils';
 
 export interface LogEntry {
   level: 'debug' | 'log' | 'error';
@@ -32,11 +32,8 @@ export class LogStorage {
   }
 
   static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
-    // If WXT_LOG_LEVEL is not debug, skip debug logs
-    if (
-      entry.level === 'debug' &&
-      import.meta.env.WXT_LOG_LEVEL?.toLowerCase() !== 'debug'
-    ) {
+    // If WXT_DEBUG is not set, skip debug logs
+    if (entry.level === 'debug' && !import.meta.env.WXT_DEBUG) {
       return await this.get();
     }
 
@@ -92,7 +89,7 @@ export class Logger {
     // If we're in a content script, use sendMessage
     if (isContentScript()) {
       console.debug('content script, using sendMessage');
-      return await sendMessage({ getLog: true });
+      return await browser.runtime.sendMessage({ getLog: true });
     } else {
       return await LogStorage.get();
     }
@@ -101,7 +98,7 @@ export class Logger {
   static async add(entry: LogEntryParam, ...dump: unknown[]): Promise<LogEntries> {
     // If we're in a content script, use sendMessage
     if (isContentScript()) {
-      return await sendMessage({ log: { entry, dump } });
+      return await browser.runtime.sendMessage({ log: { entry, dump } });
     } else {
       return await LogStorage.add(entry, ...dump);
     }

@@ -45,37 +45,6 @@ function getLastError(caller: string = 'sendMessage'): string | null {
   return /Receiving end does not exist/i.test(error?.message) ? null : error.message;
 }
 
-export function sendMessage<T, R>(message: Record<string, T>): Promise<R> {
-  return new Promise((resolve, reject) => {
-    browser.runtime.sendMessage(message, (response: R) => {
-      const error = getLastError();
-      if (error) {
-        reject(error);
-      } else {
-        // console.info('[util.sendMessage]', { message, response });
-        resolve(response as R);
-      }
-    });
-  });
-}
-
-export function sendTabMessage<T, R>(
-  tabId: number,
-  message: Record<string, T>,
-): Promise<R> {
-  return new Promise((resolve, reject) => {
-    browser.tabs.sendMessage(tabId, message, (response: R) => {
-      const error = getLastError();
-      if (error) {
-        reject(error);
-      } else {
-        // console.info('[util.sendTabMessage]', { message, response });
-        resolve(response as R);
-      }
-    });
-  });
-}
-
 export function setMenuIcon(
   color: string = 'green',
   status?: string,
@@ -218,7 +187,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
   }
 
   // Debug if requested
-  if (options.debug) {
+  if (options.debug || import.meta.env.WXT_DEBUG) {
     console.debug('utils/request() -->', {
       rawUrl: options.url,
       url: url.href,
@@ -229,10 +198,10 @@ export async function request(options: RequestOptions): Promise<unknown> {
   }
 
   // Make the request
-  const response = await fetch(url, options as RequestInit);
+  const response = await fetch(url.href, options as RequestInit);
 
   // Debug if requested
-  if (options.debug) {
+  if (options.debug || import.meta.env.WXT_DEBUG) {
     console.debug(
       'utils/request() <--',
       `${response.status}: ${response.statusText}`,
@@ -244,7 +213,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
     // Pull the body as text and attempt to parse as JSON
     // We can only pull the body from the response stream once
     const body = await response.text();
-    // if (options.debug) {
+    // if (options.debug || import.meta.env.WXT_DEBUG) {
     //   console.debug('utils/request() <-- body:', body);
     // }
     try {

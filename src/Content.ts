@@ -1,5 +1,4 @@
 import { ContentScriptContext } from 'wxt/client';
-import { ContentClient } from '~/Client';
 import { Logger } from '~/logger';
 import { getOptions, DefaultIndexers, type IndexerOptions } from '~/store';
 import { request } from '~/utils';
@@ -29,20 +28,9 @@ export abstract class Content {
     return (DefaultIndexers[this.id]?.Display as string) ?? this.id;
   }
 
-  get client() {
-    return ContentClient.getInstance();
-  }
-
   logger: Logger = new Logger(this.name);
   debug(...args: unknown[]) {
     if (import.meta.env.DEV) console.debug(...args);
-  }
-
-  /**
-   * Get a meta tag by name returning the value of the attribute.
-   */
-  getMeta(name: string, attr: string = 'content'): string {
-    return document.querySelector(`meta[name="${name}"]`)?.getAttribute(attr) ?? '';
   }
 
   // Options
@@ -55,7 +43,7 @@ export abstract class Content {
   indexerOptions: IndexerOptions | undefined = undefined;
   replaceLinks: boolean = false;
 
-  // Commonly used property accessors
+  // Commonly used property accessors, override in subclasses to provide various behavior
 
   get isList(): boolean {
     return false;
@@ -88,6 +76,17 @@ export abstract class Content {
     return id;
   }
 
+  /**
+   * Get a meta tag by name returning the value of the attribute.
+   */
+  getMeta(name: string, attr: string = 'content'): string {
+    return document.querySelector(`meta[name="${name}"]`)?.getAttribute(attr) ?? '';
+  }
+
+  /**
+   * Create a new content script instance.
+   * @param ctx
+   */
   constructor(public ctx: ContentScriptContext) {
     if (!this.id) {
       throw Error('Indexer id must be defined in subclass');
@@ -242,6 +241,38 @@ export abstract class Content {
   }
 
   /**
+   * Adds a URL to the downloader by sending a message to the background script.
+   * @param url
+   * @param {NZBAddUrlOptions} options
+   * @returns
+   */
+  async addUrl(
+    url: string,
+    options?: Record<string, unknown>,
+  ): Promise<NZBAddUrlResult | undefined> {
+    return (await browser.runtime.sendMessage({
+      addUrl: { url, options },
+    })) as NZBAddUrlResult;
+  }
+
+  /**
+   * Adds a file to the downloader by sending a message to the background script.
+   * @param filename The name of the file to add
+   * @param content The content of the file
+   * @param options Additional options to pass to the downloader
+   * @returns
+   */
+  async addFile(
+    filename: string,
+    content: string,
+    options?: Record<string, unknown>,
+  ): Promise<NZBAddUrlResult | undefined> {
+    return (await browser.runtime.sendMessage({
+      addFile: { filename, content, options },
+    })) as NZBAddUrlResult;
+  }
+
+  /**
    * Adds a file to the downloader by fetching the NZB file content from a URL.
    * Used for sites that require a POST request to fetch the NZB file.
    * @param filename The name of the file to add
@@ -262,7 +293,9 @@ export abstract class Content {
     // Fetches a single NZB from a POST request and adds it to the server as a file upload
     const content = await request({ method, url, params });
     console.log(`[NZB Unity] File content:`, content);
-    return this.client.addFile(filename, content as string, { category });
+    return this.addFile(filename, content as string, {
+      category,
+    });
   }
 
   /**
@@ -287,7 +320,7 @@ export abstract class Content {
 
     notifyEl?.dispatchEvent(new Event('nzb.pending'));
 
-    const res = await this.client.addUrl(url, { category: category });
+    const res = await this.addUrl(url, { category });
 
     // Delay the event to allow the icon to change; too fast feels like a glitch
     this.ctx.setTimeout(() => {
@@ -346,9 +379,10 @@ export abstract class Content {
       els.map((el) => {
         const id = getId(el);
         if (/[a-d0-9]+/.test(id)) {
+          const url = this.getNzbUrl(id);
           const category = getCategory(el);
           console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
-          return this.client.addUrl(this.getNzbUrl(id), { category });
+          return this.addUrl(url, { category });
         } else {
           return Promise.resolve({
             success: false,
@@ -428,6 +462,15 @@ export abstract class Content {
     }
 
     Object.assign(a.style, { ...styles });
+
+    const setClass = (className: string) => {
+      a.classList.remove('success', 'failure', 'pending', 'disabled');
+      a.classList.add(className);
+    };
+
+    a.addEventListener('nzb.pending', () => setClass('pending'));
+    a.addEventListener('nzb.success', () => setClass('success'));
+    a.addEventListener('nzb.failure', () => setClass('failure'));
 
     return a;
   }

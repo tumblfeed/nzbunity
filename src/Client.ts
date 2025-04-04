@@ -86,6 +86,17 @@ export class Client {
     return this._syncDownloader;
   }
 
+  /**
+   * Wait for the downloader to be ready, and return self for chaining.
+   */
+  async ready() {
+    await this._downloader;
+    return this;
+  }
+
+  /**
+   * Refresh the queue from the downloader.
+   */
   async refresh() {
     this._refreshing = true;
     this._queue = await (await this.getDownloader())?.getQueue();
@@ -318,7 +329,7 @@ export class Client {
   }
 }
 
-export class ContentClient extends Client {
+export class ManualClient extends Client {
   constructor() {
     // Don't auto-start, we don't need queue updates on content pages
     super(false);
