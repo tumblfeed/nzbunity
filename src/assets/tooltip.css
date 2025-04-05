@@ -39,6 +39,7 @@
     background: transparent;
     border: var(--tooltip-arrow-size) solid transparent;
     border-top-color: var(--tooltip-border-color);
+    box-sizing: border-box;
     height: var(--tooltip-arrow-size);
     width: var(--tooltip-arrow-size);
     transform: rotate(0deg);

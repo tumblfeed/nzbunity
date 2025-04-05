@@ -302,7 +302,17 @@ function Options() {
         </div>
       </section>
 
-      <Tooltip id="tooltip" place="bottom" />
+      <Tooltip
+        id="tooltip"
+        place="bottom"
+        closeEvents={{
+          dblclick: true,
+          // blur: true,
+          // click: true,
+          // mouseout: true,
+          // mouseleave: true,
+        }}
+      />
     </>
   );
 }

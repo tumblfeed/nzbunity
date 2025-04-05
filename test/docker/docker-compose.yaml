@@ -17,6 +17,7 @@ services:
     environment:
       - PUID=${UID:-1000}
       - PGID=${GID:-1000}
+    network_mode: host
 
   nzbget:
     # https://docs.linuxserver.io/images/docker-nzbget/
@@ -30,5 +31,4 @@ services:
     environment:
       - PUID=${UID:-1000}
       - PGID=${GID:-1000}
-      - NZBGET_USER=${NZBGET_USER:-nzbget}
-      - NZBGET_PASS=${NZBGET_PASS:-testnzbget}
+    network_mode: host

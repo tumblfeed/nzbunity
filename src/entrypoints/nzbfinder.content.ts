@@ -24,11 +24,11 @@ class NZBFinderContent extends Content {
   }
 
   get uid(): string {
-    return this.getMeta('user_id');
+    return this.getMeta('user_id') ?? '';
   }
 
   get apikey(): string {
-    return this.getMeta('api_token');
+    return this.getMeta('api_token') ?? '';
   }
 
   getNzbUrl(id: string): string {
@@ -67,6 +67,7 @@ class NZBFinderContent extends Content {
   }
 
   async ready() {
+    console.debug(this.getNzbUrl('lol'));
     // warn on missing parms
     this.debug(`[NZB Unity] ready()`, { uid: this.uid, apikey: this.apikey });
     if (!this.uid) console.warn(`[NZB Unity] Unable to find username`);

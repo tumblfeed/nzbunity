@@ -79,8 +79,10 @@ export abstract class Content {
   /**
    * Get a meta tag by name returning the value of the attribute.
    */
-  getMeta(name: string, attr: string = 'content'): string {
-    return document.querySelector(`meta[name="${name}"]`)?.getAttribute(attr) ?? '';
+  getMeta(name: string, attr: string = 'content'): string | undefined {
+    return (
+      document.querySelector(`meta[name="${name}"]`)?.getAttribute(attr) ?? undefined
+    );
   }
 
   /**

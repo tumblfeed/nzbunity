@@ -22,17 +22,21 @@ async function initDevelopmentOptions() {
     const opts = await getOptions();
 
     if (import.meta.env.WXT_RESET_OPTS || Object.keys(opts.Downloaders).length === 0) {
-      const dlopts = [
-        {
-          Name: 'Default',
+      const dlopts = [];
+
+      if (import.meta.env.WXT_SABNZBD_APIURL) {
+        dlopts.push({
+          Name: 'SABnzbd',
           Type: DownloaderType.SABnzbd,
           ApiUrl: import.meta.env.WXT_SABNZBD_APIURL,
           ApiKey: import.meta.env.WXT_SABNZBD_APIKEY,
           Username: null,
           Password: null,
           WebUrl: null,
-        },
-        {
+        });
+      }
+      if (import.meta.env.WXT_NZBGET_APIURL) {
+        dlopts.push({
           Name: 'NZBGet',
           Type: DownloaderType.NZBGet,
           ApiUrl: import.meta.env.WXT_NZBGET_APIURL,
@@ -40,8 +44,8 @@ async function initDevelopmentOptions() {
           Username: import.meta.env.WXT_NZBGET_USER,
           Password: import.meta.env.WXT_NZBGET_PASS,
           WebUrl: null,
-        },
-      ];
+        });
+      }
 
       await Promise.all(
         dlopts.map(
