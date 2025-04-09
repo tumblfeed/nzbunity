@@ -306,11 +306,11 @@ function Options() {
         id="tooltip"
         place="bottom"
         closeEvents={{
-          dblclick: true,
-          // blur: true,
-          // click: true,
-          // mouseout: true,
-          // mouseleave: true,
+          // dblclick: true,
+          blur: true,
+          click: true,
+          mouseout: true,
+          mouseleave: true,
         }}
       />
     </>
