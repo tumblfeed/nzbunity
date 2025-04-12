@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.animetosho.org/*'],
-
   main(ctx) {
     new AnimeToshoContent(ctx);
   },

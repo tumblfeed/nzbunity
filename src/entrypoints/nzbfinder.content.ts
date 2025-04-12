@@ -1,10 +1,9 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
-import background from './background';
+import iconGreen from '~/assets/images/nzb-16-green.png';
 
 export default defineContentScript({
   matches: ['*://*.nzbfinder.ws/*'],
-
   main(ctx) {
     new NZBFinderContent(ctx);
   },
@@ -96,7 +95,13 @@ class NZBFinderContent extends Content {
       if (this.replaceLinks) {
         this.bindAddUrl(a, url, category, true);
       } else {
-        const link = this.createAddUrlLink({ url, category });
+        const link = this.createAddUrlLink({
+          url,
+          category,
+          linkOptions: {
+            className: 'NZBUnityLink-custom',
+          },
+        });
         link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
 
         a.insertAdjacentElement('beforebegin', link);
@@ -105,11 +110,12 @@ class NZBFinderContent extends Content {
           // Info tab, side
           link.innerHTML = `${link.innerHTML} NZB Unity`;
           Object.assign(link.style, {
+            backgroundImage: `url(${iconGreen})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: '18px center',
             display: '',
-            height: 'auto',
             width: '',
-            padding: '10px 0 10px 32px',
-            backgroundPosition: '10px center',
+            paddingLeft: '40px',
           });
 
           const linkImg = link.querySelector('& > img');
@@ -142,12 +148,18 @@ class NZBFinderContent extends Content {
         continue;
       }
 
-      const link = this.createAddUrlLink({ url, category });
+      const link = this.createAddUrlLink({
+        url,
+        category,
+        linkOptions: {
+          className: 'NZBUnityLink-custom',
+        },
+      });
       link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
       Object.assign(link.style, {
-        display: '',
-        height: '',
-        width: '',
+        backgroundImage: `url(${iconGreen})`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
       });
 
       if (this.isInList(a)) {
@@ -170,7 +182,7 @@ class NZBFinderContent extends Content {
 
     // Create download all buttons
     for (const el of document.querySelectorAll('#multidownload')) {
-      const button = this.createButton();
+      const button = this.createButton({ className: 'NZBUnityButton-custom' });
       button.textContent = 'NZB Unity';
       button.classList.add(...el.classList.values());
       button.style.paddingLeft = '30px';

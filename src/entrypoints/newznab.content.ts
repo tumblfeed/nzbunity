@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   registration: 'runtime',
-
   main(ctx) {
     new NewznabContent(ctx);
   },

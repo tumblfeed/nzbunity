@@ -3,7 +3,6 @@ import { Content, request } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.drunkenslug.com/*'],
-
   main(ctx) {
     new DrunkenSlugContent(ctx);
   },

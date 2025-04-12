@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.nzbking.com/*'],
-
   main(ctx) {
     new NZBKingContent(ctx);
   },

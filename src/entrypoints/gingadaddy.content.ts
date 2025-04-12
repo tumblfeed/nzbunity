@@ -3,7 +3,6 @@ import { Content, request } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.gingadaddy.com/*'],
-
   main(ctx) {
     new GingaDaddyContent(ctx);
   },

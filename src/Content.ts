@@ -450,12 +450,14 @@ export abstract class Content {
   createLink({
     label,
     styles,
+    className = 'NZBUnityLink',
   }: {
     label?: string | boolean;
     styles?: Record<string, string>;
+    className?: string;
   } = {}): HTMLElement {
     const a = document.createElement('a');
-    a.classList.add('NZBUnityLink');
+    if (className) a.classList.add(className);
     a.title = 'Download with NZB Unity';
 
     if (label) {
@@ -490,14 +492,16 @@ export abstract class Content {
   createButton({
     context,
     styles,
+    className = 'NZBUnityButton',
     element = 'button',
   }: {
     context?: string;
     styles?: Record<string, string>;
+    className?: string;
     element?: 'button' | 'a';
   } = {}): HTMLElement {
     const btn = document.createElement(element);
-    btn.classList.add('NZBUnityButton');
+    if (className) btn.classList.add(className);
 
     switch (context) {
       case 'list':

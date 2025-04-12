@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.binsearch.info/*'],
-
   main(ctx) {
     new BinsearchContent(ctx);
   },

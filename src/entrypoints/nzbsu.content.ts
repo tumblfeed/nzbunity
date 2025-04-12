@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.nzb.su/*'],
-
   main(ctx) {
     new NZBsuContent(ctx);
   },

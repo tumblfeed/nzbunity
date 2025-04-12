@@ -3,7 +3,6 @@ import { Content, request } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.tabula-rasa.pw/*'],
-
   main(ctx) {
     new TabulaRasaContent(ctx);
   },

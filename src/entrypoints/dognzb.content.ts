@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.dognzb.cr/*'],
-
   main(ctx) {
     new DognzbContent(ctx);
   },

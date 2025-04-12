@@ -4,7 +4,6 @@ import { getQueryParam } from '~/utils';
 
 export default defineContentScript({
   matches: ['*://*.omgwtfnzbs.org/*'],
-
   main(ctx) {
     new OmgwtfnzbsContent(ctx);
   },

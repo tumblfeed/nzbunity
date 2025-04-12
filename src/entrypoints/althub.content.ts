@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.althub.co.za/*'],
-
   main(ctx) {
     new AlthubContent(ctx);
   },

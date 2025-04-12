@@ -3,7 +3,6 @@ import { Content } from '~/Content';
 
 export default defineContentScript({
   matches: ['*://*.nzbgeek.info/*'],
-
   main(ctx) {
     new NZBGeekContent(ctx);
   },
