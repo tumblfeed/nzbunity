@@ -1,9 +1,15 @@
 @import '~/assets/main.css';
 
+:root {
+  --popup-width: 460px;
+}
+
 body {
+  box-sizing: content-box;
   font-size: var(--font-size-sm);
-  overflow-x: hidden;
-  width: 460px;
+  margin: 0;
+  padding: 5px;
+  width: var(--popup-width);
 }
 
 input,
@@ -115,6 +121,7 @@ input[type='number'] {
   .nzb {
     border-bottom: 1px solid var(--highlight);
     position: relative;
+    max-width: 100%;
     width: 100%;
     height: 1.75em;
 
@@ -128,41 +135,69 @@ input[type='number'] {
       border-top: 1px solid var(--highlight);
     }
 
-    span {
+    & > * {
       text-align: left;
-      flex: 0 1 auto;
+      flex: 0 0 2em;
       order: 1;
       display: flex;
       align-items: center;
-      gap: 0.25em;
+      gap: 6px;
       z-index: 100;
-    }
+      white-space: nowrap;
 
-    .name {
-      flex-grow: 1;
-      margin-left: 5px;
-    }
-
-    .size {
-      margin-right: 5px;
-      text-align: right;
-    }
-
-    .nzb-actions {
-      > svg {
-        cursor: pointer;
-
-        &:hover {
-          fill: var(--color-active);
+      &.name {
+        flex-grow: 1;
+        & > .clip {
+          max-width: 290px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
       }
-    }
 
-    .bar {
-      background: var(--color-bar-gradient);
-      height: 100%;
-      position: absolute;
-      z-index: 10;
+      &.progress,
+      &.size,
+      &.category {
+        font-size: 0.75em;
+        justify-content: end;
+      }
+
+      &.status {
+        padding-left: 3px;
+        flex-basis: 16px;
+      }
+
+      &.progress {
+        flex-basis: 32px;
+      }
+
+      &.category {
+        display: none;
+      }
+
+      &.size {
+        flex-basis: 50px;
+      }
+
+      &.nzb-actions {
+        justify-content: end;
+        flex-basis: 40px;
+
+        > svg {
+          cursor: pointer;
+
+          &:hover {
+            fill: var(--color-active);
+          }
+        }
+      }
+
+      &.bar {
+        background: var(--color-bar-gradient);
+        height: 100%;
+        position: absolute;
+        z-index: 10;
+      }
     }
   }
 }

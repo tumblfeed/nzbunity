@@ -151,12 +151,16 @@ function Popup() {
                   {isNaN(item.percentage) || (
                     <span className="progress">{item.percentage}%</span>
                   )}
-                  <span className="name" title={`${item.name} [${item.id}]`}>
-                    <>{trunc(item.name, 40)}</>
+                  <span
+                    className="name"
+                    title={`${item.name} [${item.category}]`}
+                    // title={`${item.name} [${item.category}] [${item.id}]`}
+                  >
+                    {/* {item.name} */}
+                    <span className="clip">{item.name}</span>
                   </span>
                   <span className="category">{item.category || ''}</span>
                   <span className="size">{item.size || ''}</span>
-                  {/* <span className="progress">{item.percentage || ''}</span> */}
                   <span className="nzb-actions">
                     {client.isDownloading(item) && (
                       <Pause
