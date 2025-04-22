@@ -225,29 +225,27 @@ export class Client {
 
     // If we're overriding categories, use that.
     if (OverrideCategory) {
-      logger.debug(`Overriding category "${category}" with "${OverrideCategory}"`);
+      logger.log(`Overriding category "${category}" with "${OverrideCategory}"`);
       return OverrideCategory;
     }
 
     // If we're ignoring categories, send nothing.
     if (IgnoreCategories) {
-      logger.debug(`Ignoring category "${category}"`);
+      logger.log(`Ignoring category "${category}"`);
       return undefined;
     }
 
     // If the category is empty, use the default if set.
     if (!category && DefaultCategory) {
-      logger.debug(
-        `Using default category "${DefaultCategory}" instead of "${category}"`,
-      );
+      logger.log(`No category, using default category "${DefaultCategory}"`);
       return DefaultCategory || undefined;
     }
 
     // Simplify category if set
     if (category && SimplifyCategories) {
-      logger.debug(`Simplifying category "${category}"`);
+      logger.log(`Simplifying category "${category}"`);
       category = simplifyCategory(category);
-      logger.debug(`    >> "${category}"`);
+      logger.log(`    >> "${category}"`);
     }
 
     return category || undefined;
@@ -280,20 +278,22 @@ export class Client {
     return await this._awaitRefresh((await this.getDownloader())?.resumeQueue());
   }
 
-  async addUrl(url: string, options?: NZBAddOptions) {
-    const category = await this.transmogrifyCategory(options?.category);
-    if (category) {
-      options = { ...(options ?? {}), category };
-    }
+  async addUrl(url: string, options: NZBAddOptions = {}) {
+    options = {
+      ...options,
+      category: await this.transmogrifyCategory(options?.category),
+    };
+
+    logger.log('addUrl', url, options);
 
     return await this._awaitRefresh((await this.getDownloader())?.addUrl(url, options));
   }
 
-  async addFile(filename: string, content: string, options?: NZBAddOptions) {
-    const category = await this.transmogrifyCategory(options?.category);
-    if (category) {
-      options = { ...(options ?? {}), category };
-    }
+  async addFile(filename: string, content: string, options: NZBAddOptions = {}) {
+    options = {
+      ...options,
+      category: await this.transmogrifyCategory(options?.category),
+    };
 
     return await this._awaitRefresh(
       (await this.getDownloader())?.addFile(filename, content, options),

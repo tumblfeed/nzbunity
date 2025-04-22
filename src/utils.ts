@@ -69,10 +69,13 @@ export function setMenuIcon(
     text: badge ?? '',
   });
 
-  const bySize = ['16', '32', '64'].reduce((set, size) => {
-    set[size] = (icons as Record<string, string>)[`icon_nzb_${size}_${color}`];
-    return set;
-  }, {} as Record<string, string>);
+  const bySize = ['16', '32', '64'].reduce(
+    (set, size) => {
+      set[size] = (icons as Record<string, string>)[`icon_nzb_${size}_${color}`];
+      return set;
+    },
+    {} as Record<string, string>,
+  );
 
   return new Promise((resolve) => action.setIcon({ path: bySize }, resolve));
 }
@@ -131,7 +134,7 @@ export async function request(options: RequestOptions): Promise<unknown> {
     if (options.method === 'GET') {
       // GET requests, pack everything in the URL
       for (const [k, v] of Object.entries(options.params ?? {})) {
-        url.searchParams.set(k, String(v));
+        url.searchParams.set(k, typeof v === 'undefined' || v === null ? '' : `${v}`);
       }
     } else if (!options.body) {
       // Other types of requests, figure out content type if not specified

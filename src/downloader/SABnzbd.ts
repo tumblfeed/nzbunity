@@ -63,7 +63,7 @@ export class SABnzbd extends Downloader {
     }
 
     for (const [k, v] of Object.entries(params)) {
-      req.params![k] = String(v);
+      req.params![k] = v;
     }
 
     try {
@@ -191,16 +191,15 @@ export class SABnzbd extends Downloader {
     const params: Record<string, string> = { name: url };
 
     for (const [k, v] of Object.entries(options)) {
-      const val = String(v);
       switch (k) {
         case 'name':
-          params.nzbname = val;
+          params.nzbname = v;
           break;
         case 'category':
-          params.cat = val;
+          params.cat = v;
           break;
         default:
-          params[k] = val;
+          params[k] = v;
       }
     }
 

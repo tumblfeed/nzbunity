@@ -59,14 +59,13 @@ class NZBFinderContent extends Content {
       // try to get the main category from the url
       const [, catMatch] =
         new RegExp(`/(\\w+)/${cat}`).exec(window.location.pathname) ?? [];
-      if (catMatch) return `${catMatch} ${cat}`;
+      if (catMatch) return `${catMatch} > ${cat}`;
     }
 
     return cat;
   }
 
   async ready() {
-    console.debug(this.getNzbUrl('lol'));
     // warn on missing parms
     this.debug(`[NZB Unity] ready()`, { uid: this.uid, apikey: this.apikey });
     if (!this.uid) console.warn(`[NZB Unity] Unable to find username`);
@@ -160,19 +159,15 @@ class NZBFinderContent extends Content {
         backgroundImage: `url(${iconGreen})`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
+        display: 'inline-block',
       });
 
       if (this.isInList(a)) {
         // List
-        link.style.display = 'inline';
-
-        const linkImg = link.querySelector('& > img');
-        if (linkImg) (linkImg as HTMLElement).style.display = 'inline';
-
+        link.classList.add('align-middle');
         a.parentElement!.style.minWidth = `75px`;
       } else {
         // Covers
-        link.style.backgroundPosition = 'center';
         link.style.width = '32px';
         link.classList.add('align-bottom', 'h-full');
       }

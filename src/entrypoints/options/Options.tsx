@@ -31,7 +31,6 @@ function Options() {
   );
 
   const addDownloader = () => {
-    logger.debug('addDownloader');
     setCurrentDownloader({
       ...DefaultDownloaderOptions,
       Name: downloaderNames().length ? '' : 'Default',
@@ -39,7 +38,6 @@ function Options() {
   };
 
   const saveDownloader = async (downloader: DownloaderOptions) => {
-    logger.debug('saveDownloader', downloader);
     if (!options) return;
 
     const downloaders = await getDownloaders();
@@ -54,7 +52,6 @@ function Options() {
   };
 
   const removeDownloader = async (downloader?: DownloaderOptions) => {
-    logger.debug('removeDownloader');
     const name = downloader?.Name ?? currentDownloader?.Name;
     if (!options || !name) return;
 
@@ -74,7 +71,6 @@ function Options() {
   };
 
   const saveIndexer = async (name: string, indexer: IndexerOptions) => {
-    logger.debug('saveIndexer', indexer);
     if (!options) return;
 
     const indexers = options.Indexers;
@@ -83,7 +79,6 @@ function Options() {
   };
 
   const resetOptions = async () => {
-    logger.debug('resetOptions');
     if (
       confirm(
         'Are you sure you want to reset all settings to default? This cannot be undone.',

@@ -237,9 +237,7 @@ export abstract class Content {
     }
     // Remove classes and elements added by the content script
     document.documentElement.classList.remove(classLight);
-    document
-      .querySelectorAll('.NZBUnityLink, .NZBUnityButton')
-      .forEach((el) => el.remove());
+    document.querySelectorAll('[class^="NZBUnity"]').forEach((el) => el.remove());
   }
 
   /**
