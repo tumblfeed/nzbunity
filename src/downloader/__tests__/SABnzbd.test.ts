@@ -174,20 +174,21 @@ describe.skip('Queue items', async () => {
   });
 
   // This does not work from the node context, figure it out
-  // it.todo('Adds NZB by file upload, paused');
-  // test('Adds NZB by file upload, paused', async () => {
-  //     //   const content = readFileSync(env.nzb.file);
+  it.skip('Adds NZB by file upload, paused', async () => {
+    // Get file content
+    const content = await fetch(import.meta.env.VITE_NZB_URL).then((res) => res.text());
 
-  //   // abstract addFile(filename: string, content: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
-  //   const response = await host.addFile(
-  //     'testnzb.nzb',
-  //     content,
-  //     {
-  //       category: 'download',
-  //       name: 'Test NZB',
-  //       paused: true,
-  //     },
-  //   );
+    expect(content).not.toBeNull();
+    expect(content).toContain('<nzb');
 
-  // });
+    // abstract addFile(filename: string, content: string, options: NZBAddOptions): Promise<NZBAddUrlResult>;
+    const response = await client.addFile('testnzb.nzb', content, {
+      category: 'download',
+      name: 'Test NZB',
+      paused: true,
+    });
+
+    expect(response).not.toBeNull();
+    expect(response.success).toBeTruthy();
+  });
 });

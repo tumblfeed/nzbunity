@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "2.0.0-rc.3",
+  "version": "2.0.0",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "tumblfeed@gmail.com",
@@ -25,7 +25,8 @@
     "zip": "wxt zip --sources",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "test": "vitest --mode test",
+    "test": "vitest run --mode test",
+    "test:watch": "vitest --mode test",
     "postinstall": "wxt prepare",
     "compose": "docker compose -f test/docker/docker-compose.yaml",
     "compose:sabnzbd": "npm run compose -- up sabnzbd",

@@ -93,6 +93,34 @@ function Options() {
       <h1>NZB Unity Options</h1>
       <div id="Version">{options?.Version}</div>
 
+      <section id="whatsnew" className="collapsible collapsed">
+        <h2 onClick={(e) => e.currentTarget.parentElement?.classList.toggle('collapsed')}>
+          What's New in 2.0
+        </h2>
+        <div className="collapsible-content">
+          <p>Changes:</p>
+          <ul>
+            <li>Full core rewrite, removed external library dependencies.</li>
+            <li>New look, new options page.</li>
+            <li>Removed support for NZB interception due to Manifest V3.</li>
+            <li>
+              Removed support for universal Newznab detection - Difficult to get approval
+              for the all-sites permissions in Chrome Web Store. However, see the next
+              point.
+            </li>
+            <li>
+              Added a Hotkey to invoke the Newznab integration manually (check your
+              browser settings). This should work on any standard Newznab site [please
+              report any issues].
+            </li>
+          </ul>
+          <p>
+            Thank you all for your support and patience while I worked on this. I hope you
+            enjoy the new version! This message will self-destruct in version 2.1.
+          </p>
+        </div>
+      </section>
+
       <section id="downloaders">
         <h2>Download Clients</h2>
 

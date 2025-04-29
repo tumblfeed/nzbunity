@@ -1,4 +1,6 @@
-import content from '~/entrypoints/content';
+// Disable the same-origin policy for fetch requests in tests (route-info doesn't allow CORS requests)
+import type DetachedWindowAPI from 'happy-dom/lib/window/DetachedWindowAPI.js';
+(globalThis.happyDOM as DetachedWindowAPI).settings.fetch.disableSameOriginPolicy = true;
 
 Object.defineProperty(browser.runtime, 'getManifest', {
   value: () => ({
@@ -15,3 +17,8 @@ Object.defineProperty(browser.runtime, 'getManifest', {
     ],
   }),
 });
+
+// Catch all messages to prevent errors in tests (this is mostly logging, so will need to implement addUrl / addFile if needed for a test)
+browser.runtime.onMessage.addListener(
+  (message: MessageEvent, sender: any, sendResponse: (response: any) => void) => {},
+);

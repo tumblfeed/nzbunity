@@ -71,6 +71,35 @@ section > div:has(label + select) {
   margin: 1rem 0;
 }
 
+.collapsible {
+  overflow: hidden;
+
+  > h2 {
+    cursor: pointer;
+    margin: 0;
+  }
+
+  > h2:after {
+    content: '▲';
+    float: right;
+    font-size: var(--font-size-sm);
+  }
+
+  &.collapsed > h2:after {
+    content: '▼';
+  }
+
+  .collapsible-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    max-height: 50em;
+  }
+
+  &.collapsed .collapsible-content {
+    max-height: 0;
+  }
+}
+
 #Version {
   font-size: var(--font-size-md);
   position: absolute;

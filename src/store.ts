@@ -461,5 +461,8 @@ export async function translateV1(
 
   // Don't need to copy providers, they have not changed
 
+  // Set version to current version
+  newOptions.Version = manifest().version;
+
   return newOptions;
 }

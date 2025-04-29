@@ -223,6 +223,9 @@ export class SABnzbd extends Downloader {
     content: string | Buffer | File,
     options: NZBAddOptions = {},
   ): Promise<NZBAddUrlResult> {
+    // Upload NZB using POST multipart/form-data. In your form, set the value of the field mode to addfile;
+    // the file data should be in the field name or the field nzbfile.
+
     const params: Record<string, string> = {
       apikey: this.key,
       mode: 'addfile',
@@ -250,7 +253,7 @@ export class SABnzbd extends Downloader {
       url: `${this.url}?${objectToQuery(params)}`,
       params,
       files: {
-        name: {
+        nzbfile: {
           filename,
           type: 'application/nzb',
           content,

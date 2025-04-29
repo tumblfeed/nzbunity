@@ -165,7 +165,7 @@ class NZBFinderContent extends Content {
       if (this.isInList(a)) {
         // List
         link.classList.add('align-middle');
-        a.parentElement!.style.minWidth = `75px`;
+        a.parentElement!.style.minWidth = `80px`;
       } else {
         // Covers
         link.style.width = '32px';

@@ -69,13 +69,10 @@ export function setMenuIcon(
     text: badge ?? '',
   });
 
-  const bySize = ['16', '32', '64'].reduce(
-    (set, size) => {
-      set[size] = (icons as Record<string, string>)[`icon_nzb_${size}_${color}`];
-      return set;
-    },
-    {} as Record<string, string>,
-  );
+  const bySize = ['16', '32', '64'].reduce((set, size) => {
+    set[size] = (icons as Record<string, string>)[`icon_nzb_${size}_${color}`];
+    return set;
+  }, {} as Record<string, string>);
 
   return new Promise((resolve) => action.setIcon({ path: bySize }, resolve));
 }
@@ -155,18 +152,22 @@ export async function request(options: RequestOptions): Promise<unknown> {
 
         case 'multipart':
         case 'multipart/form-data':
-          options.headers.set('Content-Type', 'multipart/form-data');
+          // This is slightly unintuitive, but we need to remove the content type
+          // header so the browser can set it correctly with the boundary
+          options.headers.delete('Content-Type');
           options.body = new FormData();
 
           for (const [k, v] of Object.entries(options.params ?? {})) {
-            (options.body as FormData).append(k, String(v));
+            (options.body as FormData).append(
+              k,
+              typeof v === 'undefined' || v === null ? '' : `${v}`,
+            );
           }
 
           for (const [k, v] of Object.entries(options.files ?? {})) {
             (options.body as FormData).append(
               k,
-              new Blob([v.content], { type: v.type }),
-              v.filename,
+              new File([v.content], v.filename, { type: v.type }),
             );
           }
 
@@ -189,6 +190,15 @@ export async function request(options: RequestOptions): Promise<unknown> {
     // options.credentials = 'include';
   }
 
+  // Cleanup a little
+  // Remove any options we don't want to pass to fetch()
+  delete options.params;
+  delete options.files;
+  delete options.multipart;
+  delete options.json;
+  delete options.username;
+  delete options.password;
+
   // Debug if requested
   if (options.debug || import.meta.env.WXT_DEBUG) {
     console.debug('utils/request() -->', {
@@ -198,6 +208,13 @@ export async function request(options: RequestOptions): Promise<unknown> {
       headers: Object.fromEntries(options.headers),
       body: options.body,
     });
+
+    if (options.body instanceof FormData) {
+      console.debug(
+        'utils/request() --> body:',
+        Object.fromEntries(options.body as FormData),
+      );
+    }
   }
 
   // Make the request
