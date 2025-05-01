@@ -1,8 +1,11 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
 
+const autoLoadHosts = ['nzbplanet.net', 'oznzb.com'];
+
 export default defineContentScript({
-  registration: 'runtime',
+  // Automatically load on these sites (still allows hotkey loading)
+  matches: autoLoadHosts.map((host) => `*://*.${host}/*`),
   main(ctx) {
     new NewznabContent(ctx);
   },
@@ -27,6 +30,7 @@ class NewznabContent extends Content {
 
   async ready() {
     this._apiurl = `${window.location.origin}/api`;
+
     // Site specific api urls
     if (/newz-complex\.org/i.test(window.location.host)) {
       this._apiurl = `${window.location.origin}/www/api`;
@@ -39,6 +43,18 @@ class NewznabContent extends Content {
     this.debug(`[NZB Unity] ready()`, { uid: this.uid, apikey: this.apikey });
     if (!this.uid) console.warn(`[NZB Unity] Unable to find username`);
     if (!this.apikey) console.warn(`[NZB Unity] Unable to find apikey`);
+
+    if (!this.uid || !this.apikey) {
+      this.toast(
+        'NZB Unity: Unable to find UID or API key (this may not be a Newznab site)!',
+      );
+      return false;
+    }
+
+    if (!autoLoadHosts.some((host) => window.location.host.includes(host))) {
+      // If not auto loading, script was injected by the user, so give some feedback
+      this.toast('NZB Unity: 1-click activated for this page!');
+    }
   }
 
   initializeLinks = () => {

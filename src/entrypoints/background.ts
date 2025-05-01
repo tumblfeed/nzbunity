@@ -34,6 +34,10 @@ export default defineBackground(() => {
               target: { tabId: tab.id },
               files: ['content-scripts/newznab.js'],
             });
+            browser.scripting.insertCSS({
+              target: { tabId: tab.id },
+              files: ['content-scripts/newznab.css'],
+            });
           }
         });
         break;

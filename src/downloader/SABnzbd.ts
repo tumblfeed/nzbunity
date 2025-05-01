@@ -117,15 +117,15 @@ export class SABnzbd extends Downloader {
     const result = nzbResult.result! as Record<string, string>;
 
     let speedBytes: number = 0;
-    const speedMatch = result.speed.match(/(\d+)\s+(\w+)/i);
-    if (speedMatch) {
-      speedBytes = parseInt(speedMatch[1]);
+    const [, speedNumeric, speedUnit] = result.speed.match(/([\d\.]+)\s+(\w+)/i) ?? [];
+    if (speedNumeric) {
+      speedBytes = parseFloat(speedNumeric);
       speedBytes *=
         {
           G: Gigabyte,
           M: Megabyte,
           K: Kilobyte,
-        }[speedMatch[2].toUpperCase()] || 1;
+        }[speedUnit.toUpperCase()] || 1;
     }
 
     const maxSpeedBytes: number = parseInt(result.speedlimit_abs);

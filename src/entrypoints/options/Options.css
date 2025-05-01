@@ -45,6 +45,7 @@ label:has(> input[type='checkbox']) {
   align-items: center;
   gap: 0.75rem;
   margin: 0.5rem 0;
+  width: fit-content;
 }
 
 section > div:has(> label + input),

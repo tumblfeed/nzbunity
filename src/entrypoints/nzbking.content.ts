@@ -34,7 +34,7 @@ class NZBKingContent extends Content {
     for (const el of document.querySelectorAll('a[href^="/nzb:"]')) {
       const a = el as HTMLAnchorElement;
       const link = this.createAddUrlLink({
-        url: `${window.location.origin}${a.href}`,
+        url: a.href,
         linkOptions: {
           styles: {
             margin: '0 5px 0 0',

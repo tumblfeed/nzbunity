@@ -18,11 +18,10 @@ export default defineConfig({
     ],
     commands: {
       _execute_action: {
-        suggested_key: {
-          default: 'Ctrl+Shift+U',
-          mac: 'Command+Shift+U',
-        },
         description: 'Open the popup',
+        suggested_key: {
+          default: 'Alt+Shift+U',
+        },
       },
       'toggle-queue': {
         description: 'Toggle queue',
@@ -32,6 +31,9 @@ export default defineConfig({
       },
       'activate-newznab': {
         description: 'Add 1-click actions to the current Newznab page',
+        suggested_key: {
+          default: 'Alt+Shift+N',
+        },
       },
     },
   },

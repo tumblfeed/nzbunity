@@ -113,3 +113,25 @@
     background-image: var(--icon-nzb-red);
   }
 }
+
+.NZBUnityToast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+
+  height: auto;
+  width: auto;
+  max-width: 300px;
+  padding: 12px;
+  padding-left: 36px;
+
+  font-size: 18px;
+
+  color: var(--nzb-text);
+  background: rgb(from var(--nzb-base) r g b / 0.9) var(--icon-nzb-green) no-repeat scroll
+    12px center;
+  border: 1px solid var(--nzb-text);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}

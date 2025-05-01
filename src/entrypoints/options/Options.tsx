@@ -95,7 +95,7 @@ function Options() {
 
       <section id="whatsnew" className="collapsible collapsed">
         <h2 onClick={(e) => e.currentTarget.parentElement?.classList.toggle('collapsed')}>
-          What's New in 2.0
+          What's New in 2.0.1
         </h2>
         <div className="collapsible-content">
           <p>Changes:</p>
@@ -104,19 +104,23 @@ function Options() {
             <li>New look, new options page.</li>
             <li>Removed support for NZB interception due to Manifest V3.</li>
             <li>
-              Removed support for universal Newznab detection - Difficult to get approval
-              for the all-sites permissions in Chrome Web Store. However, see the next
-              point.
+              Added a Hotkey to invoke the Newznab integration manually, by default
+              Alt-Shift-N (check your browser extension settings to change). This should
+              work on any standard Newznab site (see below for details).
             </li>
             <li>
-              Added a Hotkey to invoke the Newznab integration manually (check your
-              browser settings). This should work on any standard Newznab site [please
-              report any issues].
+              (2.0.1) NZBPlanet will now automatically show 1-click download buttons using
+              the Newznab general profile. Please request any other sites you would like
+              to see added.
             </li>
           </ul>
           <p>
-            Thank you all for your support and patience while I worked on this. I hope you
-            enjoy the new version! This message will self-destruct in version 2.1.
+            Thank you all for your support and patience. I hope you enjoy the new version!
+            Please report any problem or request features via the{' '}
+            <a href="https://github.com/tumblfeed/nzbunity/issues" target="_blank">
+              GitHub Issues page
+            </a>
+            . This message will self-destruct in version 2.1.
           </p>
         </div>
       </section>
@@ -203,6 +207,7 @@ function Options() {
           </ul>
         </div>
 
+        {/* This should have been removed
         <div
           data-tooltip-id="tooltip"
           data-tooltip-html="
@@ -218,6 +223,7 @@ function Options() {
             onChange={(e) => setOptions({ IndexerNewznab: e.target.value })}
           />
         </div>
+        */}
 
         <div>
           <label>
@@ -230,6 +236,21 @@ function Options() {
             Replace download links on 1-click sites instead of adding an additional
             download button
           </label>
+        </div>
+
+        <div>
+          <h4>About Newznab sites:</h4>
+          <p>
+            Newznab is generic indexing software used by many indexer sites. NZB Unity can
+            add 1-click download buttons to any site that uses Newznab, but there are many
+            and they change often, so 1-click functionality must be activated manually on
+            each page load using a configurable browser hotkey -{' '}
+            <strong>Alt-Shift-N</strong> by default.
+          </p>
+          <p>
+            The following Newznab sites will be automatically enabled with the 1-click
+            Newznab prodile: <strong>NZBPlanet</strong>.
+          </p>
         </div>
       </section>
 

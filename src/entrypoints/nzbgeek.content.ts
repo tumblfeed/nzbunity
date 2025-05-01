@@ -15,9 +15,7 @@ class NZBGeekContent extends Content {
 
   initializeLinks = () => {
     // Create direct download links
-    for (const el of document.querySelectorAll(
-      'a[href*="/api?t=get&id="]:not(:has(i))',
-    )) {
+    for (const el of document.querySelectorAll('a[href*="/api?t=get&id="]:has(i)')) {
       const a = el as HTMLAnchorElement;
       const row = a.closest('tr.releases');
 
@@ -42,26 +40,33 @@ class NZBGeekContent extends Content {
         }
       }
 
+      let link: HTMLAnchorElement;
+
       if (this.replaceLinks) {
-        this.bindAddUrl(a, url, category, true);
+        link = a;
+        this.bindAddUrl(a, url, category);
       } else {
-        const link = this.createAddUrlLink({
+        link = this.createAddUrlLink({
           url,
           category,
+          linkOptions: {
+            styles: {
+              marginRight: '5px',
+            },
+          },
         });
-
-        link.addEventListener('nzb.success', () => {
-          const img = document.createElement('img');
-          img.src = 'pics/downloaded.png';
-          img.className = 'hastip';
-          img.style.width = '13px';
-          img.style.marginRight = '.25em';
-
-          link.closest('tr')?.querySelector('a[href*="details"]')?.prepend(img);
-        });
-
-        a.insertAdjacentElement('afterend', link);
+        a.insertAdjacentElement('beforebegin', link);
       }
+
+      link.addEventListener('nzb.success', () => {
+        const img = document.createElement('img');
+        img.src = 'pics/downloaded.png';
+        img.className = 'hastip';
+        img.style.width = '13px';
+        img.style.marginRight = '.25em';
+
+        link.closest('tr')?.querySelector('a[href*="details"]')?.prepend(img);
+      });
     }
   };
 }

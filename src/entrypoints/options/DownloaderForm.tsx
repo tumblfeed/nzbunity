@@ -119,7 +119,6 @@ function DownloaderForm({
     // If save is not yet in progress, start with a test
     if (!shouldSave) {
       const url = await test();
-      if (url === null) return; // Invalid, do not save
 
       // If no url was found, confirm for save
       if (
@@ -159,12 +158,13 @@ function DownloaderForm({
     <div id="downloader-settings">
       <div className="form">
         {/* <ul>
-        <li>dirty: {JSON.stringify(dirty)}</li>
-        <li>shouldCheck: {JSON.stringify(shouldCheck)}</li>
-        <li>isValid: {JSON.stringify(isValid)}</li>
-        <li>invalidNames: {JSON.stringify(invalidNames)}</li>
-        <li>Invalid: {JSON.stringify(invalid)}</li>
-      </ul> */}
+          <li>dirty: {JSON.stringify(dirty)}</li>
+          <li>shouldCheck: {JSON.stringify(shouldCheck)}</li>
+          <li>isValid: {JSON.stringify(isValid)}</li>
+          <li>invalidNames: {JSON.stringify(invalidNames)}</li>
+          <li>Invalid: {JSON.stringify(invalid)}</li>
+        </ul> */}
+        <div>Don't forget to save after making any changes.</div>
         <div
           data-tooltip-id="tooltip"
           data-tooltip-html="
@@ -325,13 +325,29 @@ function DownloaderForm({
       <div className="actions right">
         <button
           onClick={test}
-          className={testResult === null ? '' : testResult ? 'success' : 'fail'}
+          className={
+            testResult !== null
+              ? testResult
+                ? 'success'
+                : 'fail'
+              : dirty
+              ? 'highlight'
+              : ''
+          }
+          data-tooltip-id="tooltip"
+          data-tooltip-html="Test and automatically find the full URL."
         >
           Test
           {testResult === true && <Success />}
           {testResult === false && <Failure />}
         </button>
-        <button onClick={save} disabled={!dirty || !isValid}>
+        <button
+          onClick={save}
+          disabled={!dirty || !isValid}
+          className={dirty ? 'highlight' : ''}
+          data-tooltip-id="tooltip"
+          data-tooltip-html={dirty ? 'Save changes' : 'No changes to save'}
+        >
           <Save /> Save
         </button>
         {currentDownloader && (

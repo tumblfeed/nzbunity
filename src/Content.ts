@@ -9,6 +9,13 @@ import '~/assets/content.css';
 
 export { request, RequestOptions } from '~/utils';
 
+export class ContentDisabledError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ContentDisabledError';
+  }
+}
+
 export const classLight: string = 'NZBUnityLight';
 
 export abstract class Content {
@@ -98,16 +105,25 @@ export abstract class Content {
       .then((options) => {
         this.replaceLinks = options.ReplaceLinks;
 
-        // Check that the indexer is present and enabled
-        if (!options.Indexers[this.id]) {
-          throw Error(`Indexer key not found: ${this.id}`);
+        if (this.id === 'newznab') {
+          // Newznab is a special case, and should be enabled by default
+          this.indexerOptions = {
+            Display: 'Newznab',
+            Enabled: options.EnableNewznab ?? true,
+          };
+        } else {
+          // Check that the indexer is present and enabled
+          if (!options.Indexers[this.id]) {
+            throw Error(`Indexer key not found: ${this.id}`);
+          }
+
+          this.indexerOptions = options.Indexers[this.id];
         }
 
-        this.indexerOptions = options.Indexers[this.id];
-
         if (!this.indexerOptions?.Enabled) {
-          console.info(`[NZB Unity] 1-click functionality disabled for this site`);
-          return;
+          throw new ContentDisabledError(
+            `[NZB Unity] 1-click functionality disabled for this site`,
+          );
         }
 
         // Set page params
@@ -121,8 +137,9 @@ export abstract class Content {
       })
       .then((readyState: void | boolean) => {
         if (readyState === false) {
-          console.warn(`[NZB Unity] Ready failed, disabling ${this.name} content script`);
-          return;
+          throw new ContentDisabledError(
+            `[NZB Unity] Ready failed, disabling ${this.name} content script`,
+          );
         }
         // Ready succeeded, continue
         return this.onReady();
@@ -133,6 +150,11 @@ export abstract class Content {
         this.ctx.onInvalidated(() => this.cleanup());
       })
       .catch((err) => {
+        if (err instanceof ContentDisabledError) {
+          console.warn(err.message);
+          return;
+        }
+        // Otherwise, log the error
         console.error(`[NZB Unity] Error initializing ${this.name} content script`, err);
       });
   }
@@ -241,6 +263,23 @@ export abstract class Content {
   }
 
   /**
+   * Display a toast message on the page.
+   * Useful for notifications that don't need to be desktop notifications.
+   */
+  toast(message: string, duration: number = 5000) {
+    const toast = document.createElement('div');
+    toast.classList.add('NZBUnityToast');
+    toast.insertAdjacentHTML('beforeend', message);
+    document.body.appendChild(toast);
+
+    if (duration > 0) {
+      this.ctx.setTimeout(() => {
+        toast.remove();
+      }, duration);
+    }
+  }
+
+  /**
    * Adds a URL to the downloader by sending a message to the background script.
    * @param url
    * @param {NZBAddUrlOptions} options
@@ -336,24 +375,16 @@ export abstract class Content {
    * @param el The element to watch for clicks
    * @param url The URL to add
    * @param category (optional) The category to add the URL to
-   * @param exclusive (default false) If true, the event will be captured and not bubble
    * @returns
    */
-  bindAddUrl(
-    el: HTMLElement,
-    url: string,
-    category: string = '',
-    exclusive: boolean = false,
-  ): HTMLElement {
+  bindAddUrl(el: HTMLElement, url: string, category: string = ''): HTMLElement {
     el.addEventListener(
       'click',
-      async (event) => {
+      (event) => {
         event.preventDefault();
-        await this.addUrlAndNotify(el, url, category);
+        this.addUrlAndNotify(el, url, category);
       },
-      {
-        capture: !!exclusive,
-      },
+      false,
     );
 
     return el;
@@ -453,7 +484,7 @@ export abstract class Content {
     label?: string | boolean;
     styles?: Record<string, string>;
     className?: string;
-  } = {}): HTMLElement {
+  } = {}): HTMLAnchorElement {
     const a = document.createElement('a');
     if (className) a.classList.add(className);
     a.title = 'Download with NZB Unity';
@@ -497,7 +528,7 @@ export abstract class Content {
     styles?: Record<string, string>;
     className?: string;
     element?: 'button' | 'a';
-  } = {}): HTMLElement {
+  } = {}): HTMLButtonElement | HTMLAnchorElement {
     const btn = document.createElement(element);
     if (className) btn.classList.add(className);
 
@@ -545,9 +576,10 @@ export abstract class Content {
     category?: string;
     adjacent?: HTMLElement;
     linkOptions?: Parameters<Content['createLink']>[0];
-  }): HTMLElement {
+  }): HTMLAnchorElement {
     // console.debug(`${this.name}.createAddUrlLink`, url, category, adjacent, linkOptions);
-    const a = this.bindAddUrl(this.createLink(linkOptions), url, category);
+    const a = this.createLink(linkOptions);
+    this.bindAddUrl(a, url, category);
     a.setAttribute('href', url);
 
     if (adjacent) {
@@ -575,9 +607,10 @@ export abstract class Content {
     category?: string;
     adjacent?: HTMLElement;
     buttonOptions?: Parameters<Content['createButton']>[0];
-  }): HTMLElement {
+  }): HTMLButtonElement | HTMLAnchorElement {
     // console.debug(`${this.name}.createAddUrlButton`, url, category, adjacent, buttonOptions);
-    const btn = this.bindAddUrl(this.createButton(buttonOptions), url, category);
+    const btn = this.createButton(buttonOptions);
+    this.bindAddUrl(btn, url, category);
 
     if (adjacent) {
       adjacent.insertAdjacentElement('afterend', btn);
@@ -604,16 +637,5 @@ export abstract class Content {
     }
 
     return category.trim();
-  }
-
-  /**
-   * Checks if the current page is a Newznab page.
-   */
-  static isNewznab(): boolean {
-    return (
-      (document.querySelectorAll('[name="RSSTOKEN" i]').length > 0 &&
-        document.querySelectorAll('input.nzb_multi_operations_cart').length > 0) ||
-      document.querySelectorAll('#browsetable tr td.item label').length > 0
-    );
   }
 }
