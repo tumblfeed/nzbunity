@@ -486,8 +486,8 @@ export abstract class Content {
     className?: string;
   } = {}): HTMLAnchorElement {
     const a = document.createElement('a');
-    if (className) a.classList.add(className);
     a.title = 'Download with NZB Unity';
+    if (className) a.className = className;
 
     if (label) {
       if (label === true) label = 'Download';
@@ -530,7 +530,7 @@ export abstract class Content {
     element?: 'button' | 'a';
   } = {}): HTMLButtonElement | HTMLAnchorElement {
     const btn = document.createElement(element);
-    if (className) btn.classList.add(className);
+    if (className) btn.className = className;
 
     switch (context) {
       case 'list':

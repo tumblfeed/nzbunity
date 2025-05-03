@@ -109,6 +109,10 @@ function DownloaderForm({
     if (url) {
       setTestResult(true);
       setFields({ ApiUrl: url });
+      // Go ahead and automatically save if the test was successful
+      // This means the user doesn't have to click save after testing, and is
+      // more intuitive, but it does mean that the 2 buttons are actually the same.
+      setShouldSave(true);
       return true;
     }
     setTestResult(false);
@@ -118,11 +122,11 @@ function DownloaderForm({
   const save = async () => {
     // If save is not yet in progress, start with a test
     if (!shouldSave) {
-      const url = await test();
+      const found = await test();
 
       // If no url was found, confirm for save
       if (
-        !url &&
+        !found &&
         !confirm(
           'Could not validate the API URL. Are you sure you want to save this downloader?',
         )

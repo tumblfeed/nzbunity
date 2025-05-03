@@ -28,6 +28,16 @@ class NewznabContent extends Content {
     return `${this.apiurl}?t=get&i=${this.uid}&apikey=${this.apikey}&guid=${id}&id=${id}`;
   }
 
+  getCategory(el: HTMLElement): string {
+    const [, category] = el
+      .closest('tr')
+      ?.querySelector('[href^="/browse?t"]')
+      ?.getAttribute('title')
+      ?.replace(/^Browse /, '')
+      ?.match(/^(\w+)/) ?? [, ''];
+    return category;
+  }
+
   async ready() {
     this._apiurl = `${window.location.origin}/api`;
 
@@ -63,13 +73,7 @@ class NewznabContent extends Content {
       const a = el as HTMLAnchorElement;
       const [, id] = a.href.match(/\/getnzb\/(\w+)/i) ?? [, ''];
       const url = this.getNzbUrl(id);
-
-      const [, category] = a
-        .closest('tr')
-        ?.querySelector('[href^="/browse?t"]')
-        ?.getAttribute('title')
-        ?.replace(/^Browse /, '')
-        ?.match(/^(\w+)/) ?? [, ''];
+      const category = this.getCategory(a);
 
       const link = this.createAddUrlLink({
         url,
@@ -86,7 +90,7 @@ class NewznabContent extends Content {
           link.style.margin = '0 .2em 0 .5em';
         }
 
-        a.closest('td')?.append(link);
+        a.insertAdjacentElement('beforebegin', link);
       }
     }
 
@@ -103,16 +107,7 @@ class NewznabContent extends Content {
           // Get the ID from each checkbox
           (el) => (el as HTMLInputElement).value,
           // Get the category from each checkbox
-          (el) => {
-            return (
-              (el as HTMLInputElement)
-                .closest('tr')
-                ?.querySelector('[href^="/browse?t"]')
-                ?.getAttribute('title')
-                ?.replace(/^Browse /, '')
-                ?.trim() ?? ''
-            );
-          },
+          (el) => this.getCategory(el as HTMLInputElement),
         );
       });
 

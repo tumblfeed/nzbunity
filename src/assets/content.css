@@ -34,6 +34,15 @@
   --nzb-highlight: var(--latte-blue);
 }
 
+.NZBUnityIcon {
+  display: inline-block;
+  /* Don't set color here, just the image */
+  background-image: var(--icon-nzb-green);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-position: center;
+}
+
 .NZBUnityLink {
   color: var(--nzb-text);
   background: transparent var(--icon-nzb-green) no-repeat scroll left center;

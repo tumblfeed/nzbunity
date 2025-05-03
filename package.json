@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "tumblfeed@gmail.com",
@@ -22,8 +22,10 @@
     "dev:firefox": "wxt -b firefox",
     "build": "wxt build",
     "build:firefox": "wxt build -b firefox",
+    "build:all": "wxt build && wxt build -b firefox",
     "zip": "wxt zip --sources",
     "zip:firefox": "wxt zip -b firefox",
+    "zip:all": "wxt zip --sources && wxt zip -b firefox",
     "compile": "tsc --noEmit",
     "test": "vitest run --mode test",
     "test:watch": "vitest --mode test",

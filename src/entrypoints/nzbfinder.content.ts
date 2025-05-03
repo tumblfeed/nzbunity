@@ -1,6 +1,5 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
-import iconGreen from '~/assets/images/nzb-16-green.png';
 
 export default defineContentScript({
   matches: ['*://*.nzbfinder.ws/*'],
@@ -92,13 +91,13 @@ class NZBFinderContent extends Content {
       }
 
       if (this.replaceLinks) {
-        this.bindAddUrl(a, url, category, true);
+        this.bindAddUrl(a, url, category);
       } else {
         const link = this.createAddUrlLink({
           url,
           category,
           linkOptions: {
-            className: 'NZBUnityLink-custom',
+            className: 'NZBUnityIcon NZBUnityLink-custom',
           },
         });
         link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
@@ -109,8 +108,6 @@ class NZBFinderContent extends Content {
           // Info tab, side
           link.innerHTML = `${link.innerHTML} NZB Unity`;
           Object.assign(link.style, {
-            backgroundImage: `url(${iconGreen})`,
-            backgroundRepeat: 'no-repeat',
             backgroundPosition: '18px center',
             display: '',
             width: '',
@@ -143,7 +140,7 @@ class NZBFinderContent extends Content {
       let category = this.getCategory(a);
 
       if (this.replaceLinks) {
-        this.bindAddUrl(a, url, category, true);
+        this.bindAddUrl(a, url, category);
         continue;
       }
 
@@ -151,14 +148,11 @@ class NZBFinderContent extends Content {
         url,
         category,
         linkOptions: {
-          className: 'NZBUnityLink-custom',
+          className: 'NZBUnityIcon NZBUnityLink-custom',
         },
       });
       link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
       Object.assign(link.style, {
-        backgroundImage: `url(${iconGreen})`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
         display: 'inline-block',
       });
 
