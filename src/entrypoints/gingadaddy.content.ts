@@ -32,10 +32,6 @@ class GingaDaddyContent extends Content {
     return uid;
   }
 
-  get apikey(): string {
-    return '';
-  }
-
   getNzbUrl(id: string): string {
     return `${window.location.origin}/gingasrssdownload.php?h=${id}&i=${this.apikey}&uid=${this.uid}&t=dlnzb`;
   }

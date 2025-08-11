@@ -1,7 +1,12 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
 
-const autoLoadHosts = ['nzbplanet.net', 'oznzb.com'];
+const autoLoadHosts = [
+  'newz-complex.org',
+  'ninjacentral.co.za',
+  'nzbplanet.net',
+  'oznzb.com',
+];
 
 export default defineContentScript({
   // Automatically load on these sites (still allows hotkey loading)

@@ -30,7 +30,7 @@ class TabulaRasaContent extends Content {
       return false;
     }
 
-    [, , this._apikey] = this.profileContent.match(/\/rss\?.*(r=([a-z0-9]+))/i) || [];
+    [, , this._apikey] = this.profileContent.match(/api_token=([a-f0-9]+)/i) || [];
 
     // warn on missing parms
     this.debug(`[NZB Unity] ready()`, { apikey: this.apikey });
@@ -50,7 +50,7 @@ class TabulaRasaContent extends Content {
         );
 
         if (this.replaceLinks) {
-          this.bindAddUrl(a, url, category, true);
+          this.bindAddUrl(a, url, category);
         } else {
           const link = this.createAddUrlLink({
             url,
@@ -75,7 +75,7 @@ class TabulaRasaContent extends Content {
         }
       } else if (a.getAttribute('role') === 'button') {
         if (this.replaceLinks) {
-          this.bindAddUrl(a, url, '', true);
+          this.bindAddUrl(a, url, '');
         } else {
           const link = this.createAddUrlLink({
             url,
@@ -94,7 +94,7 @@ class TabulaRasaContent extends Content {
           a.closest('tr[id^="guid"]')?.querySelector('td:nth-child(3)'),
         );
         if (this.replaceLinks) {
-          this.bindAddUrl(a, url, category, true);
+          this.bindAddUrl(a, url, category);
         } else {
           const link = this.createAddUrlLink({
             url,

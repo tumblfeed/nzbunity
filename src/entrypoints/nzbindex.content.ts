@@ -17,11 +17,10 @@ class NzbIndexContent extends Content {
     return true;
   }
 
-  readonly checkboxSelector: string = 'input[id^="release_"][type="checkbox"]';
-  results: HTMLElement[] = [];
+  results: HTMLInputElement[] = [];
 
   getNzbUrl(id: string): string {
-    return `${window.location.origin}/download/${id}`;
+    return `${window.location.origin}/download/${id}.nzb`;
   }
 
   get isDetail(): boolean {
@@ -33,10 +32,18 @@ class NzbIndexContent extends Content {
   }
 
   async ready() {
+    if (!this.isList) return true;
+
     // Wait for the results to load before continuing
-    this.results = Array.from(
-      await this.waitForQuerySelectorAll('#results-table .result:not(#template)'),
-    );
+    try {
+      const results = await this.waitForQuerySelectorAll(
+        'input[id^="select-"][type="checkbox"]',
+      );
+      this.results = Array.from(results) as HTMLInputElement[];
+    } catch (e) {
+      console.error('[NZB Unity] Failed to find results:', e);
+      return false;
+    }
   }
 
   initializeDetailLinks = () => {
@@ -44,7 +51,7 @@ class NzbIndexContent extends Content {
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
-      const [, nzbId] = window.location.pathname.match(/^\/\w+\/(\d+)/) || [];
+      const [, nzbId] = window.location.pathname.match(/^\/\w+\/([a-f0-9\-]+)/) || [];
 
       if (nzbId) {
         console.info(`[NZB Unity] Adding NZB ${nzbId}`);
@@ -52,25 +59,24 @@ class NzbIndexContent extends Content {
       }
     });
 
-    const download = document.querySelector('#actions .download');
+    this.waitForQuerySelector('a[href^="/download"]')
+      .then((download) => {
+        if (!download) throw Error('Failed to find download button');
 
-    if (!download) {
-      return document.querySelector('#actions')?.prepend(button);
-    }
-
-    if (this.replaceLinks) {
-      return download.replaceWith(button);
-    }
-
-    return download.insertAdjacentElement('beforebegin', button);
+        if (this.replaceLinks) {
+          download.replaceWith(button);
+        } else {
+          download.insertAdjacentElement('beforebegin', button);
+        }
+      })
+      .catch(() => {
+        document.querySelector('h1')?.prepend(button);
+      });
   };
 
   initializeListLinks = () => {
     // Direct download links
-    for (const checkbox of this.results.flatMap(
-      (el) =>
-        Array.from(el.querySelectorAll(this.checkboxSelector)) as HTMLInputElement[],
-    )) {
+    for (const checkbox of this.results) {
       const container = checkbox.closest('tr');
       if (!container) continue;
 
@@ -82,8 +88,11 @@ class NzbIndexContent extends Content {
       link.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        const nzbId = checkbox.id.replace('release_', '');
-        const nzbUrl = download?.getAttribute('href');
+        const nzbId = checkbox.value;
+        let nzbUrl = download?.getAttribute('href');
+        if (nzbUrl) {
+          nzbUrl = `${window.location.origin}${nzbUrl}`;
+        }
 
         if (nzbUrl || nzbId) {
           console.info(`[NZB Unity] Adding NZB ${nzbId}`);
@@ -107,27 +116,37 @@ class NzbIndexContent extends Content {
     }
 
     // Create download all button
-    const button = this.createButton({ context: 'selected' });
+
+    console.log(this.results);
+
+    const button = this.createButton({
+      context: 'selected',
+      styles: {
+        float: 'left',
+      },
+    });
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
       this.addUrlsFromElementsAndNotify(
         button,
         // Get all the checked checkboxes
-        this.results.filter((el) => el.querySelector(`${this.checkboxSelector}:checked`)),
+        this.results.filter((el) => el.checked),
         // Get the ID from each checkbox
-        (el) => el.id.replace('release_', ''),
+        (el) => (el as HTMLInputElement).value,
         // Get the category from the checkbox
         () => '',
       );
     });
 
-    const download = document.querySelector('#actions button');
+    const download = Array.from(document.querySelectorAll('button')).find(
+      (el) => el.textContent === 'Download',
+    );
 
     if (download && this.replaceLinks) {
       download.replaceWith(button);
     } else {
-      document.getElementById('actions')?.prepend(button);
+      download?.insertAdjacentElement('beforebegin', button);
     }
   };
 }

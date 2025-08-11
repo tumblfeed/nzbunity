@@ -215,8 +215,12 @@ export abstract class Content {
    * @param selector
    * @param root The root element to search within
    */
-  waitForQuerySelector(selector: string, root = document): Promise<HTMLElement> {
-    return new Promise((resolve) => {
+  waitForQuerySelector(
+    selector: string,
+    root = document,
+    timeout = 5000,
+  ): Promise<HTMLElement> {
+    return new Promise((resolve, reject) => {
       const interval = this.ctx.setInterval(() => {
         const el = root.querySelector(selector);
         if (el) {
@@ -224,6 +228,13 @@ export abstract class Content {
           resolve(el as HTMLElement);
         }
       }, 100);
+
+      if (timeout > 0) {
+        this.ctx.setTimeout(() => {
+          clearInterval(interval);
+          reject(`Timed out waiting for ${selector}`);
+        }, timeout);
+      }
     });
   }
 
@@ -236,8 +247,9 @@ export abstract class Content {
   waitForQuerySelectorAll(
     selector: string,
     root = document,
+    timeout = 5000,
   ): Promise<NodeListOf<HTMLElement>> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const interval = this.ctx.setInterval(() => {
         const els = root.querySelectorAll(selector);
         if (els.length) {
@@ -245,6 +257,13 @@ export abstract class Content {
           resolve(els as NodeListOf<HTMLElement>);
         }
       }, 100);
+
+      if (timeout > 0) {
+        this.ctx.setTimeout(() => {
+          clearInterval(interval);
+          reject(`Timed out waiting for ${selector}`);
+        }, timeout);
+      }
     });
   }
 

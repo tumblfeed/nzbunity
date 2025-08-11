@@ -144,6 +144,13 @@ export abstract class Downloader {
       ports.unshift('');
     }
 
+    // If the parsed path is in the list of path suggestions, remove the pathname from the parsed
+    // So that we don't double anything up
+    const parsedPath = parsed.pathname.replace(/^\//, '');
+    if (parsedPath && paths.includes(parsedPath)) {
+      parsed.pathname = '';
+    }
+
     // Generate suggestions
     const suggestions: string[] = [];
 
@@ -153,10 +160,11 @@ export abstract class Downloader {
           const sugg = new URL(parsed.href); // clone the parsed URL
           // URL's rules for base URL relative paths are a little silly,
           // so we're going to do it manually, gluing the paths together and removing extra slashes
-          sugg.pathname = `${sugg.pathname}/${path}`.replace(/\/+/g, '/');
+          sugg.pathname = `${sugg.pathname}/${path}`
+            .replace(/\/+/g, '/') // remove double slashes
+            .replace(/\/$/, ''); // remove trailing slashe
           sugg.port = port;
           sugg.protocol = protocol;
-
           suggestions.push(sugg.href);
         }
       }
@@ -180,8 +188,12 @@ export abstract class Downloader {
     if (options.ApiUrl) {
       const urls = this.generateApiUrlSuggestions(options.ApiUrl);
       for (const url of urls) {
+        console.debug(`Testing API URL ${url}`);
         const r = await this.testApiUrl(url, options);
-        if (r.success) return url;
+        if (r.success) {
+          console.debug(`Found valid API URL ${url}`);
+          return url;
+        }
       }
     }
     return null;

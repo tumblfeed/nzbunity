@@ -1,17 +1,5 @@
 # NZB Unity
 
-## What's New
-
-- **2.0.0** -- Complete rewrite of the extension using WXT and Manifest V3. For the most part this is a drop-in replacement for the previous version, but some featured had to be removed for compliance / compatibility:
-  - Removed support for NZB interception - Manifest V3
-  - Removed support for universal Newznab detection - Difficult to get approval for the all-sites permissions in Chrome Web Store. However, see next point.
-  - Added a Hotkey to invoke the Newznab integration manually. This should work on any standard Newznab site [please report any issues].
-  - New look, new options page.
-
-Thank you all for your support and patience while I worked on this. I hope you enjoy the new version!
-
-## About
-
 Send and control NZB files directly with SABnzbd or NZBGet download clients. Allows monitoring and control of your download queue (pause, resume) and enables 1-click downloading from a handful of membership NZB sites. Tested in Chrome and Firefox, but should be compatible with any webextension compatible browser. Version 2 and above is a complete rewrite of the original NZB Unity extension, which is fully Manifest V3 compatible.
 
 - [Homepage](https://github.com/tumblfeed/nzbunity)
@@ -147,3 +135,22 @@ class MyRadSiteContent extends Content {
   }
   ...
 ```
+
+## Troubleshooting
+
+### General advice when making an issue
+
+- Make sure you have the latest version of NZBUnity.
+- Make note of the site you are using, or what settings you are changing.
+- Check the developer console for errors and take a screenshot, these are very helpful in figuring out what is going wrong.
+- Steps to reproduce the issue are very helpful: what you did, what you didn't do, what you expected to see, what you actually saw.
+
+### SABnzbd on a remote server
+
+Some LAN configurations may require reverse proxy setups to use NZBUnity if your downloader is on a different machine from your browser (ie, a media server). NZBUnity makes all requests from the browser background context and not the website so some of this should be mitigated, but SABnzbd fully blocks CORS requests to the api if not from the same origin and they have no plans to change that.
+
+If in the developer console you see a message like:
+
+> Access to fetch at 'http://192.168.1.999:8080/?output=json&apikey=deadbeefcafe&mode=fullstatus&skip_dashboard=1' from origin 'chrome-extension://gpifmafclfppgkpjphdkhdaikolnlank' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+That means you will need to set up a reverse proxy for SABnzbd. The easiest way to do this is with [nginx](https://www.nginx.com/resources/wiki/) or [caddy](https://github.com/mholt/caddy) on a docker compose stack with the downloader. Configuration is beyond the scope of this document, but there are a lot of examples on github.

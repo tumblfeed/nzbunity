@@ -2,7 +2,7 @@ import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
 
 export default defineContentScript({
-  matches: ['*://*.nzb.life/*'],
+  matches: ['*://*.nzb.life/*', '*://*.nzb.su/*'],
   main(ctx) {
     new NZBsuContent(ctx);
   },
@@ -55,7 +55,7 @@ class NZBsuContent extends Content {
         .match(/^(\w+)/) ?? [, ''];
 
       if (this.replaceLinks) {
-        this.bindAddUrl(a, url, category, true);
+        this.bindAddUrl(a, url, category);
       } else {
         if (window.location.pathname.startsWith('/details')) {
           const button = this.createAddUrlButton({
