@@ -63,7 +63,7 @@ class DrunkenSlugContent extends Content {
       }
 
       if (this.replaceLinks) {
-        this.bindAddUrl(a, url, category, true);
+        this.bindAddUrl(a, url, category);
       } else {
         const link = this.createAddUrlLink({
           url,

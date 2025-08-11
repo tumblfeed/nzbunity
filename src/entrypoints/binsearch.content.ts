@@ -43,11 +43,11 @@ class BinsearchContent extends Content {
     button.addEventListener('click', async (e) => {
       e.preventDefault();
 
-      const data = new FormData(this.form!);
       const params: Record<string, string> = {};
-      for (const [key, value] of data.entries()) {
-        params[key] = `${value}`;
+      for (const input of this.form!.querySelectorAll('input')) {
+        params[input.name] = `${input.value}`;
       }
+
       const filename = params.name;
 
       button.dispatchEvent(new Event('nzb.pending'));
@@ -88,12 +88,11 @@ class BinsearchContent extends Content {
 
         const nzbId = checkbox.getAttribute('name') as string;
 
-        const data = new FormData(this.form!);
         const params: Record<string, string> = {};
-        for (const [key, value] of data.entries()) {
-          if ((value as string) !== 'on')
-            // skip checkboxes
-            params[key] = `${value}`;
+        for (const input of this.form!.querySelectorAll('input')) {
+          if (input.type === 'checkbox') continue;
+          if (input.type === 'radio' && !input.checked) continue;
+          params[input.name] = `${input.value}`;
         }
 
         console.info(`[NZB Unity] Adding NZB ${nzbId}`);
@@ -138,12 +137,11 @@ class BinsearchContent extends Content {
         console.info(`[NZB Unity] Adding ${nzbIds.length} NZB(s)`);
         button.dispatchEvent(new Event('nzb.pending'));
 
-        const data = new FormData(this.form!);
         const params: Record<string, string> = {};
-        for (const [key, value] of data.entries()) {
-          if ((value as string) !== 'on')
-            // skip checkboxes
-            params[key] = `${value}`;
+        for (const input of this.form!.querySelectorAll('input')) {
+          if (input.type === 'checkbox') continue;
+          if (input.type === 'radio' && !input.checked) continue;
+          params[input.name] = `${input.value}`;
         }
 
         const results = await Promise.all(

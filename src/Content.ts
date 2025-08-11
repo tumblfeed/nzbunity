@@ -350,7 +350,7 @@ export abstract class Content {
     // A lot of sites require POST to fetch NZB and follow this pattern (binsearch, nzbindex, nzbking)
     // Fetches a single NZB from a POST request and adds it to the server as a file upload
     const content = await request({ method, url, params });
-    console.log(`[NZB Unity] File content:`, content);
+    console.debug(`[NZB Unity] File content:`, content);
     return this.addFile(filename, content as string, {
       category,
     });
@@ -428,17 +428,10 @@ export abstract class Content {
     return await Promise.all(
       els.map((el) => {
         const id = getId(el);
-        if (/[a-d0-9]+/.test(id)) {
-          const url = this.getNzbUrl(id);
-          const category = getCategory(el);
-          console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
-          return this.addUrl(url, { category });
-        } else {
-          return Promise.resolve({
-            success: false,
-            error: `Invalid ID: ${id} from ${el}`,
-          } as NZBAddUrlResult);
-        }
+        const url = this.getNzbUrl(id);
+        const category = getCategory(el);
+        console.info(`[NZB Unity] Adding URL ${id} with category ${category}`);
+        return this.addUrl(url, { category });
       }),
     );
   }

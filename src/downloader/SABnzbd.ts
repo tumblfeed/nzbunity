@@ -196,7 +196,7 @@ export class SABnzbd extends Downloader {
           params.nzbname = v;
           break;
         case 'category':
-          params.cat = v;
+          params.cat = v ?? '';
           break;
         default:
           params[k] = v;
@@ -234,13 +234,12 @@ export class SABnzbd extends Downloader {
     };
 
     for (const [k, v] of Object.entries(options)) {
-      const val = String(v);
       switch (k) {
         case 'category':
-          params.cat = val;
+          params.cat = v ?? '';
           break;
         default:
-          params[k] = val;
+          params[k] = v;
       }
     }
 
@@ -250,16 +249,15 @@ export class SABnzbd extends Downloader {
     const req: RequestOptions = {
       method: 'POST',
       multipart: true,
-      url: `${this.url}?${objectToQuery(params)}`,
+      url: this.url,
       params,
       files: {
         nzbfile: {
           filename,
-          type: 'application/nzb',
+          type: 'application/x-nzb',
           content,
         },
       },
-      debug: true,
     };
 
     try {

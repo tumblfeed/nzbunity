@@ -57,7 +57,7 @@ class AlthubContent extends Content {
         category = this.extractCategory(document.querySelector('a[href^="/browse?t="]'));
 
         if (this.replaceLinks) {
-          this.bindAddUrl(a, url, category, true);
+          this.bindAddUrl(a, url, category);
         } else {
           const link = this.createAddUrlButton({
             url,
@@ -75,7 +75,7 @@ class AlthubContent extends Content {
         );
 
         if (this.replaceLinks) {
-          this.bindAddUrl(a, url, category, true);
+          this.bindAddUrl(a, url, category);
         } else {
           const link = this.createAddUrlLink({
             url,
