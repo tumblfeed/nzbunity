@@ -4,13 +4,13 @@ import { Content } from '~/Content';
 export default defineContentScript({
   matches: ['*://*.nzb.life/*', '*://*.nzb.su/*'],
   main(ctx) {
-    new NZBsuContent(ctx);
+    new NZBLifeContent(ctx);
   },
 });
 
-class NZBsuContent extends Content {
+class NZBLifeContent extends Content {
   get id() {
-    return 'nzbsu';
+    return 'nzblife';
   }
 
   get useLightTheme() {
