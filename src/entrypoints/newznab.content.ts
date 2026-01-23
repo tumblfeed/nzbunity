@@ -4,6 +4,7 @@ import { Content } from '~/Content';
 const autoLoadHosts = [
   'newz-complex.org',
   'ninjacentral.co.za',
+  'miatrix.com',
   'nzbplanet.net',
   'oznzb.com',
 ];
