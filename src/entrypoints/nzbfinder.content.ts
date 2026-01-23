@@ -1,5 +1,6 @@
 import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
+import { icon_nzb_32_green } from '~/assets';
 
 export default defineContentScript({
   matches: ['*://*.nzbfinder.ws/*'],
@@ -36,7 +37,7 @@ class NZBFinderContent extends Content {
   }
 
   isInList(link: HTMLElement): boolean {
-    return link.parentElement?.tagName === 'TD';
+    return link.closest('td') !== null;
   }
 
   getLinkContainer(link: HTMLElement): HTMLElement | null {
@@ -152,17 +153,12 @@ class NZBFinderContent extends Content {
         },
       });
       link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
-      Object.assign(link.style, {
-        display: 'inline-block',
-      });
 
+      // List (Do nothing for now)
       if (this.isInList(a)) {
-        // List
-        link.classList.add('align-middle');
-        a.parentElement!.style.minWidth = `80px`;
       } else {
         // Covers
-        link.style.width = '32px';
+        link.style.width = '40px';
         link.classList.add('align-bottom', 'h-full');
       }
 
@@ -171,10 +167,16 @@ class NZBFinderContent extends Content {
 
     // Create download all buttons
     for (const el of document.querySelectorAll('#multidownload')) {
-      const button = this.createButton({ className: 'NZBUnityButton-custom' });
-      button.textContent = 'NZB Unity';
+      // Create a new wrapper div above the downloads div
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('id', 'nzbunity');
+      el.parentElement?.parentElement?.prepend(wrapper, el);
+
+      const button = this.createButton({
+        className: 'NZBUnityButton-custom',
+      });
+      button.innerHTML = `<img src="${icon_nzb_32_green}" class="w-5 h-5" style="margin-right: 4px;">`;
       button.classList.add(...el.classList.values());
-      button.style.paddingLeft = '30px';
 
       button.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -190,8 +192,12 @@ class NZBFinderContent extends Content {
         );
       });
 
-      el.insertAdjacentElement('beforebegin', button);
-      el.classList.remove('rounded-l-md');
+      // Add the new button to the wrapper element
+      wrapper.append(button);
+
+      // Add/remove classes on the original button
+      el.classList.remove('rounded-l-md', 'border');
+      el.classList.add('border-t', 'border-b', 'border-r');
     }
   };
 }
