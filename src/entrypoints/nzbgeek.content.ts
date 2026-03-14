@@ -15,7 +15,7 @@ class NZBGeekContent extends Content {
 
   initializeLinks = () => {
     // Create direct download links
-    for (const el of document.querySelectorAll('a[href*="/api?t=get&id="]:has(i)')) {
+    for (const el of document.querySelectorAll('a[href*="/cdn?t=get&id="]:has(i),a[href*="/api?t=get&id="]:has(i)')) {
       const a = el as HTMLAnchorElement;
       const row = a.closest('tr.releases');
 
