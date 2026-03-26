@@ -1,6 +1,6 @@
 {
   "name": "nzbunity",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "license": "MPL-2.0",
   "description": "Send and control NZB files directly with SABnzbd or NZBGet download clients.",
   "author": "tumblfeed@gmail.com",
@@ -26,7 +26,7 @@
     "zip": "wxt zip --sources",
     "zip:firefox": "wxt zip -b firefox",
     "zip:all": "wxt zip --sources && wxt zip -b firefox",
-    "compile": "tsc --noEmit",
+    "lint": "echo 'No linter configured'",
     "test": "vitest run --mode test",
     "test:watch": "vitest --mode test",
     "postinstall": "wxt prepare",
@@ -36,20 +36,16 @@
     "compose:clean": "rm -rf test/docker/sabnzbd/Downloads/*; rm -rf test/docker/nzbget/downloads/*"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0",
-    "react-tooltip": "^5.28.0"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
+    "react-tooltip": "^5.30.0"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.309",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@wxt-dev/module-react": "^1.1.3",
-    "happy-dom": "^17.4.4",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.8",
-    "wxt": "^0.19.29"
+    "@wxt-dev/module-react": "^1.2.2",
+    "happy-dom": "^20.8.8",
+    "vitest": "^4.1.2",
+    "wxt": "^0.20.20"
   },
   "prettier": {
     "singleQuote": true,

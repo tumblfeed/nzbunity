@@ -11,7 +11,7 @@ services:
     image: lscr.io/linuxserver/sabnzbd:latest
     restart: unless-stopped
     ports:
-      - 7357:8080
+      - 7357:8080 # Port mapping does not work in host mode, fine for tests
     volumes:
       - ./sabnzbd:/config
     environment:
@@ -25,7 +25,7 @@ services:
     image: lscr.io/linuxserver/nzbget:latest
     restart: unless-stopped
     ports:
-      - 7358:6789
+      - 7358:6789 # Port mapping does not work in host mode, fine for tests
     volumes:
       - ./nzbget:/config
     environment:

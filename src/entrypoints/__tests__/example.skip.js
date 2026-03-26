@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import background from '../background';
 import { fakeBrowser } from 'wxt/testing';
+
 describe('Background Entrypoint', () => {
   beforeEach(() => {
     // Reset the in-memory state, including storage
     fakeBrowser.reset();
   });
+
   it('should store the current date on install', async () => {
     const expected = '2023-12-22T15:27:25.950Z';
     vi.setSystemTime(expected);
@@ -17,6 +19,7 @@ describe('Background Entrypoint', () => {
     const actual = await storage.getItem('local:installDate');
     expect(actual).toBe(expected);
   });
+
   it.each([
     browser.runtime.OnInstalledReason.UPDATE,
     browser.runtime.OnInstalledReason.CHROME_UPDATE,

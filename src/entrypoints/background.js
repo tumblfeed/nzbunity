@@ -61,7 +61,11 @@ export default defineBackground(() => {
             Client.getInstance()
               .ready()
               .then((client) => client.addUrl(data.url, data.options ?? {}))
-              .then(sendResponse);
+              .then(sendResponse)
+              .catch((err) => {
+                console.error('Error in addUrl', err);
+                sendResponse({ success: false, error: err?.message || String(err) });
+              });
             break;
           case 'addFile':
             if (!data.filename || !data.content)
@@ -74,7 +78,11 @@ export default defineBackground(() => {
               .then((client) =>
                 client.addFile(data.filename, data.content, data.options ?? {}),
               )
-              .then(sendResponse);
+              .then(sendResponse)
+              .catch((err) => {
+                console.error('Error in addFile', err);
+                sendResponse({ success: false, error: err?.message || String(err) });
+              });
             break;
           default:
             throw Error(`Unknown message: ${key}`, data);

@@ -309,5 +309,3 @@ describe('migrations', () => {
     await storageArea.clear();
   });
 });
-
-//export async function migrateV1(): Promise<void> {
