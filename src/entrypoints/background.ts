@@ -1,9 +1,11 @@
 import { defineBackground } from 'wxt/sandbox';
 
 import { Client } from '~/Client';
+import { icons } from '~/assets';
 import { Logger, LogStorage } from '~/logger';
 import { getOptions, DefaultOptions, DownloaderType } from '~/store';
 import { setMenuIcon } from '~/utils';
+import type { NZBQueueItem } from '~/downloader';
 
 export default defineBackground(() => {
   const logger = new Logger('Background');
@@ -119,6 +121,35 @@ export default defineBackground(() => {
       );
     } else {
       setMenuIcon('inactive', client.status);
+    }
+  });
+
+  // Show a browser notification when a download completes or fails
+  Client.getInstance().addCompletionListener(
+    async (item: NZBQueueItem, success: boolean) => {
+      const { EnableNotifications } = await getOptions();
+      if (!EnableNotifications) return;
+
+      const notificationId = `nzbunity-${item.id || Date.now()}`;
+
+      browser.notifications.create(notificationId, {
+        type: 'basic',
+        iconUrl: success ? icons.icon_nzb_64_green : icons.icon_nzb_64_red,
+        title: success ? 'Download Complete' : 'Download Failed',
+        message: item.name || 'A download has finished.',
+        // Second, dimmer line in the notification; used for the failure reason
+        contextMessage: !success ? item.message || 'Unknown error' : undefined,
+      });
+
+      logger.debug(`Notification: ${notificationId}`, item, success);
+    },
+  );
+
+  // Clicking a notification opens the downloader's web UI
+  browser.notifications.onClicked.addListener((notificationId: string) => {
+    if (notificationId.startsWith('nzbunity-')) {
+      Client.getInstance().openWebUI();
+      browser.notifications.clear(notificationId);
     }
   });
 });

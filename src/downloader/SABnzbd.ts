@@ -103,8 +103,37 @@ export class SABnzbd extends Downloader {
     return res;
   }
 
-  async getHistory(): Promise<NZBQueueItem[]> {
-    return [];
+  async getHistory(options: Record<string, unknown> = {}): Promise<NZBQueueItem[]> {
+    // See https://sabnzbd.org/wiki/advanced/api#history
+    const nzbResult = await this.call('history', { limit: 25, ...options });
+
+    if (!nzbResult.success) return [];
+
+    const result = nzbResult.result! as Record<string, unknown>;
+    const slots = (result.slots ?? []) as Record<string, string>[];
+
+    return slots.map((slot) => {
+      const sizeBytes = Math.floor(Number(slot.bytes) || 0);
+      // SABnzbd reports 'Completed' or 'Failed' (amongst in-progress states we
+      // don't expect to see in history), normalize just in case.
+      const status = /fail/i.test(slot.status) ? 'Failed' : 'Completed';
+      const message = status === 'Failed' ? slot.fail_message?.trim() || undefined : undefined;
+
+      return {
+        ...DefaultNZBQueueItem,
+        id: slot.nzo_id,
+        status,
+        name: slot.name,
+        category: slot.category,
+        size: humanSize(sizeBytes),
+        sizeBytes,
+        sizeRemaining: humanSize(0),
+        sizeRemainingBytes: 0,
+        timeRemaining: '∞',
+        percentage: 100,
+        message,
+      };
+    });
   }
 
   async getQueue(): Promise<NZBQueue> {

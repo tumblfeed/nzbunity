@@ -282,7 +282,6 @@ function Options() {
           </select>
         </div>
 
-        {/* Currently does nothing, so let's not show it
         <div>
           <label>
             <input
@@ -291,10 +290,9 @@ function Options() {
               checked={options?.EnableNotifications ?? DefaultOptions.EnableNotifications}
               onChange={(e) => setOptions({ EnableNotifications: e.target.checked })}
             />
-            Enable Notifications
+            Show a browser notification when a download completes or fails
           </label>
         </div>
-        */}
 
         <div>
           <label>

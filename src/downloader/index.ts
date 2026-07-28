@@ -80,6 +80,9 @@ export interface NZBQueueItem {
   sizeRemainingBytes: number;
   timeRemaining: string;
   percentage: number;
+  // Optional detail set by getHistory(), eg. the reason a download failed.
+  // Not populated by getQueue() since active queue items don't have this yet.
+  message?: string;
 }
 
 export const DefaultNZBQueue: NZBQueue = {

@@ -1,4 +1,10 @@
-import { NZBAddOptions, NZBQueue, NZBQueueItem, type Downloader } from '~/downloader';
+import {
+  NZBAddOptions,
+  NZBQueue,
+  NZBQueueItem,
+  DefaultNZBQueueItem,
+  type Downloader,
+} from '~/downloader';
 import { SABnzbd } from '~/downloader/SABnzbd';
 import { NZBGet } from '~/downloader/NZBGet';
 import {
@@ -48,6 +54,10 @@ export class Client {
   _listeners: ((arg0: Client) => void)[] = [];
   _refreshing: boolean = false;
 
+  // Tracks queue item ids between refreshes so we can detect completions
+  _previousIds: Set<string> | undefined;
+  _completionListeners: ((item: NZBQueueItem, success: boolean) => void)[] = [];
+
   constructor(autoStart = true) {
     // Initialize with the active downloader
     this._downloader = getActiveDownloader().then((opts) => {
@@ -59,6 +69,8 @@ export class Client {
     this._optsWatcher = watchActiveDownloader((opts) => {
       this._syncDownloader = createDownloader(opts);
       this._downloader = Promise.resolve(this._syncDownloader);
+      // Avoid false completion notifications when switching downloaders
+      this._previousIds = undefined;
       this.refresh();
     });
 
@@ -99,13 +111,44 @@ export class Client {
    */
   async refresh() {
     this._refreshing = true;
-    this._queue = await (await this.getDownloader())?.getQueue();
+    const downloader = await this.getDownloader();
+    this._queue = await downloader?.getQueue();
+    await this.checkCompletions(downloader);
     this.onRefresh();
     setTimeout(() => (this._refreshing = false), 500); // Actual refresh is too fast, so delay
   }
 
   get refreshing() {
     return this._refreshing;
+  }
+
+  /**
+   * Compare the current queue against the queue from the previous refresh to
+   * detect items that have left the queue (completed or failed), then look
+   * them up in the downloader's history to determine the final status and
+   * notify any completion listeners.
+   */
+  async checkCompletions(downloader?: Downloader) {
+    const currentIds = new Set(this.queue.map((item) => item.id));
+
+    // Skip the very first refresh (or a refresh right after switching
+    // downloaders) so we don't fire notifications for items that already
+    // finished before we started watching.
+    if (this._previousIds && downloader) {
+      const finishedIds = [...this._previousIds].filter((id) => !currentIds.has(id));
+
+      if (finishedIds.length) {
+        const history = await downloader.getHistory().catch(() => []);
+
+        for (const id of finishedIds) {
+          const historyItem = history.find((item) => item.id === id);
+          const success = historyItem ? historyItem.status !== 'Failed' : true;
+          this.onCompletion(historyItem ?? { ...DefaultNZBQueueItem, id }, success);
+        }
+      }
+    }
+
+    this._previousIds = currentIds;
   }
 
   // Refresh timer
@@ -148,6 +191,20 @@ export class Client {
 
   onRefresh() {
     this._listeners.forEach((l) => l(this));
+  }
+
+  // Completion listeners (fired when a queue item finishes downloading)
+
+  addCompletionListener(listener: (item: NZBQueueItem, success: boolean) => void) {
+    this._completionListeners.push(listener);
+  }
+
+  removeCompletionListener(listener: (item: NZBQueueItem, success: boolean) => void) {
+    this._completionListeners = this._completionListeners.filter((l) => l !== listener);
+  }
+
+  onCompletion(item: NZBQueueItem, success: boolean) {
+    this._completionListeners.forEach((l) => l(item, success));
   }
 
   // Queue properties (call refresh to update)

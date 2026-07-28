@@ -32,6 +32,36 @@ export interface NZBGetResult extends NZBResult {
   version?: string;
 }
 
+// NZBGet reports history status as a combined code like 'FAILURE/PAR' or
+// 'WARNING/DAMAGED'. Map the reason half to something readable for notifications.
+// See https://nzbget.com/documentation/api/#status-codes
+const NZBGET_STATUS_REASONS: Record<string, string> = {
+  PAR: 'Par verification failed',
+  UNPACK: 'Unpacking failed',
+  MOVE: 'Could not move files to the destination folder',
+  HEALTH: 'Download health check failed',
+  SPACE: 'Not enough disk space',
+  PASSWORD: 'Archive is password protected',
+  DAMAGED: 'Downloaded files are damaged',
+  BADPARENT: 'A duplicate/parent item failed',
+};
+
+function describeNzbgetHistoryStatus(rawStatus: string): {
+  status: string;
+  message?: string;
+} {
+  const [kind, reason] = rawStatus.split('/');
+  const success = /^success/i.test(kind);
+
+  if (success) return { status: 'Completed' };
+
+  const message = reason
+    ? (NZBGET_STATUS_REASONS[reason.toUpperCase()] ?? `${ucFirst(kind)}: ${reason}`)
+    : ucFirst(kind);
+
+  return { status: 'Failed', message };
+}
+
 export class NZBGet extends Downloader {
   static generateApiUrlSuggestions(url: string): string[] {
     return super.generateApiUrlSuggestions(url, ['6789'], ['', 'jsonrpc']);
@@ -105,7 +135,34 @@ export class NZBGet extends Downloader {
   }
 
   async getHistory(): Promise<NZBQueueItem[]> {
-    return [];
+    // See https://nzbget.com/api/method/history
+    // param: whether to include hidden (duplicate) history items
+    const nzbResult = await this.call('history', [false]);
+
+    if (!nzbResult.success) return [];
+
+    const slots = (nzbResult.result ?? []) as Record<string, unknown>[];
+
+    return slots.map((slot) => {
+      const sizeBytes = Math.floor((<number>slot['FileSizeMB'] || 0) * Megabyte);
+      const rawStatus = String(slot['Status'] ?? '');
+      const { status, message } = describeNzbgetHistoryStatus(rawStatus);
+
+      return {
+        ...DefaultNZBQueueItem,
+        id: String(slot['NZBID']),
+        status,
+        name: (slot['NZBNicename'] ?? slot['Name']) as string,
+        category: slot['Category'] as string,
+        size: humanSize(sizeBytes),
+        sizeBytes,
+        sizeRemaining: humanSize(0),
+        sizeRemainingBytes: 0,
+        timeRemaining: '∞',
+        percentage: 100,
+        message,
+      } as NZBQueueItem;
+    });
   }
 
   async getQueue(): Promise<NZBQueue> {
