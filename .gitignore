@@ -23,6 +23,7 @@ test/docker/sabnzbd/*
 *.njsproj
 *.sln
 *.sw?
+*.xpi
 
 # Logs
 logs

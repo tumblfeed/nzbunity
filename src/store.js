@@ -89,7 +89,9 @@ export const DefaultDownloaderOptions = {
 export const DefaultIndexers = {
   abnzb: { Display: 'abNZB', Enabled: true },
   althub: { Display: 'altHUB', Enabled: true },
+  amenzb: { Display: 'ameNZB', Enabled: true },
   animetosho: { Display: 'AnimeTosho', Enabled: true },
+  aninzb: { Display: 'aniNZB', Enabled: true },
   binsearch: { Display: 'BinSearch', Enabled: true },
   dognzb: { Display: 'DogNZB', Enabled: true },
   drunkenslug: { Display: 'DrunkenSlug', Enabled: true },
