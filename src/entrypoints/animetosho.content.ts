@@ -2,7 +2,7 @@ import { defineContentScript } from 'wxt/sandbox';
 import { Content } from '~/Content';
 
 export default defineContentScript({
-  matches: ['*://*.animetosho.org/*'],
+  matches: ['*://*.animetosho.net/*'],
   main(ctx) {
     new AnimeToshoContent(ctx);
   },
@@ -14,7 +14,7 @@ class AnimeToshoContent extends Content {
   }
 
   initializeLinks = () => {
-    for (const el of document.querySelectorAll('a[href*="/nzbs/"]')) {
+    for (const el of document.querySelectorAll('a[href*="/nzb/"]')) {
       const a = el as HTMLAnchorElement;
       const url = a.href.replace(/\.gz$/, '');
       const link = this.createAddUrlLink({
