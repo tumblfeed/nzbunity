@@ -243,33 +243,21 @@ Line numbers were from `README.md` at `9b23c50`; all are done, so they are liste
 
 ### M8 — Dependency refresh (one commit per tier; see §5 for numbers and dates)
 
-- [ ] **WXT 0.20.20 → 0.21.4.** Breaking items that touch this repo: `vite` is now a **required**
-      peer → add `vite@^8.3.4` to devDependencies; `web-ext` is an **optional** peer → add it
-      (this repo has `web-ext.config.js` with Chromium/Firefox-DE binaries, so `npm run dev`
-      relies on it); the `wxt/testing` barrel is gone → `vitest.config.js` imports
-      `wxt/testing/vitest-plugin` and `src/entrypoints/__tests__/example.skip.js` imports
-      `wxt/testing/fake-browser`; generated `.wxt/tsconfig.json` gains stricter options
-      (`noUncheckedIndexedAccess`, `verbatimModuleSyntax`) — expect noise in `checkJs` files.
-      Node ≥22 required; `.nvmrc` is already 24.
-- [ ] routine minors, safe: `react`/`react-dom` 19.2.4 → 19.3.1, `react-icons` 5.6.0 → 5.7.0
-      (`@wxt-dev/module-react` 1.2.2 is already current)
-- [ ] `happy-dom` 20.8.8 → 21.0.3: v21 disables CSS and iframe loading by default and deprecates
-      `disableCSSFileLoading`; verify `vitest.setup.js` (`happyDOM.settings.fetch.disableSameOriginPolicy`)
-      still behaves and that no test depended on CSS being parsed
-- [ ] `vitest` 4.1.2 → 5.0.5 **in the same commit as WXT 0.21** so the `WxtVitest` pairing is
-      exercised once. If WXT's vitest plugin doesn't support vitest 5 yet, pin `^4.1.12` and note it
-- [ ] `react-tooltip` 5.30.0 → 6.0.9 — **last, and only with owner OK.** v6 removed the raw-HTML
-      string API, and this repo uses `data-tooltip-html` with nested `<span>`/`<p>` markup in
-      `src/entrypoints/options/DownloaderForm.jsx` at L153, 195, 229, 250, 265, 282 (and more).
-      Also `src/assets/tooltip.css:1` imports `react-tooltip/dist/react-tooltip.css` and L36-58
-      override `.react-tooltip-arrow`, `.react-tooltip__place-top`, `.react-tooltip__place-bottom`
-      — verify the CSS entry path and class names against v6 markup before merging
-- [ ] land the M3–M5 devDependencies as explicit pins in `package.json`
-- [ ] `npm audit` (last run on this branch: 2026-03-27 in `8bd61a6`); record output
-- [ ] `.nvmrc` stays 24 here; `main` still says 22 → harmonize during the M9 merge decision
-- [ ] Dependabot: ~15 open branches, all lockfile-only and 12–23 commits stale (several target the
-      old Gulp-era tree). After this tier, close the obsolete ones so the repo doesn't look
-      abandoned to a would-be contributor
+- [x] routine minors, safe: `react`/`react-dom` 19.2.4 → 19.3.1 (commit `a757545`; about +30 kB in the built package, worth knowing), `react-icons` 5.6.0 → 5.7.0, `react-tooltip` 5.30.0 → 5.30.1 (patch only). `@wxt-dev/module-react` 1.2.2 is already current.
+- [x] `happy-dom` 20.8.8 → 21.0.3 (+ `globals` 16 → 17 for the eslint config), commit `ae4e124`. v21 turns CSS and iframe loading off by default, which is what this suite already saw; `disableCSSFileLoading` is not used anywhere; `vitest.setup.js`'s `happyDOM.settings.fetch.disableSameOriginPolicy` still exists and is still a boolean, checked against a fresh `Window` rather than assumed. Test totals identical to the M0 baseline.
+- [x] **WXT 0.20.20 → 0.21.4**, commit `115dacb`, with an important caveat found on the way:
+  - **Blocker found and worked around.** 0.21.4 cannot build this project as laid out. A stylesheet imported from the shared `src/Content.js` module (every content script gets its CSS that way) crashes vite 8's `vite:css` plugin during the content-script build: `Cannot read properties of undefined (reading 'get')` at `cssModulesCache.get(config).get(id)` — the plugin's `buildStart` never ran for that container. Reproduced on vite 8.0.16 / 8.1.6 / 8.2.4 / 8.3.4, so it is not a vite-window problem. `cssInjectionMode: 'file'` does not help. vite 7 is not available because `@wxt-dev/module-react` bundles a `@vitejs/plugin-react` that imports vite's `./internal` subpath. Nothing upstream matches it: searched WXT's issues and the 0.21.0-0.21.4 release notes.
+  - **Workaround:** each `src/entrypoints/*.content.js` now imports `~/assets/content.css` itself, and the import is gone from `src/Content.js`. That is what WXT documents for content-script CSS, and it costs nothing: 0.20 already emitted one copy per script, so the package is 837.68 kB against 838.07 kB before the change.
+  - **Verified, not assumed:** 17 `content_scripts` entries in the built manifest, every one with both `js` and `css`; `content-scripts/newznab.js` and `content-scripts/newznab.css` are still emitted at the exact paths `src/entrypoints/background.js:31-36` injects them from (that coupling is silent — nothing tests it); `build:all` green for chrome-mv3 and firefox.
+  - `vite@^8.3.4` is now an explicit devDependency (required peer on 0.21). `web-ext` is deliberately **not** installed: it is an optional peer, WXT 0.21 does not depend on it, and installing it re-adds 5 high advisories (`web-ext` → `@devicefarmer/adbkit` → `node-forge`, plus a `brace-expansion` DoS through `multimatch`). Consequence to tell the owner: `npm run dev:firefox` (and `wxt -b firefox`) will need `npm i -D web-ext` on the owner's machine.
+  - `wxt/testing` is gone in 0.21 → `vitest.config.js` imports `WxtVitest` from `wxt/testing/vitest-plugin`, `src/entrypoints/__tests__/example.skip.js` imports `fakeBrowser` from `wxt/testing/fake-browser`.
+  - The generated `.wxt/tsconfig.json` changed shape on 0.21: it now sets `noImplicitOverride`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `moduleDetection: force`, `allowImportingTsExtensions`, `module: Preserve`, `lib: [ESNext, DOM, DOM.Iterable]`, and drops `esModuleInterop`/`forceConsistentCasingInFileNames`. Only one of them produced errors: `noImplicitOverride` needed `@override` JSDoc tags on the 8 overridden members in the two `@ts-check` files (amenzb, aninzb). Kept the flag on rather than turning it off: a typo'd hook (`initializeLink` instead of `initializeLinks`) is exactly the silent-failure class this branch had, and the structure test does not catch it. `noUncheckedIndexedAccess` produced nothing today but will bite as more files opt in.
+- [x] `vitest` 4.1.2 → 5.0.5, landed with the WXT commit as planned. `WxtVitest` works with it; the `^4.1.12` fallback was not needed. Also verified separately that vitest 5 + WXT 0.20.27 gives identical results, in case the WXT upgrade is ever reverted.
+- [x] `npm audit`: **0 vulnerabilities** on the committed tree (measured after a clean `npm ci`). The 0.20 line was the problem, not this project: WXT 0.20 depends on `web-ext-run`, which pulled 11 findings — 3 critical (`fx-runner`, `shell-quote`, `web-ext-run`), 6 high (`adm-zip`, `firefox-profile`, `node-forge`, `@devicefarmer/adbkit`, `tmp`), 2 moderate. `npm audit fix` could not reach any of them without jumping to 0.21. Previous audit on this branch: 2026-03-27 in `8bd61a6`.
+- [ ] `react-tooltip` 5.30.1 → 6.0.9 — **left for the owner.** v6 removed the raw-HTML string API, and this repo uses `data-tooltip-html` with nested `<span>`/`<p>` markup at `src/entrypoints/options/DownloaderForm.jsx:153,195,229,250,265,282`; `src/assets/tooltip.css:36-58` also overrides `.react-tooltip-arrow`, `.react-tooltip__place-top` and `.react-tooltip__place-bottom`, and the `react-tooltip/dist/react-tooltip.css` entry path would need re-checking against v6 markup. Six call sites plus CSS that only a browser can confirm: that is a deliberate migration, not a routine bump.
+- [~] "land the M3-M5 devDependencies as explicit pins": **done differently on purpose.** `prettier`, `eslint`, `@eslint/js`, `eslint-plugin-import-x`, `globals`, `typescript` are all in `package.json` as carets, matching every other entry in the file; exact pins would be the only caret-free entries and would send `npm outdated` silent for them too. Say so in the review rather than pretending the box was ticked as written.
+- [x] `.nvmrc` stays 24 on this branch (WXT 0.21 needs Node >=22; verified on Node 26.11.1). `main` still says 22 → harmonize during the M9 merge decision.
+- [ ] Dependabot cleanup is owner-side and cannot be done from a worktree: ~15 open branches, all lockfile-only and 12-23 commits stale, several against the Gulp-era tree. After this tier they are worth closing so the repo does not look abandoned to a first-time contributor.
 
 ### M9 — Final pass, merge decision, cleanup
 
@@ -310,6 +298,8 @@ Two things no automated check can prove, so call them out explicitly in the Prog
    only observable in a browser.
 
 ## 5. Dependency reference (lookups performed 2026-10-19)
+
+> Kept as the research snapshot taken before the upgrade. §M8 records what actually landed and what was found on the way.
 
 No OSV advisory currently affects any pinned direct dependency, so nothing here is forced by a
 security problem. Only two majors require source work: WXT 0.21 and react-tooltip 6.
@@ -353,9 +343,11 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 
 ## Progress log (append newest first)
 
-- **2026-10-19 — M7 done (commit pending at time of writing).** README no longer mentions TypeScript, SASS, Gulp, `.content.ts`, `src/store.ts` or `from 'wxt/sandbox'`; `public/` is documented at the repo root where it actually is; the setup steps list `lint` / `format:check` / `check` as local gates without saying what `check` runs; and new adapter authors get pointed at `structure.test.js`. Also fixed `.gitignore`'s dead `web-ext.config.ts` pattern and a stray `store.ts` in `src/dev.js:3`. Gates unchanged: `check`/`lint`/`format:check` clean, tests at baseline, build 810.22 kB.
+- **2026-10-19 — M8 done except the owner-gated boxes (three commits: `a757545` React, `ae4e124` happy-dom/globals, `115dacb` WXT/vite/vitest).** The interesting one is the last: WXT 0.21.4 would not build this project because vite 8 crashes on the CSS imported through the shared `src/Content.js` module, so each content script now imports the stylesheet it injects. Measured before accepting that: 17 content scripts each with their own `content-scripts/<name>.css`, `newznab.js`/`newznab.css` still at the paths `background.js` injects them from, 837.68 kB against 838.07 kB. `npm audit` went from 11 findings (3 critical, all through WXT 0.20's `web-ext-run`) to 0, measured after a clean `npm ci` - which also means `postinstall: wxt prepare` now succeeds on this branch for the first time. `web-ext` is deliberately not installed, so `dev:firefox` will need it added locally. Not done: `react-tooltip` 6 (owner), Dependabot cleanup (owner).
 
-- **2026-10-19 — M6 partially done (commit pending at time of writing).** amenzb now uses the base class `_apikey`/`apikey` instead of its own `apiKey` field, and its logging matches the sibling adapters (`this.debug(...)` plus a warn when the key is missing). Only console output changed. The hardcoded `https://amenzb.moe` origin and `credentials: 'include'` were left alone on purpose: both are owner decisions and neither is testable without a logged-in amenzb account. Gates after the change: `check` / `lint` / `format:check` clean, `npm test` identical to the M0 baseline, build 810.22 kB.
+- **2026-10-19 — M7 done, commit `077a68a`.** README no longer mentions TypeScript, SASS, Gulp, `.content.ts`, `src/store.ts` or `from 'wxt/sandbox'`; `public/` is documented at the repo root where it actually is; the setup steps list `lint` / `format:check` / `check` as local gates without saying what `check` runs; and new adapter authors get pointed at `structure.test.js`. Also fixed `.gitignore`'s dead `web-ext.config.ts` pattern and a stray `store.ts` in `src/dev.js:3`. Gates unchanged: `check`/`lint`/`format:check` clean, tests at baseline, build 810.22 kB.
+
+- **2026-10-19 — M6 partially done, commit `20c5258` (the two owner-gated boxes are still open).** amenzb now uses the base class `_apikey`/`apikey` instead of its own `apiKey` field, and its logging matches the sibling adapters (`this.debug(...)` plus a warn when the key is missing). Only console output changed. The hardcoded `https://amenzb.moe` origin and `credentials: 'include'` were left alone on purpose: both are owner decisions and neither is testable without a logged-in amenzb account. Gates after the change: `check` / `lint` / `format:check` clean, `npm test` identical to the M0 baseline, build 810.22 kB.
 
 - **2026-10-19 — M5 done, commit `36fc427`.** `npm run check` is a real gate: `typescript@7.0.2` (only new devDep), `jsconfig.json` extends the generated `.wxt/tsconfig.json`, `checkJs: false` + per-file `// @ts-check`. Opted in `src/Content.js` + both new adapters: 24 errors, all fixed with JSDoc-only edits, and the check was proven to bite with throwaway probes. Two conversions casualties fixed on the way: three `@enum` consts had their JSDoc detached by a blank line, and shared typedefs were unreachable from other modules (TS2304). `npm run check`/`lint`/`format:check` exit 0, `npm test` is unchanged from the M0 baseline (10 docker-dependent failures), build size identical at 810.21 kB. Measured the cost of a repo-wide opt-in for later: 133 errors under `src/`, of which ~44 are one typedef-scoping pattern. Nothing TypeScript-related appears in contributor-facing text.
 
