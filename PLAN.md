@@ -264,7 +264,7 @@ Line numbers were from `README.md` at `9b23c50`; all are done, so they are liste
 - [ ] `git rm PLAN.md && git commit -m "[2.2] remove PLAN.md, JS conversion complete"` — **deliberately not done.** The conversion work itself is complete (M0-M8), but these remain open and belong to the owner, not the agent: `react-tooltip` 6, the amenzb origin/credentials hardcoding, Dependabot cleanup, the browser smoke pass, the merge/push decision. Delete the file once those are settled.
 - [ ] from the main checkout: `git worktree remove /home/hutch/Projects/nzbunity-2.2-js` (keep it until the PR/merge is settled)
 
-### M10 — react-tooltip 5 → 6 (owner-approved 2026-10-19; **review the shape below before starting**)
+### M10 — react-tooltip 5 → 6 — **implemented 2026-10-19** (owner chose shape A and approved removing the dead block); browser pass outstanding
 
 This is the last deferred dependency upgrade. Everything measured here was measured against the actual `react-tooltip@6.0.9` tarball, unpacked into a scratch directory and inspected, not read off a changelog.
 
@@ -277,7 +277,7 @@ Facts that decide the shape of the change:
 
 **Recommended shape (A, smallest diff, CSS untouched).** Keep the single global `<Tooltip id="tooltip" place="bottom" closeEvents={…} />` in `src/entrypoints/options/Options.jsx:306-316` and give it a `render` that looks the content up by a key on the anchor:
 
-1. New file `src/entrypoints/options/help.jsx` exporting one object, `HelpText`, keyed by tip (`name`, `apiUrl`, `apiKey`, `nzbgetUser`, `nzbgetPass`, `categories`, `test`, `save`, `saveDisabled`, `defaultCategory`) with JSX fragments as values — the existing copy verbatim, `<span>`/`<p>` nesting intact, no styling changes. It has to be `.jsx`, not `.js`: the JSX loader is chosen by file extension.
+1. New file `src/entrypoints/options/help.jsx` exporting one object, `HelpText`, keyed by tip (`name`, `apiUrl`, `apiKey`, `username`, `password`, `webUrl`, `test`, `save`, `saveDisabled`, `defaultCategory` — the form-field names) with JSX fragments or plain strings as values — the existing copy verbatim, `<span>`/`<p>` nesting intact, no styling changes. It has to be `.jsx`, not `.js`: the JSX loader is chosen by file extension.
 2. In both files, each anchor keeps `data-tooltip-id="tooltip"` and swaps `data-tooltip-html="…"` for `data-help="apiKey"`. The dynamic save button becomes `data-help={dirty ? 'save' : 'saveDisabled'}`, which is why the object has ten entries for nine anchors. Two anchors are `<button>` elements (`DownloaderForm.jsx:314-337`), which is why the pattern must stay attribute-based rather than wrapping anything in a helper component.
 3. On the global `<Tooltip>`, add `render={({ activeAnchor }) => HelpText[activeAnchor?.dataset.help ?? ''] ?? null}`.
 4. `src/assets/tooltip.css` needs no change (see the class-name finding above). Re-check `#tooltip { border: 1px solid … }` in a browser anyway: v6's own `border` prop documentation warns that borders over 3 px, or non-`px` units, break arrow positioning, and this project draws its arrow with a border trick plus `!important` offsets.
@@ -288,11 +288,12 @@ Do **not** do any of this while at it: no restyling, no changing tooltip copy, n
 
 Verification for this step:
 
-- [ ] `npm i react-tooltip@^6.0.9`, then `npm run check && npm run lint && npm run format:check && npm test && npm run build:all`; record the built size delta against the current 837.68 kB in the commit message the way the React tier did.
-- [ ] `grep -rn "data-tooltip-html\|dangerouslySetInnerHTML" src/` must come back empty, which it only can if that dead commented block is dealt with first.
-- [ ] the structure test's `wxt/*` specifier guard, `check`, and `lint` must stay green (no new specifier involved, so this is a regression guard only).
-- [ ] **browser pass, which the owner can actually do in two minutes**: the options page needs no accounts and no indexer. For each of the nine anchors — hover, and confirm the tip appears with its `<p>` blocks still wrapped and its arrow still attached; with the v5 build side by side if in doubt. Then the three behaviours the config encodes: the tip closes on click, on blur and on mouseleave; the Save button's text flips between 'Save changes' and 'No changes to save' after editing a field; and the tip sits below the anchor (`place="bottom"`) with the arrow pointing up, then above it near the bottom of the page with the arrow flipped. What cannot be verified headlessly here, and must not be claimed: all of that rendering.
-- [ ] commit as one step: `[2.2] move to react-tooltip 6 and drop the HTML string tooltips`. Rollback is that one commit; nothing else in the branch depends on it.
+- [x] `npm i react-tooltip@^6.0.9`, then `npm run check && npm run lint && npm run format:check && npm test && npm run build:all`. Done 2026-10-19: 6.0.9 installed, `check`/`lint`/`format:check` silent, `npm test` 53 passed / 9 skipped / 1 todo with the two downloader containers up, `build:all` green at 841.35 kB (chrome) and 841.36 kB (firefox) against 837.68 kB before, so **+3.7 kB** per target.
+- [x] `grep -rn "data-tooltip-html\|dangerouslySetInnerHTML" src/` comes back empty, which required dealing with that dead commented block first. It is empty, and `data-tooltip-html` also appears 0 times across the built `.output/chrome-mv3/`.
+- [x] the structure test's `wxt/*` specifier guard, `check`, and `lint` stayed green.
+- [x] built output checked rather than assumed: the help copy is in `chunks/options-*.js`, the options chunk carries a `"data-help"` attribute and no `data-tooltip-html`, `react-tooltip-content-wrapper` is in the JS and `react-tooltip__place-bottom` survives in `assets/options-*.css` — that last one is what says the CSS overrides still match v6's DOM.
+- [ ] **browser pass, owed by the owner, which the owner can actually do in two minutes**: the options page needs no accounts and no indexer. For each of the nine anchors — hover, and confirm the tip appears with its `<p>` blocks still wrapped and its arrow still attached; with the v5 build side by side if in doubt. Then the three behaviours the config encodes: the tip closes on click, on blur and on mouseleave; the Save button's text flips between 'Save changes' and 'No changes to save' after editing a field; and the tip sits below the anchor (`place="bottom"`) with the arrow pointing up, then above it near the bottom of the page with the arrow flipped. What cannot be verified headlessly here, and must not be claimed: all of that rendering.
+- [x] committed as one step: `[2.2] move to react-tooltip 6 and drop the HTML string tooltips` (fbf40b4). Rollback is that one commit; nothing else in the branch depends on it. The dead commented block went with it, and it was the only place outside the store that named `IndexerNewznab`: the field, its default and the v1 migration in `src/store.js` are untouched.
 
 ---
 
@@ -361,6 +362,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — M10 implemented (shape A): react-tooltip 5.30.1 → 6.0.9, all nine live tooltips converted, dead `Options.jsx` block removed.** New `src/entrypoints/options/help.jsx` holds the copy as JSX keyed by the `data-help` value on the anchor, and the single global `<Tooltip>` resolves it through `render`. `src/assets/tooltip.css` untouched, as the class-name finding predicted. Gates green, build +3.7 kB per target. Not verified and not claimed: how the tips actually render — that is the two-minute options-page pass.
 
 - **2026-10-19 — M10 corrected before review: nine live HTML-string tooltips, not ten.** Eight in `DownloaderForm.jsx`, one in `Options.jsx` (which also hosts the global `<Tooltip>`), and a tenth that exists only inside commented-out dead markup at `Options.jsx:168-182`. Counted by stripping `{/* ... */}` blocks from the source rather than with a plain grep.
 
