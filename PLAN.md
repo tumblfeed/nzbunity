@@ -305,8 +305,8 @@ Verification for this step:
 ## 4. Verification playbook
 
 ```bash
-cd /home/hutch/Projects/nzbunity-2.2-js
-npm ci                                  # also runs wxt prepare
+cd /home/hutch/Projects/nzbunity        # branch 2.2; the worktree is gone
+git checkout 2.2 && npm ci              # also runs wxt prepare
 grep -rn "wxt/sandbox" . --include='*.js' --include='*.ts' --include='*.md'   # expect: nothing
 find src -name '*.ts' -o -name '*.tsx'  # expect: nothing
 ls src/entrypoints/*.content.js | wc -l # adapters (17 after M1)
@@ -321,6 +321,47 @@ Two things no automated check can prove, so call them out explicitly in the Prog
    needs a real account.
 2. DOM injection timing / link placement per site (`adjacent`, `replaceLinks`, CSS `styles`) is
    only observable in a browser.
+
+### 4.6 Bringing the downloader test services up
+
+Ten tests in `src/downloader/__tests__` are network tests: they hit SABnzbd on 7357 and NZBGet
+on 7358 (from `.env.test`), and exactly those ten fail with `ECONNREFUSED` when nothing is listening
+(`npx vitest run src/downloader`, 2026-10-19). This recipe is
+what makes the suite green; it is the sequence actually used on 2026-10-19, not a guess. Both
+`docker cp` steps matter: SABnzbd rewrites its ini on shutdown and NZBGet reads its config only at
+start, so editing a file the wrong way silently changes nothing.
+
+```bash
+docker run -d --name nzbunity-test-sab -p 7357:8080 \
+  -e PUID=1000 -e PGID=1000 -e UMASK=022 lscr.io/linuxserver/sabnzbd:latest
+docker run -d --name nzbunity-test-nzbget -p 7358:6789 \
+  -e PUID=1000 -e PGID=1000 -e UMASK=022 lscr.io/linuxserver/nzbget:latest
+sleep 15   # first boot writes the configs; SABnzbd does NOT take its api key from the environment
+
+docker stop nzbunity-test-sab                       # edit the ini while it is down
+docker cp nzbunity-test-sab:/config/sabnzbd.ini /tmp/sabnzbd.ini
+sed -i 's/^api_key *=.*/api_key = nzbunitytestkey/' /tmp/sabnzbd.ini
+docker cp /tmp/sabnzbd.ini nzbunity-test-sab:/config/sabnzbd.ini
+
+docker cp nzbunity-test-nzbget:/config/nzbget.conf /tmp/nzbget.conf
+sed -i 's/^ControlUsername=.*/ControlUsername=nzbtest/; s/^ControlPassword=.*/ControlPassword=nzbtestpass/' /tmp/nzbget.conf
+docker cp /tmp/nzbget.conf nzbunity-test-nzbget:/config/nzbget.conf
+
+docker start nzbunity-test-sab
+docker restart nzbunity-test-nzbget   # `docker start` on an already-running container is a no-op,
+sleep 10                              # which is how a config edit here looks like it worked
+
+# credentials the tests read; .env.test.local is gitignored, .env.test only documents the names
+printf 'VITE_SABNZBD_APIKEY=nzbunitytestkey\nVITE_NZBGET_USER=nzbtest\nVITE_NZBGET_PASS=nzbtestpass\n' > .env.test.local
+
+curl -s "http://localhost:7357/api?mode=fullstatus&apikey=nzbunitytestkey&output=json" | head -c 80
+npm test    # 5 files, 53 passed / 9 skipped / 1 todo
+docker rm -f nzbunity-test-sab nzbunity-test-nzbget   # tidy up afterwards
+```
+
+`test/docker/docker-compose.yaml` is not used for this: it sets `network_mode: host`, which makes
+its `ports:` lines no-ops, and it supplies no credentials. Fixing that file is a separate call
+(§7), so the containers above are started directly.
 
 ## 5. Dependency reference (lookups performed 2026-10-19)
 
@@ -367,6 +408,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — §4.6 now exists.** Several entries above cite "the recipe in §4.6", but the section had never been written — the containers had been run and re-derived by hand twice. It is now written out with the two traps that cost time: SABnzbd's api key is not an environment variable and its ini must be edited while the container is stopped, and NZBGet only reads its config at start, so a `docker cp` followed by `docker start` (a no-op on a running container) changes nothing. It also captures the gitignored `.env.test.local`, which was a file that existed only in the worktree being deleted.
 
 - **2026-10-19 — merged into `2.2` and pushed; the `2.2-js` worktree is removed.** Everything still unchecked in this file is now owed in a normal checkout on `2.2`: the two-minute options-page tooltip pass in M10, the amenzb profile whenever its registrations open, and the last boxes of M9 (the browser smoke pass, then deleting this file once nothing is left open). The `main` checkout at `/home/hutch/Projects/nzbunity` needs `git checkout 2.2 && npm ci` before `check`/`lint`/`test` will run there, and the merge is the moment to settle the `.nvmrc` split between Node 24 here and Node 22 on `main`.
 
