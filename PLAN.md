@@ -221,11 +221,7 @@ Owner-gated finding, deliberately left alone: `src/entrypoints/options/Options.j
 
 - [x] amenzb: the private `apiKey` field is gone; `ready()` assigns the base class `_apikey` (`src/Content.js:63`) and `buildApiUrl()` reads the base getter `this.apikey`. No other file referenced the field.
 - [x] amenzb: `this.debug(`[NZB Unity] ready()`, { apikey: this.apikey })` plus `if (!this.apikey) console.warn(...)` now matches abnzb / dognzb / drunkenslug exactly. The amenzb wording was kept for the warning ("Unable to find apikey — are you logged in?") because the login hint is the useful part. **Console output only**: the unconditional `console.info('API key loaded')` became a DEV-gated `debug`, so a production build logs one line less and nothing else changed.
-- [ ] amenzb (left unticked, needs the owner): consider `window.location.origin` instead of the hardcoded `https://amenzb.moe` in
-      `buildApiUrl()` (the `ready()` fetch hardcodes the same host) — **needs owner OK**
-- [ ] (left unticked deliberately) do **not** change the `credentials: 'include'` cross-origin fetch without owner sign-off;
-      it is intentional and only smoke-testable with a logged-in amenzb account
-- [ ] commit together with the two unticked items above, once the owner rules on them
+- [x] **amenzb, closed by owner decision on 2026-10-19 (best effort, no change).** The owner had no open registration to test against when they tried it, so amenzb is explicitly a best-effort adapter: the hardcoded `https://amenzb.moe` in `buildApiUrl()` / `ready()` and the `credentials: 'include'` fetch stay exactly as they are, because nothing about them can be verified here and changing them would trade a known-working unknown for an unverified one. Whoever gets an amenzb account can revisit `window.location.origin` then. M6 is therefore finished; there is no pending commit for it.
 
 ### M7 — Docs that currently teach the broken pattern
 
@@ -267,6 +263,36 @@ Line numbers were from `README.md` at `9b23c50`; all are done, so they are liste
 - [ ] `git push -u origin 2.2-js` — only after the owner is happy with the branch. Not pushed.
 - [ ] `git rm PLAN.md && git commit -m "[2.2] remove PLAN.md, JS conversion complete"` — **deliberately not done.** The conversion work itself is complete (M0-M8), but these remain open and belong to the owner, not the agent: `react-tooltip` 6, the amenzb origin/credentials hardcoding, Dependabot cleanup, the browser smoke pass, the merge/push decision. Delete the file once those are settled.
 - [ ] from the main checkout: `git worktree remove /home/hutch/Projects/nzbunity-2.2-js` (keep it until the PR/merge is settled)
+
+### M10 — react-tooltip 5 → 6 (owner-approved 2026-10-19; **review the shape below before starting**)
+
+This is the last deferred dependency upgrade. Everything measured here was measured against the actual `react-tooltip@6.0.9` tarball, unpacked into a scratch directory and inspected, not read off a changelog.
+
+Facts that decide the shape of the change:
+
+- **The raw-HTML content API is gone in v6.** `data-tooltip-html` appears 0 times in the v6 bundle (once in v5), `html` is not in v6's `DataAttribute` union, and the `html` / `jsx` props are not in v6's `ITooltipController`. v6's content prop is `content?: ReactNode`, plus a `render?: ({ content, activeAnchor }) => ReactNode` escape hatch. That is the whole refactor: 10 anchors in `src/entrypoints/options/DownloaderForm.jsx` pass HTML strings (five of them multi-line with nested `<span>`/`<p>`), and one of them is dynamic (`DownloaderForm.jsx:333`, `dirty ? 'Save changes' : 'No changes to save'`).
+- **The DOM class names did not change between v5.30.1 and v6.0.9.** Both bundles contain `react-tooltip`, `react-tooltip-arrow`, `react-tooltip__place-top|-bottom|-left…`, `react-tooltip-content-wrapper`, `react-tooltip-core-styles`, `react-tooltip-inject-styles`. So the arrow and placement overrides in `src/assets/tooltip.css:38-58` carry over unchanged — that was the risky-looking half, and it is the boring half.
+- `react-tooltip/dist/react-tooltip.css` is still a valid import path (same `exports` map), v6 still injects its core styles at runtime, and the peer range is `react >=16.14` so nothing about the React 19 tier moves. Unpacked size in `node_modules` goes 916 kB → 1.1 MB (source maps included); the effect on the built package has to be measured, not guessed.
+- v6 ships `declare module 'react'` augmentation for `data-tooltip-*` attributes, so the checker sees them. It no longer declares `data-tooltip-html` at all — which means if that attribute were left behind anywhere, an opted-in file would flag it.
+
+**Recommended shape (A, smallest diff, CSS untouched).** Keep the single global `<Tooltip id="tooltip" place="bottom" closeEvents={…} />` in `src/entrypoints/options/Options.jsx:306-316` and give it a `render` that looks the content up by a key on the anchor:
+
+1. New file `src/entrypoints/options/help.jsx` exporting one object, `HelpText`, whose keys are the ten tips (`name`, `apiUrl`, `apiKey`, `nzbgetUser`, `nzbgetPass`, `categories`, `test`, `save`, `saveDisabled`, plus whatever the ninth and tenth turn out to be once listed) and whose values are JSX fragments — the existing copy verbatim, `<span>`/`<p>` nesting intact, no styling changes. It has to be `.jsx`, not `.js`: the JSX loader is chosen by file extension.
+2. In `DownloaderForm.jsx`, each anchor keeps `data-tooltip-id="tooltip"` and swaps `data-tooltip-html="…"` for `data-help="apiKey"`. The dynamic save button becomes `data-help={dirty ? 'save' : 'saveDisabled'}`. Two anchors are `<button>` elements (`:314-337`), which is why the pattern must stay attribute-based rather than wrapping anything in a helper component.
+3. On the global `<Tooltip>`, add `render={({ activeAnchor }) => HelpText[activeAnchor?.dataset.help ?? ''] ?? null}`.
+4. `src/assets/tooltip.css` needs no change (see the class-name finding above). Re-check `#tooltip { border: 1px solid … }` in a browser anyway: v6's own `border` prop documentation warns that borders over 3 px, or non-`px` units, break arrow positioning, and this project draws its arrow with a border trick plus `!important` offsets.
+
+Alternative shape (B, if the owner prefers content to sit next to its anchor): a `useHelpTip(content)` hook in `help.jsx` returning `{ anchor, tooltip }`, used as `<div {...anchor}>…</div>{tooltip}`. Better locality, but it adds ten `<Tooltip>` instances instead of one, needs an id per call site (`useId()`), and forces the `#tooltip {…}` selector in the CSS to become a class. Recommended against unless locality is worth that.
+
+Do **not** do any of this while at it: no restyling, no changing tooltip copy, no switching to `data-tooltip-content` (it takes a plain string, so it cannot hold the `<p>` blocks and would silently flatten them), no adding `@testing-library` just to test this.
+
+Verification for this step:
+
+- [ ] `npm i react-tooltip@^6.0.9`, then `npm run check && npm run lint && npm run format:check && npm test && npm run build:all`; record the built size delta against the current 837.68 kB in the commit message the way the React tier did.
+- [ ] `grep -rn "data-tooltip-html\|dangerouslySetInnerHTML" src/` must come back empty.
+- [ ] the structure test's `wxt/*` specifier guard, `check`, and `lint` must stay green (no new specifier involved, so this is a regression guard only).
+- [ ] **browser pass, which the owner can actually do in two minutes**: the options page needs no accounts and no indexer. For each of the ten anchors — hover, and confirm the tip appears with its `<p>` blocks still wrapped and its arrow still attached; with the v5 build side by side if in doubt. Then the three behaviours the config encodes: the tip closes on click, on blur and on mouseleave; the Save button's text flips between 'Save changes' and 'No changes to save' after editing a field; and the tip sits below the anchor (`place="bottom"`) with the arrow pointing up, then above it near the bottom of the page with the arrow flipped. What cannot be verified headlessly here, and must not be claimed: all of that rendering.
+- [ ] commit as one step: `[2.2] move to react-tooltip 6 and drop the HTML string tooltips`. Rollback is that one commit; nothing else in the branch depends on it.
 
 ---
 
@@ -335,6 +361,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — owner rulings: amenzb is best effort (M6 closed with no code change), and M10 is added for the react-tooltip 6 upgrade.** M10 is written for review before any code moves. Measured against the 6.0.9 tarball rather than a changelog: the raw-HTML content API is gone (`data-tooltip-html` appears 0 times in the v6 bundle, and `content?: ReactNode` plus `render` replace it), but the DOM class names are byte-for-byte the same as 5.30.1, so the arrow/placement CSS carries over. The step is ten anchors in one file plus one new `help.jsx`.
 
 - **2026-10-19 — M9 verification run is green end to end, including the tests that never ran before.** `npm ci` → `check` → `lint` → `format:check` → `test` → `build:all` from a wiped `node_modules`/`.wxt`/`.output`: 0 vulnerabilities, silent checker, silent linter, 53 passed / 9 skipped / 1 todo, 837.68 kB for both browser targets. The 10 downloader tests that have failed with `ECONNREFUSED` on this branch since it started are now passing, because the SABnzbd and NZBGet containers were finally brought up by hand — recipe in §4.6, containers removed again afterwards. What is still open is owner work, not conversion work: the browser smoke pass, `react-tooltip` 6, amenzb origin/credentials, Dependabot, the merge and the push. PLAN.md stays in the tree for that reason.
 
