@@ -3,25 +3,19 @@ import { icons } from '~/assets';
 /**
  * @typedef {Object} RequestOptions
  * @property {string} url
- * @property {Record<string, *>} [params]
+ * @property {Record<string, unknown>} [params]
  * @property {string} [username]
  * @property {string} [password]
  * @property {boolean} [json]
  * @property {boolean} [multipart]
  * @property {Object} [files]
  * @property {boolean} [debug]
+ * @property {string} [method] HTTP verb; `request()` upper-cases it
+ * @property {HeadersInit} [headers]
+ * @property {string | FormData | URLSearchParams} [body]
  */
 export function isContentScript() {
   return location && !/^(chrome|moz)-extension:/.test(location.protocol);
-}
-
-function getLastError(caller = 'sendMessage') {
-  const error = browser.runtime.lastError;
-  if (!error?.message) return null;
-  console.warn(`[${caller}] Last error: ${error.message}`);
-
-  // Receiving end not existing isn't really concerning, ignore.
-  return /Receiving end does not exist/i.test(error?.message) ? null : error.message;
 }
 
 /**
@@ -71,7 +65,7 @@ export function getQueryParam(k, default_, query) {
 }
 
 /**
- * @param {Record<string, *>} obj
+ * @param {Record<string, unknown>} obj
  * @returns {string}
  */
 export function objectToQuery(obj) {
@@ -98,7 +92,7 @@ export function parseUrl(url) {
 /**
  * Wraps a fetch() request to handle common options in a sensible way.
  * @param {RequestOptions} options
- * @returns {Promise<*>}
+ * @returns {Promise<any>}
  */
 export async function request(options) {
   // Options wrangling

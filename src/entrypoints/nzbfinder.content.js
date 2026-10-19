@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 import { icon_nzb_32_green } from '~/assets';
 export default defineContentScript({
   matches: ['*://*.nzbfinder.ws/*'],
@@ -140,10 +141,8 @@ class NZBFinderContent extends Content {
       });
       link.classList.add(...(this.getFirstChild(a)?.classList.values() ?? []));
 
-      // List (Do nothing for now)
-      if (this.isInList(a)) {
-      } else {
-        // Covers
+      // Covers only: list rows are left as they are (for now)
+      if (!this.isInList(a)) {
         link.style.width = '40px';
         link.classList.add('align-bottom', 'h-full');
       }

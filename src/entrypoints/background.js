@@ -10,7 +10,7 @@ export default defineBackground(() => {
   // Handle commands
   browser.commands.onCommand.addListener((command, tab) => {
     switch (command) {
-      case 'toggle-queue':
+      case 'toggle-queue': {
         const client = Client.getInstance();
         client.getDownloader().then(() => {
           if (client.isDownloading()) {
@@ -20,6 +20,7 @@ export default defineBackground(() => {
           }
         });
         break;
+      }
       case 'open-web-ui':
         Client.getInstance().openWebUI();
         break;

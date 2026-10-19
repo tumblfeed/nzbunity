@@ -99,7 +99,7 @@ export class SABnzbd extends Downloader {
     }
     const result = nzbResult.result;
     let speedBytes = 0;
-    const [, speedNumeric, speedUnit] = result.speed.match(/([\d\.]+)\s+(\w+)/i) ?? [];
+    const [, speedNumeric, speedUnit] = result.speed.match(/([\d.]+)\s+(\w+)/i) ?? [];
     if (speedNumeric) {
       speedBytes = parseFloat(speedNumeric);
       speedBytes *=

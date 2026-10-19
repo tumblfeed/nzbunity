@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.nzbgeek.info/*'],
   main(ctx) {
@@ -21,7 +22,7 @@ class NZBGeekContent extends Content {
       const url = a.href;
 
       // Get the category
-      let category = '';
+      let category;
       const pathSearch = window.location.pathname + window.location.search;
       category =
         row

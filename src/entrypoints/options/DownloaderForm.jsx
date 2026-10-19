@@ -149,19 +149,7 @@ function DownloaderForm({
           <li>Invalid: {JSON.stringify(invalid)}</li>
         </ul> */}
         <div>Don't forget to save after making any changes.</div>
-        <div
-          data-tooltip-id="tooltip"
-          data-tooltip-html="
-            <span>
-              A unique name for this downloader.
-              <p>
-                This is used to identify the downloader in the list. If you change the
-                name of an existing downloader, it will duplicate the downloader with the
-                new name.
-              </p>
-            </span>
-          "
-        >
+        <div data-tooltip-id="tooltip" data-help="name">
           <label htmlFor="DownloaderName">Name:</label>
           <input
             type="text"
@@ -190,27 +178,7 @@ function DownloaderForm({
           {invalid.Type && <span className="error">{invalid.Type}</span>}
         </div>
 
-        <div
-          data-tooltip-id="tooltip"
-          data-tooltip-html="
-            The full URL to connect to downloader API.
-            <p>
-              This is probably different from the URL you use to access the web UI, but
-              when Test or Save is clicked, NZBUnity will attempt to automatically find
-              the full API URL using smart defaults
-              <br />
-              For example:
-              <br />
-              Entering '192.168.1.123' will try 'http://192.168.1.123:8080/api', etc.
-              <br />
-              If the URL cannot be automatically found (ie, you are using a non-standard
-              port or proxy), please try the full URL from your downloader UI without
-              path.
-              <br />
-              You may want to set 'Web UI' URL as well.
-            </p>
-          "
-        >
+        <div data-tooltip-id="tooltip" data-help="apiUrl">
           <label htmlFor="DownloaderApiUrl">API URL:</label>
           <input
             type="text"
@@ -224,12 +192,7 @@ function DownloaderForm({
 
         {fields.Type === DownloaderType.SABnzbd && (
           <>
-            <div
-              data-tooltip-id="tooltip"
-              data-tooltip-html="
-                The API Key for SABnzbd. This can be found in the SABnzbd settings.
-              "
-            >
+            <div data-tooltip-id="tooltip" data-help="apiKey">
               <label htmlFor="DownloaderApiKey">API Key:</label>
               <input
                 type="text"
@@ -245,10 +208,7 @@ function DownloaderForm({
 
         {fields.Type === DownloaderType.NZBGet && (
           <>
-            <div
-              data-tooltip-id="tooltip"
-              data-tooltip-html="The control username for NZBGet."
-            >
+            <div data-tooltip-id="tooltip" data-help="username">
               <label htmlFor="DownloaderUsername">Username:</label>
               <input
                 type="text"
@@ -260,10 +220,7 @@ function DownloaderForm({
               />
             </div>
 
-            <div
-              data-tooltip-id="tooltip"
-              data-tooltip-html="The control password for NZBGet."
-            >
+            <div data-tooltip-id="tooltip" data-help="password">
               <label htmlFor="DownloaderPassword">Password:</label>
               <input
                 type="text"
@@ -277,16 +234,7 @@ function DownloaderForm({
           </>
         )}
 
-        <div
-          data-tooltip-id="tooltip"
-          data-tooltip-html="
-            Optional, page URL to open when clicking the
-            <br />
-            Open web UI button on the toolbar UI.
-            <br />
-            Defaults to API URL value above.
-          "
-        >
+        <div data-tooltip-id="tooltip" data-help="webUrl">
           <label htmlFor="DownloaderWebUrl">Web URL:</label>
           <input
             type="text"
@@ -319,7 +267,7 @@ function DownloaderForm({
                 : ''
           }
           data-tooltip-id="tooltip"
-          data-tooltip-html="Test and automatically find the full URL."
+          data-help="test"
         >
           Test
           {testResult === true && <Success />}
@@ -330,7 +278,7 @@ function DownloaderForm({
           disabled={!dirty || !isValid}
           className={dirty ? 'highlight' : ''}
           data-tooltip-id="tooltip"
-          data-tooltip-html={dirty ? 'Save changes' : 'No changes to save'}
+          data-help={dirty ? 'save' : 'saveDisabled'}
         >
           <Save /> Save
         </button>

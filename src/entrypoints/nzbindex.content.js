@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.nzbindex.com/*', '*://*.nzbindex.nl/*'],
   main(ctx) {
@@ -48,7 +49,7 @@ class NzbIndexContent extends Content {
     const button = this.createButton();
     button.addEventListener('click', async (e) => {
       e.preventDefault();
-      const [, nzbId] = window.location.pathname.match(/^\/\w+\/([a-f0-9\-]+)/) || [];
+      const [, nzbId] = window.location.pathname.match(/^\/\w+\/([a-f0-9-]+)/) || [];
       if (nzbId) {
         console.info(`[NZB Unity] Adding NZB ${nzbId}`);
         this.addUrlAndNotify(button, this.getNzbUrl(nzbId));

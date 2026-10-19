@@ -16,7 +16,6 @@ import {
   getDownloaderCount,
   getDefaultDownloader,
   getIndexers,
-  getIndexer,
   translateV1,
   migrateV1,
 } from '../store.js';

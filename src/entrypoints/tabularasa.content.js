@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content, request } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.tabula-rasa.pw/*'],
   main(ctx) {

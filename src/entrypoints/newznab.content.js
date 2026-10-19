@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 const autoLoadHosts = [
   'newz-complex.org',
   'ninjacentral.co.za',

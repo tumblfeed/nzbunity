@@ -1,0 +1,6 @@
+.wxt
+.output
+node_modules
+package-lock.json
+test/docker
+*.svg

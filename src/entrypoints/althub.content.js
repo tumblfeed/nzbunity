@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.althub.co.za/*'],
   main(ctx) {
@@ -47,7 +48,7 @@ class AlthubContent extends Content {
       const [, id] = a.getAttribute('href')?.match(/\/getnzb\/(\w+)/i) ?? [];
       if (!id) continue;
       const url = this.getNzbUrl(id);
-      let category = '';
+      let category;
       if (window.location.pathname.startsWith('/details')) {
         // Detail page
         category = this.extractCategory(document.querySelector('a[href^="/browse?t="]'));

@@ -4,7 +4,7 @@ import { DownloaderType } from '~/store';
 export { DownloaderType };
 
 /** @enum {number} */
-
+/** @typedef {(typeof NZBPriority)[keyof typeof NZBPriority]} NZBPriority */
 export const NZBPriority = {
   default: -100,
   paused: -2,
@@ -15,7 +15,7 @@ export const NZBPriority = {
 };
 
 /** @enum {number} */
-
+/** @typedef {(typeof NZBPostProcessing)[keyof typeof NZBPostProcessing]} NZBPostProcessing */
 export const NZBPostProcessing = {
   default: -1,
   none: 0,
@@ -33,6 +33,7 @@ export const NZBPostProcessing = {
  * @property {NZBPriority} [priority]
  * @property {NZBPostProcessing} [pp]
  * @property {boolean} [paused]
+ * @export
  */
 
 /**
@@ -63,6 +64,7 @@ export const NZBPostProcessing = {
  * @property {boolean} success
  * @property {string} [result]
  * @property {string} [error]
+ * @export
  */
 
 /**

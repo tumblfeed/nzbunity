@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.abnzb.com/*'],
   main(ctx) {
@@ -24,7 +25,7 @@ class AbnzbContent extends Content {
   }
 
   getCategory(el) {
-    let category = '';
+    let category;
     const coverCategoryRe = /^\/(movies)/;
     if (coverCategoryRe.test(window.location.pathname)) {
       // Cover view, category is in the path

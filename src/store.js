@@ -8,7 +8,7 @@ const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
 
 /** @enum {string} */
-
+/** @typedef {(typeof DownloaderType)[keyof typeof DownloaderType]} DownloaderType */
 export const DownloaderType = {
   SABnzbd: 'SABnzbd',
   NZBGet: 'NZBGet',
@@ -85,7 +85,7 @@ export const DefaultDownloaderOptions = {
 };
 
 // This used to come from manifest, making it static reduces the need for scripting permissions in v3
-// The keys match the names of entrypoints/*.content.ts
+// The keys match the names of entrypoints/*.content.js
 export const DefaultIndexers = {
   abnzb: { Display: 'abNZB', Enabled: true },
   althub: { Display: 'altHUB', Enabled: true },
