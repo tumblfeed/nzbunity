@@ -11,10 +11,12 @@
 1. **Resume check** — do this before anything else, every time you pick the plan up:
 
    ```bash
-   cd /home/hutch/Projects/nzbunity-2.2-js
+   # As of 2026-10-19 this branch lives in the main checkout; the worktree is gone.
+   cd /home/hutch/Projects/nzbunity
    git status --short
-   git log --oneline origin/2.2..HEAD
+   git log --oneline -3
    grep -n '^- \[ \]' PLAN.md | head   # next unchecked boxes
+   npm ci                              # .wxt/ is generated; check and lint need it
    ```
 
    Then read the **Progress log** at the bottom, pick the first unchecked box in the first
@@ -32,10 +34,13 @@
    `[2.2] add structural guards for entrypoint drift`. Do not squash milestones together —
    reviewers on this repo review file-by-file renames.
 
-4. **Do not switch branches** in `/home/hutch/Projects/nzbunity`; it is a separate checkout of
-   `main`. All work happens in this worktree. Do not `git push` until milestone M9 says so.
+4. **Where the work happens.** Until 2026-10-19 this ran in a throwaway worktree at
+   `/home/hutch/Projects/nzbunity-2.2-js` with `main` checked out in `/home/hutch/Projects/nzbunity`,
+   and nothing was pushed from the worktree. That is finished: the branch was merged into `2.2`,
+   pushed, and the worktree removed. Pick the work up on `2.2` in a normal checkout, and leave
+   whatever branch someone else happens to have checked out alone.
 
-5. **Delete this file when the work is done.** When every box through M9 is ticked and the
+5. **Delete this file when the work is done.** When every box through M10 is ticked and the
    final verification pass in §4 is green:
 
    ```bash
@@ -362,6 +367,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — merged into `2.2` and pushed; the `2.2-js` worktree is removed.** Everything still unchecked in this file is now owed in a normal checkout on `2.2`: the two-minute options-page tooltip pass in M10, the amenzb profile whenever its registrations open, and the last boxes of M9 (the browser smoke pass, then deleting this file once nothing is left open). The `main` checkout at `/home/hutch/Projects/nzbunity` needs `git checkout 2.2 && npm ci` before `check`/`lint`/`test` will run there, and the merge is the moment to settle the `.nvmrc` split between Node 24 here and Node 22 on `main`.
 
 - **2026-10-19 — M10 implemented (shape A): react-tooltip 5.30.1 → 6.0.9, all nine live tooltips converted, dead `Options.jsx` block removed.** New `src/entrypoints/options/help.jsx` holds the copy as JSX keyed by the `data-help` value on the anchor, and the single global `<Tooltip>` resolves it through `render`. `src/assets/tooltip.css` untouched, as the class-name finding predicted. Gates green, build +3.7 kB per target. Not verified and not claimed: how the tips actually render — that is the two-minute options-page pass.
 
