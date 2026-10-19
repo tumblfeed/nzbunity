@@ -116,59 +116,70 @@
 
 ### M0 — Baseline the worktree
 
-- [ ] `cd /home/hutch/Projects/nzbunity-2.2-js && npm ci` (runs `postinstall: wxt prepare`, creating the gitignored `.wxt/` dir)
-- [ ] Run `npm run build` and record the outcome in the Progress log. Expected: a resolution
-      failure on `wxt/sandbox` in the two adapters. This is the evidence M1 is a build fix.
-- [ ] Run `npm test` and record the outcome (expect 0 real adapter tests, 1 skipped file).
-- [ ] Confirm `git status --short` shows only gitignored noise.
+- [x] `cd /home/hutch/Projects/nzbunity-2.2-js && npm ci` (runs `postinstall: wxt prepare`, creating the gitignored `.wxt/` dir)
+- [x] Run `npm run build` and record the outcome. **Actual baseline: `npm ci` itself failed** —
+      the `postinstall: wxt prepare` step aborted with `"./sandbox" is not exported ... from
+      package .../node_modules/wxt`, so the branch breaks even earlier than the build.
+      (wxt 0.20.20, node 26.11.1, npm 12.2.1)
+- [x] Run `npm test` and record the outcome. **Baseline: 39 passed / 10 failed / 9 skipped / 1
+      todo.** All 10 failures are `NZBGetHost.test.js` and `SABnzbd.test.js` hitting
+      `ECONNREFUSED` on localhost 7357/7358 — they need `npm run compose:sabnzbd` and
+      `compose:nzbget` (docker). Environmental and pre-existing: a fully green `npm test` is not
+      reachable without those services, so compare against this baseline rather than expecting 0.
+- [x] Confirm `git status --short` shows only gitignored noise.
 
 ### M1 — Port the two adapters to JS (the actual fix; do this first)
 
 **amenzb.content.ts → amenzb.content.js** (`git mv` to keep rename detection), then:
 
-- [ ] L1 → `import { defineContentScript } from '#imports';`
-- [ ] L13 delete the stray blank line right after `class AmenzbContent extends Content {`
-- [ ] L18 `apiKey: string = '';` → `apiKey = '';` (keep the field for now; M6 may replace it with the base-class `_apikey`)
-- [ ] L20 → `get isList() {`, L24 → `get isDetail() {`, L29 → `async ready() {`, L44 → `buildApiUrl(downloadUrl) {`
-- [ ] L34 drop ` as HTMLInputElement`; L52 and L61 drop ` as HTMLAnchorElement`
-- [ ] Remove the blank lines that separate the import block / `export default` / `class` (match `abnzb.content.js`)
-- [ ] Add the missing trailing newline at end of file
-- [ ] Optionally add JSDoc on `ready()`/`buildApiUrl()` only if it costs nothing in review noise
+- [x] L1 → `import { defineContentScript } from '#imports';`
+- [x] L13 delete the stray blank line right after `class AmenzbContent extends Content {`
+- [x] L18 `apiKey: string = '';` → `apiKey = '';` (keep the field for now; M6 may replace it with the base-class `_apikey`)
+- [x] L20 → `get isList() {`, L24 → `get isDetail() {`, L29 → `async ready() {`, L44 → `buildApiUrl(downloadUrl) {`
+- [x] L34 drop ` as HTMLInputElement`; L52 and L61 drop ` as HTMLAnchorElement`
+- [x] Remove the blank lines that separate the import block / `export default` / `class` (match `abnzb.content.js`)
+- [x] Add the missing trailing newline at end of file
+- [ ] ~~Optionally add JSDoc on `ready()`/`buildApiUrl()`~~ — skipped on purpose: M1 stays a
+      pure conversion so the diff is a rename plus deletions. JSDoc can ride along with M5.
 
 **aninzb.content.ts → aninzb.content.js** (`git mv`), then:
 
-- [ ] L1 → `import { defineContentScript } from '#imports';`
-- [ ] L23 `const a = el as HTMLAnchorElement;` → `const a = el;`
-- [ ] **Leave `'vertical-align': 'middle'` alone.** The quoted dashed key is a valid CSSOM
+- [x] L1 → `import { defineContentScript } from '#imports';`
+- [x] L23 `const a = el as HTMLAnchorElement;` → `const a = el;`
+- [x] **Leave `'vertical-align': 'middle'` alone.** The quoted dashed key is a valid CSSOM
       named-property assignment; it is not a bug and does not need camelCase.
-- [ ] Keep the trailing `;` after the `initializeLinks = () => {...}` property assignment
-- [ ] Same top-level blank-line collapse as above
+- [x] Keep the trailing `;` after the `initializeLinks = () => {...}` property assignment
+- [x] Same top-level blank-line collapse as above
 
 **Acceptance for M1:**
 
-- [ ] `grep -rn "wxt/sandbox" src/` → no results
-- [ ] `find src -name '*.ts' -o -name '*.tsx'` → no results
-- [ ] `npm run build` succeeds; `.output/chrome-mv3/manifest.json` has one `content_scripts`
+- [x] `grep -rn "wxt/sandbox" src/` → no results
+- [x] `find src -name '*.ts' -o -name '*.tsx'` → no results
+- [x] `npm run build` succeeds; `.output/chrome-mv3/manifest.json` has one `content_scripts`
       entry per `src/entrypoints/*.content.js` (17) and includes amenzb + aninzb matches
-- [ ] `npm run build:all` succeeds (chrome + firefox)
-- [ ] `npm test` still passes
-- [ ] commit
+- [x] `npm run build:all` succeeds (chrome + firefox)
+- [x] `npm test` result **unchanged from the M0 baseline** (same 10 docker-dependent failures;
+      nothing regressed). A fully green suite needs `npm run compose:sabnzbd` + `compose:nzbget`.
+- [x] commit -> `d163353`
 
 ### M2 — Structural guard tests (prevents the drift from coming back)
 
 Add a plain vitest file, e.g. `src/__tests__/structure.test.js`, covering:
 
-- [ ] no `*.ts` / `*.tsx` anywhere under `src/` (walk with `node:fs`)
-- [ ] parity: every `src/entrypoints/<name>.content.js` basename is a key in
+- [x] no `*.ts` / `*.tsx` anywhere under `src/` (walk with `node:fs`)
+- [x] parity: every `src/entrypoints/<name>.content.js` basename is a key in
       `DefaultIndexers` (`src/store.js`) and every key that is meant to be an adapter has a file —
       if the lists legitimately differ, encode the whitelist in the test with a comment
-- [ ] every `wxt/...` import specifier in `src/` exists in the installed
+- [x] every `wxt/...` import specifier in `src/` exists in the installed
       `node_modules/wxt/package.json` `exports` map — this catches the whole `wxt/sandbox` bug
       class on any future WXT upgrade
-- [ ] write these tests **before** finishing M1 if convenient: watching them go red then green
-      is the cheapest proof they work
-- [ ] `npm test` green with the new tests included
-- [ ] commit
+- [x] proof the guards actually bite: instead of un-fixing M1, the tests were run against two
+      throwaway probe files (`src/entrypoints/tmpsite.content.ts` and
+      `src/entrypoints/tmprole.content.js` importing `wxt/sandbox`); three of the four guards went
+      red with the right assertion messages, both probes were deleted and the suite went green
+      again. Delete any probe file you create before committing.
+- [x] new tests pass: `npx vitest run --mode test src/__tests__/structure.test.js` -> 4/4
+- [x] commit
 
 ### M3 — Prettier, enforced
 
@@ -378,6 +389,29 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+* **2026-10-19 — M2 done, `src/__tests__/structure.test.js` (uncommitted at time of writing).**
+  Four guards: no typed files under `src/`, indexer->entrypoint parity, entrypoint->indexer parity
+  (with `newznab` whitelisted: it is one shared adapter gated by the `EnableNewznab` option, so it
+  intentionally has no `DefaultIndexers` key - 17 adapters vs 16 keys), and every `wxt/*` import
+  specifier validated against the installed `node_modules/wxt/package.json` exports map.
+  4/4 green, and proven red against probe files (see M2).
+
+* **2026-10-19 — M1 done, commit `d163353`** (`git mv` preserved rename detection, 15 changed
+  lines in amenzb + 4 in aninzb, zero logic changes). After it: `wxt prepare` succeeds,
+  `npm run build` and `npm run build:all` both succeed, the chrome manifest has 17
+  `content_scripts` entries including amenzb and aninzb, `grep wxt/sandbox src/` is empty and
+  `find src -name '*.ts*'` is empty. Also confirmed the JSDoc-free conversion needs no other edit:
+  the base class already exposes `_apikey`/`get apikey()` (Content.js:63,65) for M6 to use.
+
+* **2026-10-19 — M0 done (with an ordering deviation worth knowing).** `npm ci` could not
+  complete *before* M1, because its `postinstall: wxt prepare` is where the `wxt/sandbox` failure
+  surfaces: `ERROR "./sandbox" is not exported under the conditions [...] from package
+  .../node_modules/wxt`. node_modules was still populated (310 entries) and `.wxt/tsconfig.json`
+  was generated, so tooling could run. This turns the earlier inference into a fact: **branch 2.2
+  fails `npm ci` as published.** Test baseline: 39 passed / 10 failed / 9 skipped / 1 todo, all
+  failures `ECONNREFUSED` on localhost 7357-7358 (NZBGetHost + SABnzbd integration tests need the
+  docker services). Docker was deliberately not started: that is state outside the worktree.
 
 * **2026-10-19** — `PLAN.md` written. Worktree `/home/hutch/Projects/nzbunity-2.2-js` created on
   branch `2.2-js` from `origin/2.2` (`9b23c50`). No source files touched yet. Verified in the
