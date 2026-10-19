@@ -14,6 +14,7 @@ import {
   getActiveDownloader,
 } from '~/store';
 import DownloaderForm from './DownloaderForm';
+import { HelpText } from './help';
 import './Options.css';
 function Options() {
   // Hook kept for its polling subscription; this component renders no log output.
@@ -165,24 +166,6 @@ function Options() {
           </ul>
         </div>
 
-        {/* This should have been removed
-        <div
-          data-tooltip-id="tooltip"
-          data-tooltip-html="
-            Comma separated hostnames for Newznab sites to enable 1-click downloading
-          "
-        >
-          <label htmlFor="IndexerNewznab">Newznab Indexers:</label>
-          <input
-            type="text"
-            name="IndexerNewznab"
-            placeholder="mynewznab.com,otherprovider.com"
-            value={options?.IndexerNewznab ?? DefaultOptions.IndexerNewznab}
-            onChange={(e) => setOptions({ IndexerNewznab: e.target.value })}
-          />
-        </div>
-        */}
-
         <div>
           <label>
             <input
@@ -241,13 +224,7 @@ function Options() {
           </label>
         </div>
 
-        <div
-          data-tooltip-id="tooltip"
-          data-tooltip-html="
-            Optional, if no category can be determined from site or NZB headers, this
-            category will be sent instead.
-          "
-        >
+        <div data-tooltip-id="tooltip" data-help="defaultCategory">
           <label htmlFor="DefaultCategory">Default category:</label>
           <input
             type="text"
@@ -306,6 +283,7 @@ function Options() {
       <Tooltip
         id="tooltip"
         place="bottom"
+        render={({ activeAnchor }) => HelpText[activeAnchor?.dataset.help ?? ''] ?? null}
         closeEvents={{
           // dblclick: true,
           blur: true,
