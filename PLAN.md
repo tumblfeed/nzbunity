@@ -229,21 +229,17 @@ Owner-gated finding, deliberately left alone: `src/entrypoints/options/Options.j
 
 ### M7 — Docs that currently teach the broken pattern
 
-All line numbers are from `README.md` at `9b23c50`.
+Line numbers were from `README.md` at `9b23c50`; all are done, so they are listed by what changed rather than by line.
 
-- [ ] L87 `built primarily in TypeScript and SASS, using a Gulp build process` → JavaScript +
-      WXT (Gulp is gone)
-- [ ] L109 `public/` is listed under `src/` but was moved to the repo root in `1a4bcbd`
-- [ ] L114 `add a <sitename>.content.ts file` → `.content.js`; the cited examples
-      `omgwtfnzbs.content.ts` / `dognzb.content.ts` / `Content.ts` don't exist on this branch →
-      cite `aninzb.content.js` (smallest) and `dognzb.content.js`, and `Content.js`
-- [ ] L116 `src/store.ts` → `src/store.js`
-- [ ] L120-121 the ``typescript fence and `from 'wxt/sandbox'` → ``javascript and `from '#imports'`
-- [ ] `src/store.js:88` comment "The keys match the names of entrypoints/\*.content.ts" → `.content.js`
-- [ ] `.gitignore` L7 `web-ext.config.ts` — the tracked file is `web-ext.config.js`, so this line
-      is stale: fix or delete it (do not start ignoring the `.js` config)
-- [ ] add one short "adding a site adapter" pointer that mentions `npm run check` exists as a local script — without naming TypeScript. There is no CI here (no `.github/workflows`), and §7 puts CI redesign out of scope, so do not write "runs in" anything.
-- [ ] commit
+- [x] "built primarily in TypeScript and SASS, using a Gulp build process" → "written in JavaScript (a little JSX for the popup and option pages), styled with CSS, and built with the WXT CLI". Gulp has been gone for years; naming it sent contributors looking for a build system that does not exist.
+- [x] `public/` was listed as a subdirectory of `src/`; it lives at the repo root (`srcDir: 'src'`, WXT's `publicDir` defaults to `<root>/public`, and `public/icon` is there). Moved to the top level of the directory list.
+- [x] `<sitename>.content.ts` → `.content.js`; the recommended examples `omgwtfnzbs.content.ts` / `dognzb.content.ts` / `Content.ts` do not exist on this branch → now cites `aninzb.content.js` (smallest adapter) and `dognzb.content.js`, and `Content.js`.
+- [x] `src/store.ts` → `src/store.js` (also in the `src/store.js:88` comment about `DefaultIndexers` keys, and a stray `store.ts` in `src/dev.js:3` that was not on this plan's list).
+- [x] the adapter example fence changed from ` ```typescript ` to ` ```javascript ` and its import from `wxt/sandbox` to `#imports` — this was the only place in the repo that still taught the import that breaks `wxt prepare` on 0.20.
+- [x] the setup steps now name the local gates (`lint`, `format:check`, `check`) next to `test`/`build`, described as "report no problems", with no reference to what `check` is built on.
+- [x] added one sentence pointing a new adapter author at `src/__tests__/structure.test.js`, which fails when an entrypoint has no `DefaultIndexers` entry or vice versa — the exact drift that caused this branch's breakage.
+- [x] `.gitignore`: dropped the `web-ext.config.ts` line. The tracked file is `web-ext.config.js`, so the pattern matched nothing; it is not replaced with a `.js` pattern because that config is committed on purpose.
+- [x] commit
 
 ### M8 — Dependency refresh (one commit per tier; see §5 for numbers and dates)
 
@@ -356,6 +352,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — M7 done (commit pending at time of writing).** README no longer mentions TypeScript, SASS, Gulp, `.content.ts`, `src/store.ts` or `from 'wxt/sandbox'`; `public/` is documented at the repo root where it actually is; the setup steps list `lint` / `format:check` / `check` as local gates without saying what `check` runs; and new adapter authors get pointed at `structure.test.js`. Also fixed `.gitignore`'s dead `web-ext.config.ts` pattern and a stray `store.ts` in `src/dev.js:3`. Gates unchanged: `check`/`lint`/`format:check` clean, tests at baseline, build 810.22 kB.
 
 - **2026-10-19 — M6 partially done (commit pending at time of writing).** amenzb now uses the base class `_apikey`/`apikey` instead of its own `apiKey` field, and its logging matches the sibling adapters (`this.debug(...)` plus a warn when the key is missing). Only console output changed. The hardcoded `https://amenzb.moe` origin and `credentials: 'include'` were left alone on purpose: both are owner decisions and neither is testable without a logged-in amenzb account. Gates after the change: `check` / `lint` / `format:check` clean, `npm test` identical to the M0 baseline, build 810.22 kB.
 

@@ -1,6 +1,6 @@
 /**
  * Development helper script to set up default options for the extension.
- * Include this script in the from an entrypoint script (or store.ts) and
+ * Include this script in the from an entrypoint script (or store.js) and
  * set WXT_DEV_OPTIONS to true in .env.local
  */
 import { SABnzbd } from '~/downloader/SABnzbd';

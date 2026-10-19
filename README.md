@@ -84,7 +84,7 @@ For sites which have 1-click download enabled, a green NZB icon will be shown ne
 
 ## Building
 
-NZB Unity is built primarily in TypeScript and SASS, using a Gulp build process. Node, npm are required.
+NZB Unity is written in JavaScript (a little JSX for the popup and option pages), styled with CSS, and built with the WXT CLI. Node and npm are required.
 
 ### Extension
 
@@ -93,7 +93,7 @@ NZB Unity is built using WXT [https://wxt.dev/](https://wxt.dev/) and the WXT CL
 1. Clone the repository
 1. `npm ci`
 1. `npm run dev` -- Start a browser session with the extension loaded. This will also watch for changes in the source files and automatically rebuilds the extension and hot-reloads the changes.
-1. Make sure that after any changes `npm run test` passes and `npm run build` completes successfully.
+1. After any changes, make sure `npm run test` passes and `npm run build` completes successfully, and that `npm run lint`, `npm run format:check` and `npm run check` report no problems.
 1. Check `package.json` for commands.
 
 Directories:
@@ -106,19 +106,21 @@ Directories:
   - `assets/` -- Static assets (images, css, etc) to be inlined in the extension.
   - `downloader/` -- Download client adapters.
   - `entrypoints/` -- Main entry point for the extension (background, popup, options, content scripts).
-  - `public/` -- Static files to be copied to the build directory (note this is not the same as `assets/`).
+- `public/` -- Static files to be copied to the build directory (note this is not the same as `assets/`).
 - `test/` -- Helpers for unit tests.
 
 ### 1-Click Sites
 
-To build a 1-click site adapter you will need to add a `<sitename>.content.ts` file to `src/entrypoints/` using a format similar to the ones already in the directory; see `omgwtfnzbs.content.ts` or `dognzb.content.ts` for a good example. The file should export a WXT `defineContentScript` function call, and the main function should instantiate a `Content` object. Please see the `Content.ts` class for available options as it does a lot of the heavy lifting for you and only needs a few function defined to get started.
+To build a 1-click site adapter you will need to add a `<sitename>.content.js` file to `src/entrypoints/` using a format similar to the ones already in the directory; see `aninzb.content.js` (the smallest adapter) or `dognzb.content.js` for a good example. The file should export a WXT `defineContentScript` function call, and the main function should instantiate a `Content` object. Please see the `Content.js` class for available options as it does a lot of the heavy lifting for you and only needs a few function defined to get started.
 
-The site will also need to be added to the default list of 1-click sites in `src/store.ts` in `DefaultIndexers`, but this is not necessary for a pull request, you can hardcode the site check or use a name of an existing enabled site for testing.
+The site will also need to be added to the default list of 1-click sites in `src/store.js` in `DefaultIndexers`, but this is not necessary for a pull request, you can hardcode the site check or use a name of an existing enabled site for testing. A unit test (`src/__tests__/structure.test.js`) checks that every adapter in
+`src/entrypoints/` has an entry in `DefaultIndexers` and back, so if a new site is missing from
+the extension, start there.
 
 The head of the file should look something like this:
 
-```typescript
-import { defineContentScript } from 'wxt/sandbox';
+```javascript
+import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
 import { getQueryParam } from '~/utils';
 
