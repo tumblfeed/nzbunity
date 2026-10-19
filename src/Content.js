@@ -3,7 +3,6 @@ import { browser } from 'wxt/browser';
 import { Logger } from '~/logger';
 import { getOptions, DefaultIndexers } from '~/store';
 import { request } from '~/utils';
-import '~/assets/content.css';
 export { request } from '~/utils';
 /** @typedef {import('~/store').IndexerOptions} IndexerOptions */
 /** @typedef {import('~/downloader').NZBAddOptions} NZBAddOptions */

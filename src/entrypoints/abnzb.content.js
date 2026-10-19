@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.abnzb.com/*'],
   main(ctx) {

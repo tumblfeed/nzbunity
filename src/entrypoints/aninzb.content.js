@@ -1,6 +1,7 @@
 // @ts-check
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.aninzb.moe/*', '*://aninzb.moe/*'],
   main(ctx) {
@@ -8,6 +9,7 @@ export default defineContentScript({
   },
 });
 class AninzbContent extends Content {
+  /** @override */
   get id() {
     return 'aninzb';
   }
@@ -16,6 +18,7 @@ class AninzbContent extends Content {
   // <a class="btn btn-ghost btn-sm" href="/api/nzb/9470/Some.Release.Name.nzb">Download</a>
   // No API key or auth needed, so we can just grab the href directly on any page
   // (list or detail) and add a button next to it.
+  /** @override */
   initializeLinks = () => {
     for (const el of document.querySelectorAll('a[href*="/api/nzb/"]')) {
       const a = /** @type {HTMLAnchorElement} */ (el);

@@ -1,5 +1,6 @@
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 import { getQueryParam } from '~/utils';
 export default defineContentScript({
   matches: ['*://*.omgwtfnzbs.org/*'],

@@ -1,6 +1,7 @@
 // @ts-check
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
+import '~/assets/content.css';
 export default defineContentScript({
   matches: ['*://*.amenzb.moe/*', '*://amenzb.moe/*'],
   main(ctx) {
@@ -8,19 +9,25 @@ export default defineContentScript({
   },
 });
 class AmenzbContent extends Content {
+  /** @override */
   get id() {
     return 'amenzb';
   }
 
+  /** @override */
   get isList() {
     return document.querySelectorAll('a[href*="/download/"]').length > 1;
   }
 
+  /** @override */
   get isDetail() {
     return window.location.pathname.startsWith('/release/');
   }
 
-  // Fetches the API key from the profile page and caches it
+  /**
+   * Fetches the API key from the profile page and caches it
+   * @override
+   */
   async ready() {
     const res = await fetch('https://amenzb.moe/profile', { credentials: 'include' });
     const html = await res.text();
@@ -39,6 +46,7 @@ class AmenzbContent extends Content {
     return `https://amenzb.moe/api?t=get&apikey=${this.apikey}&id=${id}`;
   }
 
+  /** @override */
   initializeListLinks = () => {
     const links = document.querySelectorAll('a[href*="/download/"]');
     links.forEach((el) => {
@@ -50,6 +58,7 @@ class AmenzbContent extends Content {
     });
   };
 
+  /** @override */
   initializeDetailLinks = () => {
     const anchor = /** @type {HTMLAnchorElement} */ (
       document.querySelector('a[href*="/download/"]')
