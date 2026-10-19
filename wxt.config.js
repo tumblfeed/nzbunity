@@ -3,6 +3,9 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
+  // Emits .wxt/eslint-auto-imports.json so eslint.config.js can declare the
+  // WXT auto-import globals instead of hand-maintaining a stale list.
+  imports: { eslintrc: { enabled: true } },
   manifest: {
     permissions: [
       // "<all_urls>",

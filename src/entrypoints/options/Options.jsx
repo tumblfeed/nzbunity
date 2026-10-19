@@ -16,7 +16,8 @@ import {
 import DownloaderForm from './DownloaderForm';
 import './Options.css';
 function Options() {
-  const logger = useLogger('Options');
+  // Hook kept for its polling subscription; this component renders no log output.
+  useLogger('Options');
   const [options, setOptions] = useOptions();
   const downloaderNames = () => Object.keys(options?.Downloaders || {});
   const [currentDownloader, setCurrentDownloader] = useState(null);

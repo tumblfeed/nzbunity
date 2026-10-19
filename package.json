@@ -26,7 +26,7 @@
     "zip": "wxt zip --sources",
     "zip:firefox": "wxt zip -b firefox",
     "zip:all": "wxt zip --sources && wxt zip -b firefox",
-    "lint": "echo 'No linter configured'",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run --mode test",
@@ -44,7 +44,11 @@
     "react-tooltip": "^5.30.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@wxt-dev/module-react": "^1.2.2",
+    "eslint": "^10.13.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "globals": "^16.5.0",
     "happy-dom": "^20.8.8",
     "prettier": "^3.9.10",
     "vitest": "^4.1.2",

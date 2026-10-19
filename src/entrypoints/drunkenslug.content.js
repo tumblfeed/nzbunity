@@ -48,7 +48,7 @@ class DrunkenSlugContent extends Content {
       const url = this.getNzbUrl(id);
 
       // Get the category
-      let category = '';
+      let category;
       if (window.location.pathname.startsWith('/details')) {
         category = this.extractCategory('dd a[href^="/browse?t="]');
       } else {

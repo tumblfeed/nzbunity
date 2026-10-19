@@ -188,16 +188,17 @@ Editing note for whoever picks this up: keep task-list items on one long line. S
 
 Pick one; prefer ESLint unless the dependency tree makes it painful.
 
-- [ ] **Option A — ESLint 10 + `eslint-plugin-import-x` 4.17.1**, flat config `eslint.config.js`,
-      rules limited to `import/no-unresolved`, `no-undef`, `no-unused-vars`. Sanity-check that
-      `wxt/sandbox` _fails_ and `#imports` _passes_ (the resolver must honour package `exports`).
-      Auto-imports: set `imports: { eslintrc: { enabled: true } }` in `wxt.config.js` so WXT emits
-      `.wxt/eslint-auto-imports.json`, and wire it into `languageOptions.globals`.
-- [ ] **Option B — `dependency-cruiser` 18.6.0** with just `no-orphans` + `unknown-dependencies` + a `forbidden` rule for `wxt/sandbox`. Less tooling to explain to contributors, no
-      `no-undef` coverage.
-- [ ] keep the script named `lint` (README already tells people to run it)
-- [ ] do **not** add stylistic rules — prettier owns those
-- [ ] commit
+- [x] **Option A taken: ESLint 10.13 + `eslint-plugin-import-x` 4.17.1** (plus `@eslint/js` and `globals`), flat `eslint.config.js`, correctness only. The trick the draft worried about is solved by `settings['import-x/resolver-next']` with `createNodeResolver({ tsconfig: { configFile: '.wxt/tsconfig.json' }, extensions: [...] })` — that is what makes `~/...` resolve, and it also honours package `exports`. `#imports` is allow-listed in `no-unresolved` because it is a build-time alias with no real file.
+- [x] auto-import globals come from WXT, not a hand-kept list: `imports: { eslintrc: { enabled: true } }` in `wxt.config.js` makes `wxt prepare` emit **`.wxt/eslint-auto-imports.mjs`** (0.20.20 also writes `.wxt/eslintrc-auto-import.json`; the draft guessed `.json` only). That module default-exports a ready-made flat-config entry, so it is spread into a `files: ['src/entrypoints/**/*.js']` block. If `.wxt/` is missing, `npm run lint` fails with a clear "cannot find module" — `npm ci` regenerates it via postinstall.
+- [x] both sanity checks proven, not assumed: a probe adapter importing `~/Contnet` and `wxt/sandbox` produced `import-x/no-unresolved` for each, while `#imports` and real `wxt/*` subpaths passed. Probe deleted.
+- [x] Option B (dependency-cruiser) unnecessary now that the resolver works; it would add a second mental model for the same class of bug.
+- [x] script kept as `lint`, now `eslint .`
+- [x] no stylistic rules; formatting stays with `npm run format` / `format:check`
+- [x] commit
+
+**Triage record — the first run produced 56 errors in 22 files, all pre-existing.** Only one rule was switched off: `no-sparse-arrays` (15 hits), because `const [, id] = href.match(..) ?? [, '']` is the established adapter idiom and the elisions are never read. Everything else was fixed in place and each change is provably behaviour-neutral: `let category = '';` -> `let category;` in abnzb, althub, drunkenslug, nzbgeek and omgwtfnzbs (every branch overwrites it before any read); `{ }` around the `toggle-queue` case in `background.js`; the empty `if (this.isInList(a)) {}` in `nzbfinder.content.js` inverted to `if (!this.isInList(a))`; two dead regex escapes (`[\d\.]` and `[a-f0-9\-]`); `[dName, mm, dd, yy]` -> `[, mm, dd, yy]`; one unused import dropped from `store.test.js`; and `getLastError()` deleted from `utils.js` (private, referenced nowhere in `src/`, not exported — git history still has it if the owner wants it back). `no-unused-vars` runs with `args: 'none'` and `ignoreRestSiblings: true`, both justified inline: downloader interface stubs, browser-API-shaped callbacks, and the `const { formatted, ...rest }` key-dropping idiom in `logger.js`.
+
+Owner-gated finding, deliberately left alone: `src/entrypoints/options/Options.jsx:19` calls `useLogger('Options')` whose only effect is a 5-second polling subscription that the Options page never renders. The unused binding was dropped but the call kept — removing a hook call changes render behaviour, so it is not provably neutral.
 
 ### M5 — JS static checking, invisible to contributors
 
@@ -378,23 +379,25 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 
 ## Progress log (append newest first)
 
-- **2026-10-19 — M3 done.** prettier 3.9.10 as a devDependency, `format` + `format:check` scripts, `.prettierignore`. The headline result: **the source tree needed no reformatting at all** — the 2.2 conversion pass left it prettier-clean, so enforcing formatting costs three files of noise, all documentation/markup. `format:check` now passes and is a usable gate.
+- **2026-10-19 — M4 done.** `npm run lint` is a real gate now: ESLint 10.13 + eslint-plugin-import-x 4.17.1 flat config, zero errors across the tree, and it demonstrably catches both a typo'd `~/` import and the historical `wxt/sandbox` import. 56 pre-existing findings were triaged (see the M4 triage record) with behaviour-neutral fixes; one rule disabled with a written reason. `wxt.config.js` gained `imports.eslintrc.enabled` so the auto-import globals stay generated.
 
-* **2026-10-19 — M2 done, `src/__tests__/structure.test.js` (uncommitted at time of writing).**
+* **2026-10-19 — M3 done.** prettier 3.9.10 as a devDependency, `format` + `format:check` scripts, `.prettierignore`. The headline result: **the source tree needed no reformatting at all** — the 2.2 conversion pass left it prettier-clean, so enforcing formatting costs three files of noise, all documentation/markup. `format:check` now passes and is a usable gate.
+
+- **2026-10-19 — M2 done, `src/__tests__/structure.test.js` (uncommitted at time of writing).**
   Four guards: no typed files under `src/`, indexer->entrypoint parity, entrypoint->indexer parity
   (with `newznab` whitelisted: it is one shared adapter gated by the `EnableNewznab` option, so it
   intentionally has no `DefaultIndexers` key - 17 adapters vs 16 keys), and every `wxt/*` import
   specifier validated against the installed `node_modules/wxt/package.json` exports map.
   4/4 green, and proven red against probe files (see M2).
 
-* **2026-10-19 — M1 done, commit `d163353`** (`git mv` preserved rename detection, 15 changed
+- **2026-10-19 — M1 done, commit `d163353`** (`git mv` preserved rename detection, 15 changed
   lines in amenzb + 4 in aninzb, zero logic changes). After it: `wxt prepare` succeeds,
   `npm run build` and `npm run build:all` both succeed, the chrome manifest has 17
   `content_scripts` entries including amenzb and aninzb, `grep wxt/sandbox src/` is empty and
   `find src -name '*.ts*'` is empty. Also confirmed the JSDoc-free conversion needs no other edit:
   the base class already exposes `_apikey`/`get apikey()` (Content.js:63,65) for M6 to use.
 
-* **2026-10-19 — M0 done (with an ordering deviation worth knowing).** `npm ci` could not
+- **2026-10-19 — M0 done (with an ordering deviation worth knowing).** `npm ci` could not
   complete _before_ M1, because its `postinstall: wxt prepare` is where the `wxt/sandbox` failure
   surfaces: `ERROR "./sandbox" is not exported under the conditions [...] from package
 .../node_modules/wxt`. node_modules was still populated (310 entries) and `.wxt/tsconfig.json`
@@ -403,7 +406,7 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
   failures `ECONNREFUSED` on localhost 7357-7358 (NZBGetHost + SABnzbd integration tests need the
   docker services). Docker was deliberately not started: that is state outside the worktree.
 
-* **2026-10-19** — `PLAN.md` written. Worktree `/home/hutch/Projects/nzbunity-2.2-js` created on
+- **2026-10-19** — `PLAN.md` written. Worktree `/home/hutch/Projects/nzbunity-2.2-js` created on
   branch `2.2-js` from `origin/2.2` (`9b23c50`). No source files touched yet. Verified in the
   worktree: 2 remaining `.ts` files (amenzb, aninzb), 15 `.content.js` adapters,
   `DefaultIndexers` already lists `amenzb` (store.js:92) and `aninzb` (store.js:94), README stale

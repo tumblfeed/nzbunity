@@ -48,7 +48,7 @@ class NzbIndexContent extends Content {
     const button = this.createButton();
     button.addEventListener('click', async (e) => {
       e.preventDefault();
-      const [, nzbId] = window.location.pathname.match(/^\/\w+\/([a-f0-9\-]+)/) || [];
+      const [, nzbId] = window.location.pathname.match(/^\/\w+\/([a-f0-9-]+)/) || [];
       if (nzbId) {
         console.info(`[NZB Unity] Adding NZB ${nzbId}`);
         this.addUrlAndNotify(button, this.getNzbUrl(nzbId));

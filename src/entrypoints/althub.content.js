@@ -47,7 +47,7 @@ class AlthubContent extends Content {
       const [, id] = a.getAttribute('href')?.match(/\/getnzb\/(\w+)/i) ?? [];
       if (!id) continue;
       const url = this.getNzbUrl(id);
-      let category = '';
+      let category;
       if (window.location.pathname.startsWith('/details')) {
         // Detail page
         category = this.extractCategory(document.querySelector('a[href^="/browse?t="]'));

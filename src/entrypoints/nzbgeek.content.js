@@ -21,7 +21,7 @@ class NZBGeekContent extends Content {
       const url = a.href;
 
       // Get the category
-      let category = '';
+      let category;
       const pathSearch = window.location.pathname + window.location.search;
       category =
         row

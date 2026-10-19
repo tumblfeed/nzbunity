@@ -50,7 +50,7 @@ class OmgwtfnzbsContent extends Content {
       if (!id) continue;
 
       // Get the category
-      let category = '';
+      let category;
       if (document.getElementById('category')) {
         // Short circuit if there is a category element (usually the details page)
         category = document.getElementById('category')?.textContent ?? '';
@@ -121,7 +121,7 @@ class OmgwtfnzbsContent extends Content {
         let date = el.dataset.sort;
         if (date) {
           date = new Date(Number(date) * 1000).toDateString();
-          const [dName, mm, dd, yy] = date.split(' ');
+          const [, mm, dd, yy] = date.split(' ');
           const isCurYear = `${new Date().getFullYear()}` === yy;
           const container = el.querySelector('span');
           if (!container) continue;

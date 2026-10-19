@@ -15,15 +15,6 @@ export function isContentScript() {
   return location && !/^(chrome|moz)-extension:/.test(location.protocol);
 }
 
-function getLastError(caller = 'sendMessage') {
-  const error = browser.runtime.lastError;
-  if (!error?.message) return null;
-  console.warn(`[${caller}] Last error: ${error.message}`);
-
-  // Receiving end not existing isn't really concerning, ignore.
-  return /Receiving end does not exist/i.test(error?.message) ? null : error.message;
-}
-
 /**
  * @param {string} [color]
  * @param {string} [status]

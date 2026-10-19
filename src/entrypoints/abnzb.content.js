@@ -24,7 +24,7 @@ class AbnzbContent extends Content {
   }
 
   getCategory(el) {
-    let category = '';
+    let category;
     const coverCategoryRe = /^\/(movies)/;
     if (coverCategoryRe.test(window.location.pathname)) {
       // Cover view, category is in the path
