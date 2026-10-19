@@ -29,6 +29,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check": "tsc --noEmit -p jsconfig.json",
     "test": "vitest run --mode test",
     "test:watch": "vitest --mode test",
     "postinstall": "wxt prepare",
@@ -51,6 +52,7 @@
     "globals": "^16.5.0",
     "happy-dom": "^20.8.8",
     "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.2",
     "wxt": "^0.20.20"
   },

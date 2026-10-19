@@ -1,3 +1,4 @@
+// @ts-check
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
 export default defineContentScript({
@@ -17,7 +18,7 @@ class AninzbContent extends Content {
   // (list or detail) and add a button next to it.
   initializeLinks = () => {
     for (const el of document.querySelectorAll('a[href*="/api/nzb/"]')) {
-      const a = el;
+      const a = /** @type {HTMLAnchorElement} */ (el);
 
       const link = this.createAddUrlLink({
         url: a.href,

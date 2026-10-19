@@ -8,7 +8,7 @@ const storageAreaName = 'local';
 export const storageArea = browser.storage[storageAreaName];
 
 /** @enum {string} */
-
+/** @typedef {(typeof DownloaderType)[keyof typeof DownloaderType]} DownloaderType */
 export const DownloaderType = {
   SABnzbd: 'SABnzbd',
   NZBGet: 'NZBGet',

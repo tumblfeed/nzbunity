@@ -1,3 +1,4 @@
+// @ts-check
 import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
 export default defineContentScript({
@@ -27,7 +28,7 @@ class AmenzbContent extends Content {
     const html = await res.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const input = doc.getElementById('apiKeyInput');
+    const input = /** @type {HTMLInputElement} */ (doc.getElementById('apiKeyInput'));
     if (input?.value) {
       this.apiKey = input.value;
       console.info(`[NZB Unity] ameNZB API key loaded`);
@@ -45,7 +46,7 @@ class AmenzbContent extends Content {
   initializeListLinks = () => {
     const links = document.querySelectorAll('a[href*="/download/"]');
     links.forEach((el) => {
-      const anchor = el;
+      const anchor = /** @type {HTMLAnchorElement} */ (el);
       this.createAddUrlLink({
         url: this.buildApiUrl(anchor.href),
         adjacent: anchor,
@@ -54,7 +55,9 @@ class AmenzbContent extends Content {
   };
 
   initializeDetailLinks = () => {
-    const anchor = document.querySelector('a[href*="/download/"]');
+    const anchor = /** @type {HTMLAnchorElement} */ (
+      document.querySelector('a[href*="/download/"]')
+    );
     if (anchor) {
       this.createAddUrlLink({
         url: this.buildApiUrl(anchor.href),

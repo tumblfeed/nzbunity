@@ -202,38 +202,20 @@ Owner-gated finding, deliberately left alone: `src/entrypoints/options/Options.j
 
 ### M5 — JS static checking, invisible to contributors
 
-- [ ] `npm i -D typescript@^7.0.2` (WXT 0.21 declares `typescript >=5.4` as an optional peer).
-      If TS 7 is too aggressive to get to green quickly, drop to `^6`/`^5.9` and write the reason
-      in the Progress log.
-- [ ] replace `jsconfig.json` with the generated config as the base (aliases + `#imports` types):
-
-      ```json
-      {
-        "extends": "./.wxt/tsconfig.json",
-        "compilerOptions": { "checkJs": false, "jsx": "react-jsx" }
-      }
-      ```
-
-      Note in a comment-free JSON-safe way (or in the Progress log) that `npm ci`/`wxt prepare`
-      must have run, since `.wxt/` is gitignored.
-
-- [ ] script `"check": "tsc --noEmit -p jsconfig.json"`. Keep the name `check`; do not add
-      "typecheck"/"compile" scripts that advertise TypeScript.
-- [ ] add `// @ts-check` to the top of `src/Content.js` and both new adapters; run
-      `npm run check`; triage the errors.
-- [ ] fix the Closure-dialect JSDoc that TypeScript rejects (TS 7 reworked how JSDoc'd JS is
-      analysed; `*` wildcards and `@enum` are the two big ones in this repo): - `Record<string, *>` → `Record<string, any>` at `src/Client.js:263`,
-      `src/Content.js:330`, `src/downloader/SABnzbd.js:32`, `src/downloader/index.js:247,273`,
-      `src/utils.js:74,101` - `{*[]}` → `{any[]}` at `src/downloader/NZBGet.js:32`, `src/logger.js:73`;
-      `{...*}` → `{...any}` at `src/logger.js:41,117,144,152,160,168` - `Promise<*>` → `Promise<any>` at `src/utils.js:101` - `/** @enum {…} */` at `src/downloader/index.js:6,17` and `src/store.js:10` → either
-      plain `@type` annotations on a frozen object, or a
-      `@typedef {(typeof X)[keyof typeof X]}` alias
-- [ ] leave `checkJs: false` in the config so files opt in individually and CI can never block a
-      contributor who never touched an opted-in file
-- [ ] commit
-- [ ] _(later, one commit per module, only if the above is cheap)_ add `// @ts-check` to
-      `store.js`, `utils.js`, `logger.js`, `Client.js`, `downloader/*.js`, then the remaining
-      adapters
+- [x] `npm i -D typescript@^7.0.2` (the only new devDependency; WXT 0.21 declares `typescript >=5.4` as an optional peer). TS 7 handled JSDoc'd JavaScript without trouble, so no fallback to `^6`/`^5.9` was needed.
+- [x] `jsconfig.json` replaced: it now `extends: "./.wxt/tsconfig.json"` (aliases + `#imports` + auto-import types come from the generated base) and sets `checkJs: false`, `allowJs: true`, `jsx: "react-jsx"`, `noImplicitAny: false`. Two of those were missing from this plan's original sketch and both matter: without `allowJs` the program contains **no JavaScript at all** and `// @ts-check` would be a no-op; without `noImplicitAny: false` every untyped callback parameter becomes an error whose only fix is more JSDoc in front of the contributor. The file carries JSONC comments in neutral language, and notes that `.wxt/` is gitignored so `npm ci`/`wxt prepare` must have run before `npm run check` can resolve the base.
+- [x] script `"check": "tsc --noEmit -p jsconfig.json"`. No "typecheck"/"compile" alias, and nothing TypeScript-shaped appears in README, CONTRIBUTING, or any error string a contributor would see.
+- [x] `// @ts-check` on `src/Content.js` + both new adapters. 24 errors at first; every one was fixed with comments only (zero runtime-affected lines). The fixes, as a recipe for the next module:
+  - Shared JSDoc typedefs are module-scoped, so a name like `NZBAddUrlResult` is invisible in `Content.js` even though it is used everywhere. Fix: `@export` on the typedef where it lives (`src/downloader/index.js`) plus a one-line alias where it is used: `/** @typedef {import('~/downloader').NZBAddUrlResult} NZBAddUrlResult */`. `DownloaderOptions` still needs this and is the single biggest remaining error class.
+  - `Record<string, *>` / `Promise<*>` / `{*[]}` are Closure, not TypeScript. In an unchecked file they are silently wrong; in an opted-in file they error. Fixed in the reachable files: `src/Content.js:330` and `src/utils.js` (`RequestOptions.params`, `objectToQuery`, `request`'s return). The rest of the list from the plan is still outstanding.
+  - `@enum` objects: TS 7 rejects the enum name in a type position (TS2749) even with the JSDoc attached, so each needs a `/** @typedef {(typeof X)[keyof typeof X]} X */` alias. Also, the conversion left a blank line between `/** @enum … */` and its `export const`, which detaches the comment entirely; removed at all three sites (`downloader/index.js` x2, `store.js` x1).
+  - `@param {string | NodeList | Element[]}` loses the element type: `Array.from` then yields `Node[]`. `NodeListOf<Element>` is the accurate type and needs no cast.
+  - Where the TS original had a cast and the conversion dropped it, restore it as a JSDoc cast rather than inventing a narrower type: `git show origin/main:src/entrypoints/amenzb.content.ts` had `as HTMLInputElement` / `as HTMLAnchorElement`, and aninzb had `as HTMLAnchorElement`. Verified against `origin/main` before writing them.
+  - Base-class members that subclasses widen need an explicit JSDoc type or TS believes the base declaration: `get id()` returns `string` (was inferred as the literal `''`, which made `DefaultIndexers[this.id]` `never`), `indexerOptions` is `IndexerOptions | undefined`, `ready()` returns `void | boolean | Promise<void | boolean>` (its own doc block already says it may return false).
+  - `src/utils.js`'s `RequestOptions` typedef had fallen behind its own implementation (`method`, `headers`, `body` are all read by `request()`); the JSDoc now lists them.
+- [x] `checkJs: false` stays, and the opt-in contract was proven with three probes: an opted-in file reports a typo'd property; a non-opted-in file stays silent about the same class of mistake; a non-opted-in file still fails on a **syntax** error (`allowJs` parses every `.js`, so broken files cannot hide). All probes were reverted; `git status` after them showed only intended edits.
+- [x] commit (see Progress log). No CI wiring: the repo has no workflow files and §7 puts CI redesign out of scope, so `check`/`lint`/`format:check` are local gates only.
+- [ ] _(later, one module per commit, never mandatory for a contributor)_ widen the opt-in. Measured cost today: **133 errors under `src/`** (`npx tsc --noEmit --checkJs -p jsconfig.json`, ignore the node_modules noise in that output). Worst files: `downloader/SABnzbd.js` 17, `downloader/NZBGet.js` 17, `entrypoints/binsearch.content.js` 14, `Client.js` 12, `omgwtfnzbs.content.js` 9, `popup/Popup.jsx` 8. By code: 44x TS2304 (cross-module typedef names, fixed by the `@export` + alias recipe above), 29x TS2339, 15x TS2322, 14x TS2531 + 5x TS18047 + 5x TS18048 (genuine missing null-guards — those are **behaviour changes**, so they need the owner's sign-off, not a cast), 3x TS2538 (indexing with a possibly-null key).
 
 ### M6 — Optional behaviour-neutral cleanups (only once M1–M5 are green)
 
@@ -378,6 +360,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — M5 done, commit pending at time of writing.** `npm run check` is a real gate: `typescript@7.0.2` (only new devDep), `jsconfig.json` extends the generated `.wxt/tsconfig.json`, `checkJs: false` + per-file `// @ts-check`. Opted in `src/Content.js` + both new adapters: 24 errors, all fixed with JSDoc-only edits, and the check was proven to bite with throwaway probes. Two conversions casualties fixed on the way: three `@enum` consts had their JSDoc detached by a blank line, and shared typedefs were unreachable from other modules (TS2304). `npm run check`/`lint`/`format:check` exit 0, `npm test` is unchanged from the M0 baseline (10 docker-dependent failures), build size identical at 810.21 kB. Measured the cost of a repo-wide opt-in for later: 133 errors under `src/`, of which ~44 are one typedef-scoping pattern. Nothing TypeScript-related appears in contributor-facing text.
 
 - **2026-10-19 — M4 done.** `npm run lint` is a real gate now: ESLint 10.13 + eslint-plugin-import-x 4.17.1 flat config, zero errors across the tree, and it demonstrably catches both a typo'd `~/` import and the historical `wxt/sandbox` import. 56 pre-existing findings were triaged (see the M4 triage record) with behaviour-neutral fixes; one rule disabled with a written reason. `wxt.config.js` gained `imports.eslintrc.enabled` so the auto-import globals stay generated.
 

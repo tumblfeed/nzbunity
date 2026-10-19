@@ -1,9 +1,13 @@
+// @ts-check
 import { browser } from 'wxt/browser';
 import { Logger } from '~/logger';
 import { getOptions, DefaultIndexers } from '~/store';
 import { request } from '~/utils';
 import '~/assets/content.css';
 export { request } from '~/utils';
+/** @typedef {import('~/store').IndexerOptions} IndexerOptions */
+/** @typedef {import('~/downloader').NZBAddOptions} NZBAddOptions */
+/** @typedef {import('~/downloader').NZBAddUrlResult} NZBAddUrlResult */
 export class ContentDisabledError extends Error {
   constructor(message) {
     super(message);
@@ -19,6 +23,7 @@ export class Content {
    * ID of the indexer, matching the key in options.Indexers
    * This is used to get options, and to get the display name for logging.
    * Must be a function so that it can be overridden in subclasses.
+   * @returns {string}
    */
   get id() {
     return '';
@@ -42,6 +47,7 @@ export class Content {
     return false;
   }
 
+  /** @type {IndexerOptions | undefined} */
   indexerOptions = undefined;
 
   replaceLinks = false;
@@ -172,6 +178,7 @@ export class Content {
    * - `this.initializeListLinks` if `this.isList` is true
    * - `this.initializeDetailLinks` if `this.isDetail` is true
    * - An error will be logged if none of the above are called
+   * @returns {void | boolean | Promise<void | boolean>}
    */
   ready() {
     return; // Default to no-op
@@ -327,7 +334,7 @@ export class Content {
    * @param {string} filename The name of the file to add
    * @param {string} [category] The category to add the file to
    * @param {string} [url] The URL to fetch the NZB file content from
-   * @param {Record<string, *>} [params] Additional parameters to pass to the fetch request
+   * @param {Record<string, unknown>} [params] Additional parameters to pass to the fetch request
    * @param {string} [method] The HTTP method to use for the request (default: POST)
    * @returns {Promise<NZBAddUrlResult>}
    */
@@ -396,7 +403,7 @@ export class Content {
   /**
    * Given a list of elements, extracts the ID and category from each element
    * and adds the URL to the downloader.
-   * @param {string | NodeList | Element[]} els
+   * @param {string | NodeListOf<Element> | Element[]} els
    * @param {(el: Element) => string} getId
    * @param {(el: Element) => string} getCategory
    * @returns {Promise<NZBAddUrlResult[]>}
@@ -424,7 +431,7 @@ export class Content {
    * and adds the URL to the downloader.
    * Dispatches custom events on the notifyEl element to indicate progress.
    * @param {Element} notifyEl
-   * @param {string | NodeList | Element[]} els
+   * @param {string | NodeListOf<Element> | Element[]} els
    * @param {(el: Element) => string} getId
    * @param {(el: Element) => string} getCategory
    * @param {number} [delay]
@@ -581,7 +588,7 @@ export class Content {
   extractCategory(el, firstWord = true) {
     if (!el) return '';
     if (typeof el === 'string') {
-      el = document.querySelector(el);
+      el = /** @type {Element} */ (document.querySelector(el));
     }
     let category = el.textContent ?? '';
     if (firstWord) {
