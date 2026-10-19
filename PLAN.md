@@ -52,43 +52,43 @@
 
 ## 1. Current state (verified 2026-10-19)
 
-* `origin/2.2` tip = `9b23c50` (2026-07-28, "Merge branch 'main' into 2.2"); 9 commits ahead of
+- `origin/2.2` tip = `9b23c50` (2026-07-28, "Merge branch 'main' into 2.2"); 9 commits ahead of
   `origin/main` (`ed21786`); merge-base `944028f`.
-* Conversion commits: `e8d1f83`, `3c5807a`, `0ad8097` ("normalize spacing" ×3),
+- Conversion commits: `e8d1f83`, `3c5807a`, `0ad8097` ("normalize spacing" ×3),
   `b564f2e` ("remaining core file changes, removes old TS"), `1a4bcbd` ("Move public and fix
   imports"), `8bd61a6` ("[2.2] npm audit"), `dc7990c`/`ee7cbc6`. So the branch was written
   2026-03-26/27 and last refreshed from `main` on 2026-07-28.
-* **Exactly two TypeScript files remain in the whole tree:**
+- **Exactly two TypeScript files remain in the whole tree:**
   `src/entrypoints/amenzb.content.ts` (69 lines), `src/entrypoints/aninzb.content.ts` (42 lines).
   They were reintroduced by the later merges of `main` after the conversion — which is why the
   guard tests in M2 matter more than the port itself.
-* Both start with `import { defineContentScript } from 'wxt/sandbox';`. The locked
+- Both start with `import { defineContentScript } from 'wxt/sandbox';`. The locked
   `wxt@0.20.20` export map publishes only `.`, `./browser`, `./modules`, `./testing`,
   `./utils/*`, `./vite-builder-env` — `wxt/sandbox` was removed in the 0.19→0.20
   "individual exports / `#imports`" change. **So the branch does not build as it stands.**
   (Established from the published export map, not from a build — there is no `node_modules` in
   this worktree yet. M0 confirms it by running the build.)
-* 15 converted `src/entrypoints/*.content.js` adapters exist; these 2 make 17. `DefaultIndexers`
+- 15 converted `src/entrypoints/*.content.js` adapters exist; these 2 make 17. `DefaultIndexers`
   in `src/store.js` already contains `amenzb` (L92) and `aninzb` (L94), so no store edit is
   needed for the port.
-* House style of converted entrypoints: `import { defineContentScript } from '#imports';`,
+- House style of converted entrypoints: `import { defineContentScript } from '#imports';`,
   single quotes, semicolons, 2-space indent, **no blank line between top-level statements**
   (imports → `export default` → `class`), one blank line between class members. Compare
   `src/entrypoints/abnzb.content.js`.
-* `package.json` v2.2.0: `"lint": "echo 'No linter configured'"`, no `check`/`compile` script,
+- `package.json` v2.2.0: `"lint": "echo 'No linter configured'"`, no `check`/`compile` script,
   no `prettier`/`typescript`/`eslint` dependency — although a prettier config block already
   exists (`singleQuote`, `trailingComma: "all"`, `printWidth: 90`, `tabWidth: 2`).
   `postinstall` runs `wxt prepare`, which generates `.wxt/tsconfig.json` and `.wxt/wxt.d.ts`.
-* `jsconfig.json` exists but is hand-rolled (`checkJs: false`, only `~/*` paths, does **not**
+- `jsconfig.json` exists but is hand-rolled (`checkJs: false`, only `~/*` paths, does **not**
   extend `./.wxt/tsconfig.json`) → no `#imports`/auto-import IntelliSense today.
   `tsconfig.json` was deleted on this branch.
-* `.nvmrc` = 24 (`main` still says 22). `.gitignore` L7 still lists `web-ext.config.ts` while the
+- `.nvmrc` = 24 (`main` still says 22). `.gitignore` L7 still lists `web-ext.config.ts` while the
   branch has `web-ext.config.js` committed.
-* Tests: `src/entrypoints/__tests__/example.skip.js` is the only entrypoint test and is skipped
+- Tests: `src/entrypoints/__tests__/example.skip.js` is the only entrypoint test and is skipped
   by its filename → **zero adapter coverage**. `vitest.config.js` does
   `import { WxtVitest } from 'wxt/testing'`; `vitest.setup.js` sets
   `globalThis.happyDOM.settings.fetch.disableSameOriginPolicy = true`.
-* Pinned direct deps: `wxt 0.20.20`, `@wxt-dev/module-react 1.2.2`, `react`/`react-dom 19.2.4`,
+- Pinned direct deps: `wxt 0.20.20`, `@wxt-dev/module-react 1.2.2`, `react`/`react-dom 19.2.4`,
   `react-icons 5.6.0`, `react-tooltip 5.30.0`, `happy-dom 20.8.8`, `vitest 4.1.2`
   (+ `vite 8.0.3` transitive). No OSV advisory currently covers any of them.
 
@@ -117,15 +117,8 @@
 ### M0 — Baseline the worktree
 
 - [x] `cd /home/hutch/Projects/nzbunity-2.2-js && npm ci` (runs `postinstall: wxt prepare`, creating the gitignored `.wxt/` dir)
-- [x] Run `npm run build` and record the outcome. **Actual baseline: `npm ci` itself failed** —
-      the `postinstall: wxt prepare` step aborted with `"./sandbox" is not exported ... from
-      package .../node_modules/wxt`, so the branch breaks even earlier than the build.
-      (wxt 0.20.20, node 26.11.1, npm 12.2.1)
-- [x] Run `npm test` and record the outcome. **Baseline: 39 passed / 10 failed / 9 skipped / 1
-      todo.** All 10 failures are `NZBGetHost.test.js` and `SABnzbd.test.js` hitting
-      `ECONNREFUSED` on localhost 7357/7358 — they need `npm run compose:sabnzbd` and
-      `compose:nzbget` (docker). Environmental and pre-existing: a fully green `npm test` is not
-      reachable without those services, so compare against this baseline rather than expecting 0.
+- [x] Run `npm run build` and record the outcome. **Actual baseline: `npm ci` itself failed**, because the `postinstall: wxt prepare` step aborted with `"./sandbox" is not exported ... from package .../node_modules/wxt`. So the branch breaks even earlier than the build. (wxt 0.20.20, node 26.11.1, npm 12.2.1)
+- [x] Run `npm test` and record the outcome. **Baseline: 39 passed / 10 failed / 9 skipped / 1 todo.** All 10 failures are `NZBGetHost.test.js` and `SABnzbd.test.js` hitting `ECONNREFUSED` on localhost 7357/7358 — they need `npm run compose:sabnzbd` and `compose:nzbget` (docker). Environmental and pre-existing, so compare against this baseline instead of expecting zero failures.
 - [x] Confirm `git status --short` shows only gitignored noise.
 
 ### M1 — Port the two adapters to JS (the actual fix; do this first)
@@ -183,14 +176,13 @@ Add a plain vitest file, e.g. `src/__tests__/structure.test.js`, covering:
 
 ### M3 — Prettier, enforced
 
-- [ ] `npm i -D prettier@^3.9.10` (v4 is alpha-only — do not use it)
-- [ ] scripts: `"format": "prettier --write ."`, `"format:check": "prettier --check ."`
-- [ ] add `.prettierignore`: `.wxt`, `.output`, `node_modules`, `package-lock.json`, `public/`,
-      `test/docker/`
-- [ ] run `npm run format:check` and record how much of the repo is already clean. If the churn
-      is non-trivial, land it as its own commit (`[2.2] apply prettier`) separate from real work,
-      then re-run `npm run build`. Expect prettier to reformat this PLAN.md too — that's fine.
-- [ ] commit
+- [x] `npm i -D prettier@^3.9.10` (v4 is alpha-only — do not use it) — installed **3.9.10**
+- [x] scripts: `"format": "prettier --write ."`, `"format:check": "prettier --check ."`
+- [x] added `.prettierignore`: `.wxt`, `.output`, `node_modules`, `package-lock.json`, `test/docker`, and `*.svg` (prettier rewrites svg markup, and the icons are hand-tuned assets — that replaces the `public/` entry the draft called for)
+- [x] measured churn: **the entire JS/CSS/JSON tree was already prettier-clean**, so only 3 files moved — `PRIVACY.md` (two double blank lines), `src/entrypoints/options/index.html` (`<!DOCTYPE html>` → `<!doctype html>`, cosmetic and safe), and this file. No standalone `[2.2] apply prettier` commit was needed. `format:check` is green; `npm run build` (810.23 kB, 991 ms) and `npm test` (43 passed, same 10 docker failures) are unchanged afterwards.
+- [x] commit
+
+Editing note for whoever picks this up: keep task-list items on one long line. Six-space continuation lines inside a task list parse as an indented code block, which makes `prettier --check` on this file never settle.
 
 ### M4 — Import/dependency lint (replace the placeholder `lint` script)
 
@@ -198,11 +190,10 @@ Pick one; prefer ESLint unless the dependency tree makes it painful.
 
 - [ ] **Option A — ESLint 10 + `eslint-plugin-import-x` 4.17.1**, flat config `eslint.config.js`,
       rules limited to `import/no-unresolved`, `no-undef`, `no-unused-vars`. Sanity-check that
-      `wxt/sandbox` *fails* and `#imports` *passes* (the resolver must honour package `exports`).
+      `wxt/sandbox` _fails_ and `#imports` _passes_ (the resolver must honour package `exports`).
       Auto-imports: set `imports: { eslintrc: { enabled: true } }` in `wxt.config.js` so WXT emits
       `.wxt/eslint-auto-imports.json`, and wire it into `languageOptions.globals`.
-- [ ] **Option B — `dependency-cruiser` 18.6.0** with just `no-orphans` + `unknown-dependencies`
-      + a `forbidden` rule for `wxt/sandbox`. Less tooling to explain to contributors, no
+- [ ] **Option B — `dependency-cruiser` 18.6.0** with just `no-orphans` + `unknown-dependencies` + a `forbidden` rule for `wxt/sandbox`. Less tooling to explain to contributors, no
       `no-undef` coverage.
 - [ ] keep the script named `lint` (README already tells people to run it)
 - [ ] do **not** add stylistic rules — prettier owns those
@@ -224,25 +215,22 @@ Pick one; prefer ESLint unless the dependency tree makes it painful.
 
       Note in a comment-free JSON-safe way (or in the Progress log) that `npm ci`/`wxt prepare`
       must have run, since `.wxt/` is gitignored.
+
 - [ ] script `"check": "tsc --noEmit -p jsconfig.json"`. Keep the name `check`; do not add
       "typecheck"/"compile" scripts that advertise TypeScript.
 - [ ] add `// @ts-check` to the top of `src/Content.js` and both new adapters; run
       `npm run check`; triage the errors.
 - [ ] fix the Closure-dialect JSDoc that TypeScript rejects (TS 7 reworked how JSDoc'd JS is
-      analysed; `*` wildcards and `@enum` are the two big ones in this repo):
-      - `Record<string, *>` → `Record<string, any>` at `src/Client.js:263`,
-        `src/Content.js:330`, `src/downloader/SABnzbd.js:32`, `src/downloader/index.js:247,273`,
-        `src/utils.js:74,101`
-      - `{*[]}` → `{any[]}` at `src/downloader/NZBGet.js:32`, `src/logger.js:73`;
-        `{...*}` → `{...any}` at `src/logger.js:41,117,144,152,160,168`
-      - `Promise<*>` → `Promise<any>` at `src/utils.js:101`
-      - `/** @enum {…} */` at `src/downloader/index.js:6,17` and `src/store.js:10` → either
-        plain `@type` annotations on a frozen object, or a
-        `@typedef {(typeof X)[keyof typeof X]}` alias
+      analysed; `*` wildcards and `@enum` are the two big ones in this repo): - `Record<string, *>` → `Record<string, any>` at `src/Client.js:263`,
+      `src/Content.js:330`, `src/downloader/SABnzbd.js:32`, `src/downloader/index.js:247,273`,
+      `src/utils.js:74,101` - `{*[]}` → `{any[]}` at `src/downloader/NZBGet.js:32`, `src/logger.js:73`;
+      `{...*}` → `{...any}` at `src/logger.js:41,117,144,152,160,168` - `Promise<*>` → `Promise<any>` at `src/utils.js:101` - `/** @enum {…} */` at `src/downloader/index.js:6,17` and `src/store.js:10` → either
+      plain `@type` annotations on a frozen object, or a
+      `@typedef {(typeof X)[keyof typeof X]}` alias
 - [ ] leave `checkJs: false` in the config so files opt in individually and CI can never block a
       contributor who never touched an opted-in file
 - [ ] commit
-- [ ] *(later, one commit per module, only if the above is cheap)* add `// @ts-check` to
+- [ ] _(later, one commit per module, only if the above is cheap)_ add `// @ts-check` to
       `store.js`, `utils.js`, `logger.js`, `Client.js`, `downloader/*.js`, then the remaining
       adapters
 
@@ -270,7 +258,7 @@ All line numbers are from `README.md` at `9b23c50`.
       `omgwtfnzbs.content.ts` / `dognzb.content.ts` / `Content.ts` don't exist on this branch →
       cite `aninzb.content.js` (smallest) and `dognzb.content.js`, and `Content.js`
 - [ ] L116 `src/store.ts` → `src/store.js`
-- [ ] L120-121 the ```typescript fence and `from 'wxt/sandbox'` → ```javascript and `from '#imports'`
+- [ ] L120-121 the ``typescript fence and `from 'wxt/sandbox'` → ``javascript and `from '#imports'`
 - [ ] `src/store.js:88` comment "The keys match the names of entrypoints/\*.content.ts" → `.content.js`
 - [ ] `.gitignore` L7 `web-ext.config.ts` — the tracked file is `web-ext.config.js`, so this line
       is stale: fix or delete it (do not start ignoring the `.js` config)
@@ -351,35 +339,35 @@ Two things no automated check can prove, so call them out explicitly in the Prog
 No OSV advisory currently affects any pinned direct dependency, so nothing here is forced by a
 security problem. Only two majors require source work: WXT 0.21 and react-tooltip 6.
 
-| package | pinned on 2.2 | latest seen | action |
-| --- | --- | --- | --- |
-| `wxt` | 0.20.20 | **0.21.4** (2026-08-11) | major, required — see M8 |
-| `@wxt-dev/module-react` | 1.2.2 | 1.2.2 | current |
-| `react`, `react-dom` | 19.2.4 | 19.3.1 (2026-10-14) | minor bump |
-| `react-icons` | 5.6.0 | 5.7.0 | minor bump |
-| `react-tooltip` | 5.30.0 | **6.0.9** | major, needs `data-tooltip-html` migration |
-| `happy-dom` | 20.8.8 | **21.0.3** | major, CSS/iframe loading off by default |
-| `vitest` | 4.1.2 | **5.0.5** (2026-10-15) | major, couple it to the WXT bump |
-| `vite` | 8.0.3 (transitive) | 8.3.4 | becomes a direct devDep with WXT 0.21 |
-| `typescript` | absent | 7.0.2 (2026-07-08) | new devDep, checker only (M5) |
-| `prettier` | absent (config only) | 3.9.10 | new devDep (M3) |
-| `eslint` / `eslint-plugin-import-x` | absent | 10.13.0 / 4.17.1 | new devDep (M4, option A) |
-| `@types/react`, `@types/react-dom` | absent | 19.3.0 | only if JSX files opt into `@ts-check` |
-| `web-ext` | absent | ≥9.2.0 | add as devDep if WXT 0.21 is used with `web-ext.config.js` |
+| package                             | pinned on 2.2        | latest seen             | action                                                     |
+| ----------------------------------- | -------------------- | ----------------------- | ---------------------------------------------------------- |
+| `wxt`                               | 0.20.20              | **0.21.4** (2026-08-11) | major, required — see M8                                   |
+| `@wxt-dev/module-react`             | 1.2.2                | 1.2.2                   | current                                                    |
+| `react`, `react-dom`                | 19.2.4               | 19.3.1 (2026-10-14)     | minor bump                                                 |
+| `react-icons`                       | 5.6.0                | 5.7.0                   | minor bump                                                 |
+| `react-tooltip`                     | 5.30.0               | **6.0.9**               | major, needs `data-tooltip-html` migration                 |
+| `happy-dom`                         | 20.8.8               | **21.0.3**              | major, CSS/iframe loading off by default                   |
+| `vitest`                            | 4.1.2                | **5.0.5** (2026-10-15)  | major, couple it to the WXT bump                           |
+| `vite`                              | 8.0.3 (transitive)   | 8.3.4                   | becomes a direct devDep with WXT 0.21                      |
+| `typescript`                        | absent               | 7.0.2 (2026-07-08)      | new devDep, checker only (M5)                              |
+| `prettier`                          | absent (config only) | 3.9.10                  | new devDep (M3)                                            |
+| `eslint` / `eslint-plugin-import-x` | absent               | 10.13.0 / 4.17.1        | new devDep (M4, option A)                                  |
+| `@types/react`, `@types/react-dom`  | absent               | 19.3.0                  | only if JSX files opt into `@ts-check`                     |
+| `web-ext`                           | absent               | ≥9.2.0                  | add as devDep if WXT 0.21 is used with `web-ext.config.js` |
 
 ## 6. Gotchas
 
-* `node_modules` is per-worktree — `npm ci` again here, not in the main checkout.
-* `.wxt/` is generated and gitignored: anything that reads `.wxt/tsconfig.json` or the
+- `node_modules` is per-worktree — `npm ci` again here, not in the main checkout.
+- `.wxt/` is generated and gitignored: anything that reads `.wxt/tsconfig.json` or the
   auto-import globals file needs `wxt prepare` to have run (`npm ci` does it via `postinstall`).
-* `#imports` is the convention across all converted entrypoints; keep it, don't "modernize" to
+- `#imports` is the convention across all converted entrypoints; keep it, don't "modernize" to
   `wxt/utils/define-content-script` inside a mechanical port.
-* amenzb's file has no trailing newline today; prettier will add one — expected diff noise.
-* The two leftover `.ts` files came from merges of `main`, so M2 (guards) + M9 (merge decision)
+- amenzb's file has no trailing newline today; prettier will add one — expected diff noise.
+- The two leftover `.ts` files came from merges of `main`, so M2 (guards) + M9 (merge decision)
   are what actually stop this recurring. The port alone does not.
-* `npm test` passing says nothing about adapter correctness — there is no adapter test.
-* WXT docs: <https://wxt.dev/guide/resources/upgrading.html> (0.20→0.21 breaking list).
-* react-tooltip v5→v6: <https://react-tooltip.com/docs/upgrade-guide/changelog-v5-v6>.
+- `npm test` passing says nothing about adapter correctness — there is no adapter test.
+- WXT docs: <https://wxt.dev/guide/resources/upgrading.html> (0.20→0.21 breaking list).
+- react-tooltip v5→v6: <https://react-tooltip.com/docs/upgrade-guide/changelog-v5-v6>.
 
 ## 7. Explicitly out of scope
 
@@ -389,6 +377,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — M3 done.** prettier 3.9.10 as a devDependency, `format` + `format:check` scripts, `.prettierignore`. The headline result: **the source tree needed no reformatting at all** — the 2.2 conversion pass left it prettier-clean, so enforcing formatting costs three files of noise, all documentation/markup. `format:check` now passes and is a usable gate.
 
 * **2026-10-19 — M2 done, `src/__tests__/structure.test.js` (uncommitted at time of writing).**
   Four guards: no typed files under `src/`, indexer->entrypoint parity, entrypoint->indexer parity
@@ -405,9 +395,9 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
   the base class already exposes `_apikey`/`get apikey()` (Content.js:63,65) for M6 to use.
 
 * **2026-10-19 — M0 done (with an ordering deviation worth knowing).** `npm ci` could not
-  complete *before* M1, because its `postinstall: wxt prepare` is where the `wxt/sandbox` failure
+  complete _before_ M1, because its `postinstall: wxt prepare` is where the `wxt/sandbox` failure
   surfaces: `ERROR "./sandbox" is not exported under the conditions [...] from package
-  .../node_modules/wxt`. node_modules was still populated (310 entries) and `.wxt/tsconfig.json`
+.../node_modules/wxt`. node_modules was still populated (310 entries) and `.wxt/tsconfig.json`
   was generated, so tooling could run. This turns the earlier inference into a fact: **branch 2.2
   fails `npm ci` as published.** Test baseline: 39 passed / 10 failed / 9 skipped / 1 todo, all
   failures `ECONNREFUSED` on localhost 7357-7358 (NZBGetHost + SABnzbd integration tests need the
