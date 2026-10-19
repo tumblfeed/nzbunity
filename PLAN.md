@@ -219,16 +219,13 @@ Owner-gated finding, deliberately left alone: `src/entrypoints/options/Options.j
 
 ### M6 — Optional behaviour-neutral cleanups (only once M1–M5 are green)
 
-- [ ] amenzb: delete the private `apiKey` field and use the base class (`src/Content.js`
-      L63 `_apikey = ''`, L65 `get apikey()`), assigning `this._apikey = input.value` in `ready()`
-- [ ] amenzb: replace the raw `console.info` with `this.debug('[NZB Unity] ameNZB ready()', { apikey: this.apikey })`
-      plus a warn when the key is missing — the pattern used by abnzb (`src/entrypoints/abnzb.content.js:43-48`),
-      dognzb, newznab, drunkenslug, gingadaddy
-- [ ] amenzb: consider `window.location.origin` instead of the hardcoded `https://amenzb.moe` in
+- [x] amenzb: the private `apiKey` field is gone; `ready()` assigns the base class `_apikey` (`src/Content.js:63`) and `buildApiUrl()` reads the base getter `this.apikey`. No other file referenced the field.
+- [x] amenzb: `this.debug(`[NZB Unity] ready()`, { apikey: this.apikey })` plus `if (!this.apikey) console.warn(...)` now matches abnzb / dognzb / drunkenslug exactly. The amenzb wording was kept for the warning ("Unable to find apikey — are you logged in?") because the login hint is the useful part. **Console output only**: the unconditional `console.info('API key loaded')` became a DEV-gated `debug`, so a production build logs one line less and nothing else changed.
+- [ ] amenzb (left unticked, needs the owner): consider `window.location.origin` instead of the hardcoded `https://amenzb.moe` in
       `buildApiUrl()` (the `ready()` fetch hardcodes the same host) — **needs owner OK**
-- [ ] do **not** change the `credentials: 'include'` cross-origin fetch without owner sign-off;
+- [ ] (left unticked deliberately) do **not** change the `credentials: 'include'` cross-origin fetch without owner sign-off;
       it is intentional and only smoke-testable with a logged-in amenzb account
-- [ ] commit
+- [ ] commit together with the two unticked items above, once the owner rules on them
 
 ### M7 — Docs that currently teach the broken pattern
 
@@ -245,8 +242,7 @@ All line numbers are from `README.md` at `9b23c50`.
 - [ ] `src/store.js:88` comment "The keys match the names of entrypoints/\*.content.ts" → `.content.js`
 - [ ] `.gitignore` L7 `web-ext.config.ts` — the tracked file is `web-ext.config.js`, so this line
       is stale: fix or delete it (do not start ignoring the `.js` config)
-- [ ] add one short "adding a site adapter" pointer that mentions `npm run check` exists and runs
-      in CI — without naming TypeScript
+- [ ] add one short "adding a site adapter" pointer that mentions `npm run check` exists as a local script — without naming TypeScript. There is no CI here (no `.github/workflows`), and §7 puts CI redesign out of scope, so do not write "runs in" anything.
 - [ ] commit
 
 ### M8 — Dependency refresh (one commit per tier; see §5 for numbers and dates)
@@ -361,7 +357,9 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 
 ## Progress log (append newest first)
 
-- **2026-10-19 — M5 done, commit pending at time of writing.** `npm run check` is a real gate: `typescript@7.0.2` (only new devDep), `jsconfig.json` extends the generated `.wxt/tsconfig.json`, `checkJs: false` + per-file `// @ts-check`. Opted in `src/Content.js` + both new adapters: 24 errors, all fixed with JSDoc-only edits, and the check was proven to bite with throwaway probes. Two conversions casualties fixed on the way: three `@enum` consts had their JSDoc detached by a blank line, and shared typedefs were unreachable from other modules (TS2304). `npm run check`/`lint`/`format:check` exit 0, `npm test` is unchanged from the M0 baseline (10 docker-dependent failures), build size identical at 810.21 kB. Measured the cost of a repo-wide opt-in for later: 133 errors under `src/`, of which ~44 are one typedef-scoping pattern. Nothing TypeScript-related appears in contributor-facing text.
+- **2026-10-19 — M6 partially done (commit pending at time of writing).** amenzb now uses the base class `_apikey`/`apikey` instead of its own `apiKey` field, and its logging matches the sibling adapters (`this.debug(...)` plus a warn when the key is missing). Only console output changed. The hardcoded `https://amenzb.moe` origin and `credentials: 'include'` were left alone on purpose: both are owner decisions and neither is testable without a logged-in amenzb account. Gates after the change: `check` / `lint` / `format:check` clean, `npm test` identical to the M0 baseline, build 810.22 kB.
+
+- **2026-10-19 — M5 done, commit `36fc427`.** `npm run check` is a real gate: `typescript@7.0.2` (only new devDep), `jsconfig.json` extends the generated `.wxt/tsconfig.json`, `checkJs: false` + per-file `// @ts-check`. Opted in `src/Content.js` + both new adapters: 24 errors, all fixed with JSDoc-only edits, and the check was proven to bite with throwaway probes. Two conversions casualties fixed on the way: three `@enum` consts had their JSDoc detached by a blank line, and shared typedefs were unreachable from other modules (TS2304). `npm run check`/`lint`/`format:check` exit 0, `npm test` is unchanged from the M0 baseline (10 docker-dependent failures), build size identical at 810.21 kB. Measured the cost of a repo-wide opt-in for later: 133 errors under `src/`, of which ~44 are one typedef-scoping pattern. Nothing TypeScript-related appears in contributor-facing text.
 
 - **2026-10-19 — M4 done.** `npm run lint` is a real gate now: ESLint 10.13 + eslint-plugin-import-x 4.17.1 flat config, zero errors across the tree, and it demonstrably catches both a typo'd `~/` import and the historical `wxt/sandbox` import. 56 pre-existing findings were triaged (see the M4 triage record) with behaviour-neutral fixes; one rule disabled with a written reason. `wxt.config.js` gained `imports.eslintrc.enabled` so the auto-import globals stay generated.
 

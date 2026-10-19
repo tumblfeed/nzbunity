@@ -12,8 +12,6 @@ class AmenzbContent extends Content {
     return 'amenzb';
   }
 
-  apiKey = '';
-
   get isList() {
     return document.querySelectorAll('a[href*="/download/"]').length > 1;
   }
@@ -29,18 +27,16 @@ class AmenzbContent extends Content {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const input = /** @type {HTMLInputElement} */ (doc.getElementById('apiKeyInput'));
-    if (input?.value) {
-      this.apiKey = input.value;
-      console.info(`[NZB Unity] ameNZB API key loaded`);
-    } else {
-      console.warn(`[NZB Unity] ameNZB API key not found — are you logged in?`);
-    }
+    if (input?.value) this._apikey = input.value;
+    this.debug(`[NZB Unity] ready()`, { apikey: this.apikey });
+    if (!this.apikey)
+      console.warn(`[NZB Unity] Unable to find apikey — are you logged in?`);
   }
 
   // Converts a /download/123456 URL into the authenticated API URL
   buildApiUrl(downloadUrl) {
     const id = downloadUrl.split('/download/')[1];
-    return `https://amenzb.moe/api?t=get&apikey=${this.apiKey}&id=${id}`;
+    return `https://amenzb.moe/api?t=get&apikey=${this.apikey}&id=${id}`;
   }
 
   initializeListLinks = () => {
