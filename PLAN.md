@@ -261,19 +261,12 @@ Line numbers were from `README.md` at `9b23c50`; all are done, so they are liste
 
 ### M9 — Final pass, merge decision, cleanup
 
-- [ ] green run of: `npm ci && npm run check && npm run lint && npm run format:check && npm run test && npm run build:all`
-- [ ] manual smoke in a real browser (needs accounts; record what you could and could not test):
-      amenzb logged-in `/profile` actually yields `apiKeyInput` → links get API URLs;
-      aninzb list **and** detail pages, with `replaceLinks` on and off; abnzb still fine;
-      the built chrome-mv3 and firefox packages load
-- [ ] **owner decision:** port the same two-adapter fix onto `main` as well, or merge `2.2` into
-      `main` now. `main` is only one commit ahead of the merge-base (the 2.2.0 version bump), so
-      closing the loop is cheap today and gets more expensive with every site profile added on
-      either side.
-- [ ] `git push -u origin 2.2-js` — only after the owner is happy with the branch
-- [ ] `git rm PLAN.md && git commit -m "[2.2] remove PLAN.md, JS conversion complete"`
-- [ ] from the main checkout: `git worktree remove /home/hutch/Projects/nzbunity-2.2-js`
-      (keep it until the PR/merge is settled)
+- [x] green run of `npm ci && npm run check && npm run lint && npm run format:check && npm run test && npm run build:all`, 2026-10-19, run exactly in that order from `rm -rf node_modules .wxt .output`: `npm ci` clean (257 packages, 0 vulnerabilities, postinstall `wxt prepare` succeeds); `check` silent; `lint` silent; `format:check` clean; **`npm test` fully green: 5 files, 53 passed / 9 skipped / 1 todo** — the first time this branch has been green, because the test containers from §4.6 were finally running; `build:all` green for chrome-mv3 and firefox, 837.68 kB each.
+- [ ] manual smoke in a real browser. **Not done, and not attempted**: this session has no browser session, no indexer accounts, and no GUI. What the automated gates do cover: the built chrome-mv3 and firefox packages build, all 17 content scripts appear in the manifest with both `js` and `css`, and `content-scripts/newznab.js` / `newznab.css` are where `background.js` injects them from. What only a logged-in browser can confirm: amenzb's `/profile` really contains `apiKeyInput` and the key is picked up; aninzb list **and** detail pages with `replaceLinks` on and off; the CSS injection actually styling the buttons after the per-entrypoint import move; abnzb and the other 14 adapters still working; the command shortcut `activate-newznab`. `/usr/bin/chromium` exists on this machine, but headless Chromium loading an MV3 extension against logged-in indexers is not something to fake.
+- [ ] **owner decision:** port the same two-adapter fix onto `main` as well, or merge `2.2` into `main` now. `main` is only one commit ahead of the merge-base (the 2.2.0 version bump), so closing the loop is cheap today and gets more expensive with every site profile added on either side. This branch now also carries the whole toolchain tier, which makes the merge more valuable and slightly more reviewable commit-by-commit.
+- [ ] `git push -u origin 2.2-js` — only after the owner is happy with the branch. Not pushed.
+- [ ] `git rm PLAN.md && git commit -m "[2.2] remove PLAN.md, JS conversion complete"` — **deliberately not done.** The conversion work itself is complete (M0-M8), but these remain open and belong to the owner, not the agent: `react-tooltip` 6, the amenzb origin/credentials hardcoding, Dependabot cleanup, the browser smoke pass, the merge/push decision. Delete the file once those are settled.
+- [ ] from the main checkout: `git worktree remove /home/hutch/Projects/nzbunity-2.2-js` (keep it until the PR/merge is settled)
 
 ---
 
@@ -342,6 +335,8 @@ tests to a typed flavour, CI/workflow redesign, and any behaviour change not lis
 ---
 
 ## Progress log (append newest first)
+
+- **2026-10-19 — M9 verification run is green end to end, including the tests that never ran before.** `npm ci` → `check` → `lint` → `format:check` → `test` → `build:all` from a wiped `node_modules`/`.wxt`/`.output`: 0 vulnerabilities, silent checker, silent linter, 53 passed / 9 skipped / 1 todo, 837.68 kB for both browser targets. The 10 downloader tests that have failed with `ECONNREFUSED` on this branch since it started are now passing, because the SABnzbd and NZBGet containers were finally brought up by hand — recipe in §4.6, containers removed again afterwards. What is still open is owner work, not conversion work: the browser smoke pass, `react-tooltip` 6, amenzb origin/credentials, Dependabot, the merge and the push. PLAN.md stays in the tree for that reason.
 
 - **2026-10-19 — M8 done except the owner-gated boxes (three commits: `a757545` React, `ae4e124` happy-dom/globals, `115dacb` WXT/vite/vitest).** The interesting one is the last: WXT 0.21.4 would not build this project because vite 8 crashes on the CSS imported through the shared `src/Content.js` module, so each content script now imports the stylesheet it injects. Measured before accepting that: 17 content scripts each with their own `content-scripts/<name>.css`, `newznab.js`/`newznab.css` still at the paths `background.js` injects them from, 837.68 kB against 838.07 kB. `npm audit` went from 11 findings (3 critical, all through WXT 0.20's `web-ext-run`) to 0, measured after a clean `npm ci` - which also means `postinstall: wxt prepare` now succeeds on this branch for the first time. `web-ext` is deliberately not installed, so `dev:firefox` will need it added locally. Not done: `react-tooltip` 6 (owner), Dependabot cleanup (owner).
 
