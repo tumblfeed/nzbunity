@@ -1,14 +1,11 @@
-import { defineContentScript } from 'wxt/sandbox';
+import { defineContentScript } from '#imports';
 import { Content } from '~/Content';
-
 export default defineContentScript({
   matches: ['*://*.aninzb.moe/*', '*://aninzb.moe/*'],
-
   main(ctx) {
     new AninzbContent(ctx);
   },
 });
-
 class AninzbContent extends Content {
   get id() {
     return 'aninzb';
@@ -20,7 +17,7 @@ class AninzbContent extends Content {
   // (list or detail) and add a button next to it.
   initializeLinks = () => {
     for (const el of document.querySelectorAll('a[href*="/api/nzb/"]')) {
-      const a = el as HTMLAnchorElement;
+      const a = el;
 
       const link = this.createAddUrlLink({
         url: a.href,
