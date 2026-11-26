@@ -10,6 +10,8 @@ export default defineContentScript({
 });
 
 class NZBFinderContent extends Content {
+  private readonly initializedListLinks = new WeakSet<HTMLAnchorElement>();
+
   get id() {
     return 'nzbfinder';
   }
@@ -128,17 +130,16 @@ class NZBFinderContent extends Content {
     }
   };
 
-  initializeListLinks = () => {
-    this.debug(`[NZB Unity] initializeListLinks()`);
-    // V5
-    // Create direct download links on individual items
-    for (const el of document.querySelectorAll('a[href*="/getnzb?id="]')) {
-      const a = el as HTMLElement;
+  private initializeListDownloadLinks(root: ParentNode) {
+    for (const a of root.querySelectorAll<HTMLAnchorElement>('a[href*="/getnzb?id="]')) {
+      if (this.initializedListLinks.has(a)) continue;
+
       const [, id] = a.getAttribute('href')?.match(/\/getnzb\?id=([\w-]+)/i) ?? [];
       if (!id) continue;
 
       const url = this.getNzbUrl(id);
       let category = this.getCategory(a);
+      this.initializedListLinks.add(a);
 
       if (this.replaceLinks) {
         this.bindAddUrl(a, url, category);
@@ -163,7 +164,25 @@ class NZBFinderContent extends Content {
       }
 
       a.insertAdjacentElement('beforebegin', link);
+      this.initializedListLinks.add(link);
     }
+  }
+
+  initializeListLinks = () => {
+    this.debug(`[NZB Unity] initializeListLinks()`);
+    if (/^\/series\/\d+\/?$/.test(window.location.pathname)) {
+      this.ctx.addEventListener(
+        document,
+        'nzbfinder:viewseries:releases-rendered',
+        (event) => {
+          const panel = event.target;
+          if (panel instanceof HTMLElement && panel.closest('[data-series-episode]')) {
+            this.initializeListDownloadLinks(panel);
+          }
+        },
+      );
+    }
+    this.initializeListDownloadLinks(document);
 
     // Create download all buttons
     for (const el of document.querySelectorAll('#multidownload')) {
